@@ -8,15 +8,6 @@
 | [API Documentation - master branch](http://maidsafe.net/maidsafe_nfs/master) | [SAFE Network System Documentation](http://systemdocs.maidsafe.net) | [MaidSafe website](http://maidsafe.net) | [Safe Community site](https://forum.safenetwork.io) |
 |:------:|:-------:|:-------:|:-------:|
 
-###Build Instructions:
-Maidsafe-Client interfaces conditionally with either the actual routing crate or the Mock used for efficient local testing.
-
-To use it with the Mock (default) do:
-```
-cargo build
-cargo test
-etc
-```
 ##TODO (rust_3 sprint)
 ###Version 0.0.1 (NFS separation)
 - [ ] [MAID-1209](https://maidsafe.atlassian.net/browse/MAID-1209) Move NFS API from maidsafe_client
