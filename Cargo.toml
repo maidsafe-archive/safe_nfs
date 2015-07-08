@@ -3,8 +3,23 @@ name = "maidsafe_nfs"
 version = "0.0.1"
 authors = ["MaidSafe Developers <dev@maidsafe.net>"]
 description = "This is Pre alpha, and not useful, no code worth looking at."
-documentation = "http://maidsafe.net/maidsafe_dns/latest"
-repository = "https://github.com/maidsafe/maidsafe_dns"
+documentation = "http://maidsafe.net/maidsafe_nfs/latest"
+repository = "https://github.com/maidsafe/maidsafe_nfs"
 readme = "README.md"
 license = "GPL-3.0"
 homepage = "http://maidsafe.net"
+
+[dependencies]
+cbor = "*"
+rustc-serialize = "*"
+maidsafe_types = "*"
+routing = "*"
+sodiumoxide = "*"
+self_encryption = "*"
+time="*"
+rand = "*"
+
+[dependencies.maidsafe_client]
+path = "../maidsafe_client"
+# version = "0.1.1"
+# features = ["USE_ACTUAL_ROUTING"]
