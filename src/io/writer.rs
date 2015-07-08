@@ -35,7 +35,7 @@ pub struct Writer {
 impl Writer {
     /// Create new instance of Writer
     pub fn new(directory: ::directory_listing::DirectoryListing, file: ::file::File,
-        client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>, mode: Mode) -> Writer {
+              client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>, mode: Mode) -> Writer {
         let storage = ::std::sync::Arc::new(::io::network_storage::NetworkStorage::new(client.clone()));
         let datamap = match mode {
                 Mode::Overwrite => ::self_encryption::datamap::DataMap::None,

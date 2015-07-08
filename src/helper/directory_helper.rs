@@ -118,8 +118,8 @@ impl DirectoryHelper {
     }
 
     fn save_directory(&self,
-        sdv: &mut ::maidsafe_types::StructuredData,
-        directory: &::directory_listing::DirectoryListing) -> Result<(), String> {
+                      sdv: &mut ::maidsafe_types::StructuredData,
+                      directory: &::directory_listing::DirectoryListing) -> Result<(), String> {
         let mut se = ::self_encryption::SelfEncryptor::new(::std::sync::Arc::new(::io::NetworkStorage::new(self.client.clone())), ::self_encryption::datamap::DataMap::None);
         se.write(&::utils::serialise(directory.clone())[..], 0);
         let datamap = se.close();
@@ -152,7 +152,7 @@ impl DirectoryHelper {
     }
 
     fn get_directory_version(&self, directory_id: &::routing::NameType,
-        version: &::routing::NameType) -> Result<::directory_listing::DirectoryListing, String> {
+                            version: &::routing::NameType) -> Result<::directory_listing::DirectoryListing, String> {
         let immutable_data_type_id = ::maidsafe_types::data::ImmutableDataTypeTag;
         match self.network_get(immutable_data_type_id.type_tag(), &version) {
             Ok(serialised_data) => {

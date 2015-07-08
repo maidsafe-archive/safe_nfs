@@ -26,7 +26,8 @@ pub struct Container {
 impl Container {
     /// Authorises the directory access and returns the Container, if authorisation is successful.
     /// Operations can be performed only after the authorisation is successful.
-    pub fn authorise(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>, dir_id: Option<[u8;64]>) -> Result<Container, String> {
+    pub fn authorise(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+                    dir_id: Option<[u8;64]>) -> Result<Container, String> {
         let mut directory_helper = ::helper::DirectoryHelper::new(client.clone());
         let fake_id = ::routing::NameType([0u8; 64]);
         let mut directory_id: ::routing::NameType = fake_id.clone();
