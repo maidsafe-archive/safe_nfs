@@ -20,6 +20,5 @@ time="*"
 rand = "*"
 
 [dependencies.maidsafe_client]
-path = "../maidsafe_client"
-# version = "0.1.1"
+version = "*"
 # features = ["USE_ACTUAL_ROUTING"]
