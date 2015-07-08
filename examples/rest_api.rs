@@ -24,7 +24,7 @@ fn create_account() -> Result<maidsafe_client::client::Client, String> {
     let mut keyword = String::new();
     let mut password = String::new();
     let mut pin_str = String::new();
-    let mut pin: u32;
+    let pin: u32;
 
     println!("\n\tAccount Creation");
     println!("\t================");
@@ -68,45 +68,6 @@ fn create_account() -> Result<maidsafe_client::client::Client, String> {
             Ok(client)
         },
         Err(_)  => Err("Account Login Failed !!".to_string()),
-    }
-}
-
-fn login() -> Result<maidsafe_client::client::Client, String> {
-    let mut keyword = String::new();
-    let mut password = String::new();
-    let mut pin_str = String::new();
-    let mut pin: u32;
-
-    println!("\n\nAccount Login");
-    println!("====================");
-
-    println!("------------ Enter Keyword ---------------");
-    let _ = std::io::stdin().read_line(&mut keyword);
-
-    println!("\n------------ Enter Password --------------");
-    let _ = std::io::stdin().read_line(&mut password);
-
-    loop {
-        pin_str.clear();
-        println!("\n--------- Enter PIN (4 Digits) -----------");
-        let _ = std::io::stdin().read_line(&mut pin_str);
-        let result = pin_str.trim().parse::<u32>();
-        if result.is_ok() && pin_str.trim().len() == 4 {
-            pin = result.ok().unwrap();
-            break;
-        }
-        println!("ERROR: PIN is not 4 Digits !!");
-    }
-
-    // Log into the created account
-    {
-        println!("\nTrying to log in ...");
-        match maidsafe_client::client::Client::log_in(&keyword, pin, &password) {
-            Ok(client) => {
-                Ok(client)
-            },
-            Err(_)  => Err("Account Login Failed !!".to_string()),
-        }
     }
 }
 
@@ -275,7 +236,7 @@ fn blob_operation(option: u32, container: &mut maidsafe_nfs::rest::Container) {
                     let blob_name = get_user_string("Blob name");
                     match container.get_blob_versions(blob_name.clone()) {
                         Ok(versions) => {
-                            let mut version_id;
+                            let version_id;
                             if versions.len() == 1 {
                                 version_id = versions[0];
                             } else{
@@ -355,7 +316,7 @@ fn blob_operation(option: u32, container: &mut maidsafe_nfs::rest::Container) {
 }
 
 fn get_root_container(client: &::std::sync::Arc<::std::sync::Mutex<maidsafe_client::client::Client>>) -> maidsafe_nfs::rest::Container {
-    let mut root_container;
+    let root_container;
     match maidsafe_nfs::rest::Container::authorise(client.clone(), None) {
         Ok(container) => root_container = container,
         Err(msg) => panic!(msg)
@@ -364,39 +325,16 @@ fn get_root_container(client: &::std::sync::Arc<::std::sync::Mutex<maidsafe_clie
 }
 #[allow(unused_must_use)]
 fn main() {
-    let mut client;
-    let mut option = String::new();
-    println!("\n\t-- Register or Login ----\n");
-    println!("\t1. Register");
-    println!("\t2. Login");
-    println!("\t --- Enter your choice -- ");
-    std::io::stdin().read_line(&mut option);
-    client = match option.trim().parse::<u32>() {
-        Ok(selection) => {
-            match selection {
-                1 => {
-                    match create_account() {
-                        Ok(authorised_client) => ::std::sync::Arc::new(::std::sync::Mutex::new(authorised_client)),
-                        Err(msg) => panic!(msg)
-                    }
-                },
-                2 => {
-                    match login() {
-                        Ok(authorised_client) => ::std::sync::Arc::new(::std::sync::Mutex::new(authorised_client)),
-                        Err(msg) => panic!(msg)
-                    }
-                },
-                _ => panic!("Invalid input")
-            }
-        },
-        Err(_) => panic!("Invalid input")
-    };
-
+    let client;
+    match create_account() {
+        Ok(authorised_client) => client = ::std::sync::Arc::new(::std::sync::Mutex::new(authorised_client)),
+        Err(msg) => panic!(msg)
+    }
     println!("\n\t-- Preparing storage ----\n");
     let mut root_container = get_root_container(&client);
     println!("\n\n------  (Tip) Start by creating a container and then store blob, modify blob within the container --------------------");
     loop {
-        option.clear();
+        let mut option = String::new();
         {
             println!("\n----------Choose an Operation----------------");
             println!("1. Create Container");

@@ -12,10 +12,10 @@ homepage = "http://maidsafe.net"
 [dependencies]
 cbor = "*"
 rustc-serialize = "*"
-maidsafe_types = "*"
-routing = "*"
+maidsafe_types = "0.2.*"
+routing = "0.2.*"
 sodiumoxide = "*"
-self_encryption = "*"
+self_encryption = "0.2.*"
 time="*"
 
 [dependencies.maidsafe_client]
