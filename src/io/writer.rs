@@ -29,7 +29,7 @@ pub struct Writer {
     file: ::file::File,
     directory: ::directory_listing::DirectoryListing,
     self_encryptor: ::self_encryption::SelfEncryptor<::io::network_storage::NetworkStorage>,
-    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>
+    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
 }
 
 impl Writer {
@@ -39,13 +39,13 @@ impl Writer {
         let storage = ::std::sync::Arc::new(::io::network_storage::NetworkStorage::new(client.clone()));
         let datamap = match mode {
                 Mode::Overwrite => ::self_encryption::datamap::DataMap::None,
-                Mode::Modify => file.get_datamap().clone()
+                Mode::Modify => file.get_datamap().clone(),
         };
         Writer {
             file: file.clone(),
             directory: directory,
             self_encryptor: ::self_encryption::SelfEncryptor::new(storage.clone(), datamap),
-            client: client
+            client: client,
         }
     }
 
@@ -71,7 +71,7 @@ impl Writer {
         let mut directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
         match directory_helper.update(directory) {
             Ok(_) => Ok(()),
-            Err(_) => Err("Failed to save".to_string())
+            Err(_) => Err("Failed to save".to_string()),
         }
     }
 }

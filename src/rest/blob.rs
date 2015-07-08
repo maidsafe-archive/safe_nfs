@@ -36,7 +36,7 @@ impl Blob {
                     Err(_) => None
                 }
             },
-            None => None
+            None => None,
         }
     }
 
@@ -70,7 +70,7 @@ impl Blob {
     /// interface
     pub fn convert_from_file(file: ::file::File) -> Blob {
         Blob {
-            file: file
+            file: file,
         }
     }
 }

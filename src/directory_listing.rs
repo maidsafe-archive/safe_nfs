@@ -20,7 +20,7 @@
 pub struct DirectoryListing {
     info: ::directory_info::DirectoryInfo,
     sub_directories: Vec<::directory_info::DirectoryInfo>,
-    files: Vec<::file::File>
+    files: Vec<::file::File>,
 }
 
 impl DirectoryListing {
@@ -29,7 +29,7 @@ impl DirectoryListing {
         DirectoryListing {
             info: ::directory_info::DirectoryInfo::new(::metadata::Metadata::new(name, user_metadata)),
             sub_directories: Vec::new(),
-            files: Vec::new()
+            files: Vec::new(),
         }
     }
 

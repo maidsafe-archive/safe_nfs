@@ -20,7 +20,7 @@
 /// of file
 pub struct File {
     metadata: ::metadata::Metadata,
-    datamap: ::self_encryption::datamap::DataMap
+    datamap: ::self_encryption::datamap::DataMap,
 }
 
 impl File {
@@ -28,7 +28,7 @@ impl File {
     pub fn new(metadata: ::metadata::Metadata, datamap: ::self_encryption::datamap::DataMap) -> File {
         File {
             metadata: metadata,
-            datamap: datamap
+            datamap: datamap,
         }
     }
 

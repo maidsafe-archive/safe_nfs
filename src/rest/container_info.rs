@@ -23,7 +23,7 @@ pub struct ContainerInfo {
 impl ContainerInfo {
     /// Get Container ID. This is the directory ID which is unique for every directory and is the
     /// only way to retrieve that directory (DirectoryListing) from the network
-    pub fn get_id(&self) -> [u8;64] {
+    pub fn get_id(&self) -> [u8; 64] {
         self.info.get_id().0
     }
 
@@ -55,7 +55,7 @@ impl ContainerInfo {
     /// friendly ContainerInfo
     pub fn convert_from_directory_info(info: ::directory_info::DirectoryInfo) -> ContainerInfo {
         ContainerInfo {
-            info: info
+            info: info,
         }
     }
 }

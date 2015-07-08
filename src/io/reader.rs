@@ -21,7 +21,7 @@
 pub struct Reader {
     file: ::file::File,
     self_encryptor: ::self_encryption::SelfEncryptor<::io::network_storage::NetworkStorage>,
-    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>
+    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
 }
 
 impl Reader {
@@ -32,7 +32,7 @@ impl Reader {
         Reader {
             file: file.clone(),
             self_encryptor: ::self_encryption::SelfEncryptor::new(storage.clone(), file.get_datamap().clone()),
-            client: client
+            client: client,
         }
     }
 

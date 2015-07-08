@@ -17,14 +17,14 @@
 
 /// File provides helper functions to perform Operations on Files
 pub struct FileHelper {
-    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>
+    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
 }
 
 impl FileHelper {
     /// Create a new FileHelper instance
     pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> FileHelper {
         FileHelper {
-            client: client
+            client: client,
         }
     }
 
@@ -40,7 +40,7 @@ impl FileHelper {
             None => {
                 let file = ::file::File::new(::metadata::Metadata::new(name, user_metatdata), ::self_encryption::datamap::DataMap::None);
                 Ok(::io::Writer::new(directory.clone(), file, self.client.clone(), ::io::writer::Mode::Overwrite))
-            }
+            },
         }
     }
 
@@ -53,7 +53,7 @@ impl FileHelper {
                   mode: ::io::writer::Mode) -> Result<::io::Writer, String> {
         match self.file_exists(directory, file.get_name()) {
             Some(_) => Ok(::io::Writer::new(directory.clone(), file.clone(), self.client.clone(), mode)),
-            None => Err("File not present in the directory".to_string())
+            None => Err("File not present in the directory".to_string()),
         }
     }
 
@@ -72,7 +72,7 @@ impl FileHelper {
                     Err(_) => Err("Failed to update".to_string())
                 }
             },
-            None => Err("File not present in the directory".to_string())
+            None => Err("File not present in the directory".to_string()),
         }
     }
 
@@ -103,7 +103,7 @@ impl FileHelper {
                     }
                 }
             },
-            Err(_) => { () }
+            Err(_) => { () },
         }
 
         Ok(versions)
@@ -121,7 +121,7 @@ impl FileHelper {
             });
         match result {
             Some(_) => Some(file_name.clone()),
-            None => None
+            None => None,
         }
     }
 

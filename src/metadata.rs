@@ -24,7 +24,7 @@ pub struct Metadata {
     size: u64,
     created_time:  ::time::Tm,
     modified_time: ::time::Tm,
-    user_metadata: Vec<u8>
+    user_metadata: Vec<u8>,
 }
 
 impl Metadata {
@@ -35,7 +35,7 @@ impl Metadata {
             size: 0,
             created_time:  ::time::now_utc(),
             modified_time: ::time::now_utc(),
-            user_metadata: user_metadata
+            user_metadata: user_metadata,
         }
     }
 
@@ -111,7 +111,7 @@ impl Decodable for Metadata {
                 name: name,
                 user_metadata: meta,
                 size: size,
-                created_time:  ::time::at_utc(::time::Timespec {
+                created_time: ::time::at_utc(::time::Timespec {
                         sec: created_sec,
                         nsec: created_nsec
                     }),

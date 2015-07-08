@@ -20,14 +20,14 @@
 /// Container can have its own metadata, sub-containers and files
 pub struct Container {
     client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-    directory_listing: ::directory_listing::DirectoryListing
+    directory_listing: ::directory_listing::DirectoryListing,
 }
 
 impl Container {
     /// Authorises the directory access and returns the Container, if authorisation is successful.
     /// Operations can be performed only after the authorisation is successful.
     pub fn authorise(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-                    dir_id: Option<[u8;64]>) -> Result<Container, String> {
+                    dir_id: Option<[u8; 64]>) -> Result<Container, String> {
         let mut directory_helper = ::helper::DirectoryHelper::new(client.clone());
         let fake_id = ::routing::NameType([0u8; 64]);
         let mut directory_id: ::routing::NameType = fake_id.clone();
@@ -51,7 +51,7 @@ impl Container {
                  } else {
                      directory_id = client.lock().unwrap().get_root_directory_id().unwrap().clone();
                  }
-            }
+            },
         };
 
         if directory_id == fake_id {
@@ -63,7 +63,7 @@ impl Container {
                    client: client,
                    directory_listing: listing
                }),
-               Err(msg) => Err(msg)
+               Err(msg) => Err(msg),
            }
         }
     }
@@ -111,7 +111,7 @@ impl Container {
     }
 
     /// Return the unique id of the container
-    pub fn get_id(&self) -> [u8;64] {
+    pub fn get_id(&self) -> [u8; 64] {
         self.directory_listing.get_id().0
     }
 
@@ -121,7 +121,7 @@ impl Container {
         let metadata = self.directory_listing.get_metadata().get_user_metadata();
         match metadata {
             Some(data) => Some(String::from_utf8(data.clone()).unwrap()),
-            None => None
+            None => None,
         }
     }
 
@@ -136,7 +136,7 @@ impl Container {
     }
 
     /// Returns a Blob from the container
-    pub fn get_blob(&self, name: String, version: Option<[u8;64]>) -> Result<::rest::Blob, String> {
+    pub fn get_blob(&self, name: String, version: Option<[u8; 64]>) -> Result<::rest::Blob, String> {
         match version {
             Some(version_id) => {
                 let dir_id = self.directory_listing.get_id();
@@ -179,13 +179,13 @@ impl Container {
     // }
 
     /// Retrieves Versions for the container
-    pub fn get_versions(&mut self) -> Result<Vec<[u8;64]>, String> {
+    pub fn get_versions(&mut self) -> Result<Vec<[u8; 64]>, String> {
         let id = self.directory_listing.get_id().0;
         self.list_container_versions(&::routing::NameType(id))
     }
 
     /// Retrieves Versions for the container being referred by the container_id
-    pub fn get_container_versions(&mut self, container_id: [u8;64]) -> Result<Vec<[u8;64]>, String> {
+    pub fn get_container_versions(&mut self, container_id: [u8; 64]) -> Result<Vec<[u8; 64]>, String> {
         self.list_container_versions(&::routing::NameType(container_id))
     }
 
@@ -208,7 +208,7 @@ impl Container {
                     Err(msg) => Err(msg)
                 }
             },
-            None => Err("Container not found".to_string())
+            None => Err("Container not found".to_string()),
         }
     }
 
@@ -225,7 +225,7 @@ impl Container {
             },
             None => {
                 Err("Container not found".to_string())
-            }
+            },
         }
     }
 
@@ -270,7 +270,7 @@ impl Container {
                 let size = reader.size();
                 reader.read(0, size)
             },
-            Err(msg) => Err(msg)
+            Err(msg) => Err(msg),
         }
     }
 
@@ -281,7 +281,7 @@ impl Container {
     }
 
     /// Returns the list of versions_id for the blob
-    pub fn get_blob_versions(&mut self, name: String) -> Result<Vec<[u8;64]>, String>{
+    pub fn get_blob_versions(&mut self, name: String) -> Result<Vec<[u8; 64]>, String>{
         match self.find_file(&name, &self.directory_listing) {
             Some(blob) => {
                 let mut file_helper = ::helper::FileHelper::new(self.client.clone());
@@ -289,10 +289,10 @@ impl Container {
                     Ok(versions) => {
                         Ok(versions.iter().map(|x| x.0).collect())
                     },
-                    Err(msg) => Err(msg)
+                    Err(msg) => Err(msg),
                 }
             },
-            None => Err("Blob not found".to_string())
+            None => Err("Blob not found".to_string()),
         }
     }
 
@@ -305,7 +305,7 @@ impl Container {
                         let mut file_helper = ::helper::FileHelper::new(self.client.clone());
                         file_helper.update_metadata(blob.convert_to_mut_file(), &mut self.directory_listing, &user_metadata)
                     },
-                    None => Err("Blob not found".to_string())
+                    None => Err("Blob not found".to_string()),
                 }
             },
             Err(msg) => Err(msg),
@@ -323,12 +323,12 @@ impl Container {
                     Err(msg) => Err(msg),
                 }
             },
-            None => Err("Blob not found".to_string())
+            None => Err("Blob not found".to_string()),
         }
     }
 
     /// Copies the latest blob version from the container to the specified destination container
-    pub fn copy_blob(&mut self, blob_name: String, to_container: [u8;64]) -> Result<(), String> {
+    pub fn copy_blob(&mut self, blob_name: String, to_container: [u8; 64]) -> Result<(), String> {
         let to_dir_id = ::routing::NameType(to_container);
         if *self.directory_listing.get_id() == to_dir_id {
             return Err("Destination and Source containers are the same".to_string());
@@ -361,7 +361,7 @@ impl Container {
         let mut helper = ::helper::FileHelper::new(self.client.clone());
         match helper.update(blob.convert_to_file(), &self.directory_listing, mode) {
             Ok(writter) => Ok(writter),
-            Err(_) => Err("Blob not found".to_string())
+            Err(_) => Err("Blob not found".to_string()),
         }
     }
 
@@ -370,7 +370,7 @@ impl Container {
             Some(_) => {
                 Ok(::io::Reader::new(blob.convert_to_file().clone(), self.client.clone()))
             },
-            None => Err("Blob not found".to_string())
+            None => Err("Blob not found".to_string()),
         }
     }
 
@@ -390,17 +390,17 @@ impl Container {
     fn find_file(&self, name: &String, directory_listing: &::directory_listing::DirectoryListing) -> Option<::rest::Blob> {
         match directory_listing.get_files().iter().find(|file| file.get_name() == name) {
             Some(file) => Some(::rest::Blob::convert_from_file(file.clone())),
-            None => None
+            None => None,
         }
     }
 
-    fn list_container_versions(&mut self, container_id: &::routing::NameType) -> Result<Vec<[u8;64]>, String> {
+    fn list_container_versions(&mut self, container_id: &::routing::NameType) -> Result<Vec<[u8; 64]>, String> {
         let mut directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
         match directory_helper.get_versions(container_id) {
             Ok(versions) => {
                 Ok(versions.iter().map(|v| v.0).collect())
             },
-            Err(msg) => Err(msg)
+            Err(msg) => Err(msg),
         }
     }
 }

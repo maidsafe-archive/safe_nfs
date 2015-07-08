@@ -20,14 +20,14 @@ use ::routing::sendable::Sendable;
 
 /// DirectoryHelper provides helper functions to perform Operations on Directory
 pub struct DirectoryHelper {
-    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>
+    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
 }
 
 impl DirectoryHelper {
     /// Create a new DirectoryHelper instance
     pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> DirectoryHelper {
         DirectoryHelper {
-            client: client
+            client: client,
         }
     }
 
@@ -41,7 +41,7 @@ impl DirectoryHelper {
                                                                                           Vec::new());
         match self.save_directory(&mut sdv, &directory) {
             Ok(_) => Ok(directory.get_id().clone()),
-            Err(err) => Err(err)
+            Err(err) => Err(err),
         }
     }
 
@@ -56,7 +56,7 @@ impl DirectoryHelper {
                 };
                 self.save_directory(&mut sdv, directory)
             },
-            Err(_) => Err("Network IO Error".to_string())
+            Err(_) => Err("Network IO Error".to_string()),
         }
     }
 
@@ -141,18 +141,18 @@ impl DirectoryHelper {
                         sdv.set_value(versions);
                         match self.network_put(sdv.clone()){
                             Ok(_) => Ok(()),
-                            Err(_) => Err("Failed to update directory version".to_string())
+                            Err(_) => Err("Failed to update directory version".to_string()),
                         }
                     },
-                    Err(_) => Err("IO Error".to_string())
+                    Err(_) => Err("IO Error".to_string()),
                 }
             },
-            Err(_) => Err("Encryption failed".to_string())
+            Err(_) => Err("Encryption failed".to_string()),
         }
     }
 
     fn get_directory_version(&self, directory_id: &::routing::NameType,
-                            version: &::routing::NameType) -> Result<::directory_listing::DirectoryListing, String> {
+                             version: &::routing::NameType) -> Result<::directory_listing::DirectoryListing, String> {
         let immutable_data_type_id = ::maidsafe_types::data::ImmutableDataTypeTag;
         match self.network_get(immutable_data_type_id.type_tag(), &version) {
             Ok(serialised_data) => {
@@ -166,10 +166,10 @@ impl DirectoryHelper {
                     Some(decrypted_data) => {
                         Ok(self.deserialise_directory(decrypted_data))
                     },
-                    None => return Err("Failed to decrypt".to_string())
+                    None => return Err("Failed to decrypt".to_string()),
                 }
             },
-            Err(_) => Err("Network IO Error".to_string())
+            Err(_) => Err("Network IO Error".to_string()),
         }
     }
 

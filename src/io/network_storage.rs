@@ -21,14 +21,14 @@ use ::maidsafe_types::TypeTag;
 /// Network storage is the concrete type which self-encryption crate will use to put or get data
 /// from the network
 pub struct NetworkStorage {
-    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>
+    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
 }
 
 impl NetworkStorage {
     /// Create a new NetworkStorage instance
     pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> NetworkStorage {
         NetworkStorage {
-            client: client
+            client: client,
         }
     }
 }
