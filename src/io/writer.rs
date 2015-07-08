@@ -15,10 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::sync;
-use super::network_storage::NetworkStorage;
-use self_encryption;
-use maidsafe_client;
 /// Mode of the writter
 pub enum Mode {
     /// Will create a new data
@@ -32,23 +28,23 @@ pub enum Mode {
 pub struct Writer {
     file: ::file::File,
     directory: ::directory_listing::DirectoryListing,
-    self_encryptor: self_encryption::SelfEncryptor<NetworkStorage>,
-    client: ::std::sync::Arc<::std::sync::Mutex<maidsafe_client::client::Client>>
+    self_encryptor: ::self_encryption::SelfEncryptor<::io::network_storage::NetworkStorage>,
+    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>
 }
 
 impl Writer {
     /// Create new instance of Writer
     pub fn new(directory: ::directory_listing::DirectoryListing, file: ::file::File,
-        client: ::std::sync::Arc<::std::sync::Mutex<maidsafe_client::client::Client>>, mode: Mode) -> Writer {
-        let storage = sync::Arc::new(NetworkStorage::new(client.clone()));
+        client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>, mode: Mode) -> Writer {
+        let storage = ::std::sync::Arc::new(::io::network_storage::NetworkStorage::new(client.clone()));
         let datamap = match mode {
-                Mode::Overwrite => self_encryption::datamap::DataMap::None,
+                Mode::Overwrite => ::self_encryption::datamap::DataMap::None,
                 Mode::Modify => file.get_datamap().clone()
         };
         Writer {
             file: file.clone(),
             directory: directory,
-            self_encryptor: self_encryption::SelfEncryptor::new(storage.clone(), datamap),
+            self_encryptor: ::self_encryption::SelfEncryptor::new(storage.clone(), datamap),
             client: client
         }
     }

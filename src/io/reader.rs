@@ -15,28 +15,23 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::sync;
-use super::network_storage::NetworkStorage;
-use self_encryption;
-use maidsafe_client;
-
 #[allow(dead_code)]
 /// Reader is used to read contents of a File. It can read in chunks if the file happens to be very
 /// large
 pub struct Reader {
     file: ::file::File,
-    self_encryptor: self_encryption::SelfEncryptor<NetworkStorage>,
-    client: ::std::sync::Arc<::std::sync::Mutex<maidsafe_client::client::Client>>
+    self_encryptor: ::self_encryption::SelfEncryptor<::io::network_storage::NetworkStorage>,
+    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>
 }
 
 impl Reader {
     /// Create a new instance of Reader
     pub fn new(file: ::file::File,
-               client: ::std::sync::Arc<::std::sync::Mutex<maidsafe_client::client::Client>>) -> Reader {
-        let storage = sync::Arc::new(NetworkStorage::new(client.clone()));
+               client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> Reader {
+        let storage = ::std::sync::Arc::new(::io::network_storage::NetworkStorage::new(client.clone()));
         Reader {
             file: file.clone(),
-            self_encryptor: self_encryption::SelfEncryptor::new(storage.clone(), file.get_datamap().clone()),
+            self_encryptor: ::self_encryption::SelfEncryptor::new(storage.clone(), file.get_datamap().clone()),
             client: client
         }
     }

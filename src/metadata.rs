@@ -15,18 +15,15 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use time;
-use cbor::CborTagEncode;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
-use std::fmt;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
 /// Metadata about a File or a Directory
 pub struct Metadata {
     name: String,
     size: u64,
-    created_time:  time::Tm,
-    modified_time: time::Tm,
+    created_time:  ::time::Tm,
+    modified_time: ::time::Tm,
     user_metadata: Vec<u8>
 }
 
@@ -36,8 +33,8 @@ impl Metadata {
         Metadata {
             name: name,
             size: 0,
-            created_time:  time::now_utc(),
-            modified_time: time::now_utc(),
+            created_time:  ::time::now_utc(),
+            modified_time: ::time::now_utc(),
             user_metadata: user_metadata
         }
     }
@@ -70,17 +67,17 @@ impl Metadata {
     }
 
     /// Get time of creation
-    pub fn get_created_time(&self) -> time::Tm {
+    pub fn get_created_time(&self) -> ::time::Tm {
         self.created_time
     }
 
     /// Get time of modification
-    pub fn get_modified_time(&self) -> time::Tm {
+    pub fn get_modified_time(&self) -> ::time::Tm {
         self.modified_time
     }
 
     /// Set time of modification
-    pub fn set_modified_time(&mut self, modified_time: time::Tm) {
+    pub fn set_modified_time(&mut self, modified_time: ::time::Tm) {
         self.modified_time = modified_time
     }
 
@@ -99,7 +96,7 @@ impl Encodable for Metadata {
     fn encode<E: Encoder>(&self, e: &mut E)->Result<(), E::Error> {
         let created_time = self.created_time.to_timespec();
         let modified_time = self.modified_time.to_timespec();
-        CborTagEncode::new(5483_000, &(self.name.clone(), self.size as usize, self.user_metadata.clone(),
+        ::cbor::CborTagEncode::new(5483_000, &(self.name.clone(), self.size as usize, self.user_metadata.clone(),
         created_time.sec, created_time.nsec, modified_time.sec, modified_time.nsec)).encode(e)
     }
 }
@@ -114,11 +111,11 @@ impl Decodable for Metadata {
                 name: name,
                 user_metadata: meta,
                 size: size,
-                created_time:  time::at_utc(time::Timespec {
+                created_time:  ::time::at_utc(::time::Timespec {
                         sec: created_sec,
                         nsec: created_nsec
                     }),
-                modified_time: time::at_utc(time::Timespec {
+                modified_time: ::time::at_utc(::time::Timespec {
                         sec: modified_sec,
                         nsec: modified_nsec
                     })
@@ -126,14 +123,14 @@ impl Decodable for Metadata {
     }
 }
 
-impl fmt::Debug for Metadata {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl ::std::fmt::Debug for Metadata {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "name: {}, size: {}, user_metadata: {:?}", self.name, self.size, self.user_metadata)
     }
 }
 
-impl fmt::Display for Metadata {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl ::std::fmt::Display for Metadata {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "name: {}, size: {}, user_metadata: {:?}", self.name, self.size, self.user_metadata)
     }
 }

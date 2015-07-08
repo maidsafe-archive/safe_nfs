@@ -15,42 +15,38 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use metadata::Metadata;
-use routing;
-use std::fmt;
-
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
 /// Contains Information pertaining to a Directory
 pub struct DirectoryInfo {
-    id: routing::NameType,
-    // parent_dir_id: routing::NameType,
-    metadata: Metadata,
+    id: ::routing::NameType,
+    // parent_dir_id: ::routing::NameType,
+    metadata: ::metadata::Metadata,
 }
 
 impl DirectoryInfo {
     /// Create a new DirectoryInfo
-    pub fn new(metadata: Metadata) -> DirectoryInfo {
+    pub fn new(metadata: ::metadata::Metadata) -> DirectoryInfo {
         DirectoryInfo {
-            id: routing::test_utils::Random::generate_random(),
+            id: ::routing::test_utils::Random::generate_random(),
             // parent_dir_id: parent_dir_id,
             metadata: metadata,
         }
     }
 
     /// Get the unique ID representing this directory in the network
-    pub fn get_id(&self) -> &routing::NameType {
+    pub fn get_id(&self) -> &::routing::NameType {
         &self.id
     }
 
     #[allow(dead_code)]
     /// Get the metadata of this directory. Since return value is mutable it can also be used to
     /// update the metadata
-    pub fn get_mut_metadata(&mut self) -> &mut Metadata {
+    pub fn get_mut_metadata(&mut self) -> &mut ::metadata::Metadata {
         &mut self.metadata
     }
 
     /// Get the metadata of this directory
-    pub fn get_metadata(&self) -> &Metadata {
+    pub fn get_metadata(&self) -> &::metadata::Metadata {
         &self.metadata
     }
 
@@ -59,19 +55,19 @@ impl DirectoryInfo {
         self.metadata.get_name()
     }
 
-    // pub fn get_parent_dir_id(&self) -> &routing::NameType {
+    // pub fn get_parent_dir_id(&self) -> &::routing::NameType {
     //     &self.parent_dir_id
     // }
 }
 
-impl fmt::Debug for DirectoryInfo {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl ::std::fmt::Debug for DirectoryInfo {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "metadata: {}, id: {}", *self.get_metadata(), *self.get_id())
     }
 }
 
-impl fmt::Display for DirectoryInfo {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl ::std::fmt::Display for DirectoryInfo {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "metadata: {}, id: {}", *self.get_metadata(), *self.get_id())
     }
 }
@@ -79,12 +75,11 @@ impl fmt::Display for DirectoryInfo {
 #[cfg(test)]
 mod test {
     use super::*;
-    use ::metadata::Metadata;
     use cbor;
 
     #[test]
     fn serialise() {
-        let obj_before = DirectoryInfo::new(Metadata::new("hello.txt".to_string(), "{mime:\"application/json\"}".to_string().into_bytes()));
+        let obj_before = DirectoryInfo::new(::metadata::Metadata::new("hello.txt".to_string(), "{mime:\"application/json\"}".to_string().into_bytes()));
 
         let mut e = cbor::Encoder::from_memory();
         e.encode(&[&obj_before]).unwrap();

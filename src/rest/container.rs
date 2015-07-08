@@ -15,21 +15,18 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use routing;
-use time;
-use maidsafe_client;
 
 /// Container Repersents a Directory.
 /// Container can have its own metadata, sub-containers and files
 pub struct Container {
-    client: ::std::sync::Arc<::std::sync::Mutex<maidsafe_client::client::Client>>,
+    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
     directory_listing: ::directory_listing::DirectoryListing
 }
 
 impl Container {
     /// Authorises the directory access and returns the Container, if authorisation is successful.
     /// Operations can be performed only after the authorisation is successful.
-    pub fn authorise(client: ::std::sync::Arc<::std::sync::Mutex<maidsafe_client::client::Client>>, dir_id: Option<[u8;64]>) -> Result<Container, String> {
+    pub fn authorise(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>, dir_id: Option<[u8;64]>) -> Result<Container, String> {
         let mut directory_helper = ::helper::DirectoryHelper::new(client.clone());
         let fake_id = ::routing::NameType([0u8; 64]);
         let mut directory_id: ::routing::NameType = fake_id.clone();
@@ -108,7 +105,7 @@ impl Container {
     }
 
     /// Returns the Created time of the container
-    pub fn get_created_time(&self) -> time::Tm {
+    pub fn get_created_time(&self) -> ::time::Tm {
         self.directory_listing.get_metadata().get_created_time()
     }
 
@@ -143,7 +140,7 @@ impl Container {
             Some(version_id) => {
                 let dir_id = self.directory_listing.get_id();
                 let mut directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
-                match directory_helper.get_by_version(dir_id, &routing::NameType(version_id)) {
+                match directory_helper.get_by_version(dir_id, &::routing::NameType(version_id)) {
                     Ok(listing) => match self.find_file(&name, &listing){
                         Some(blob) => Ok(blob),
                         None => Err("Blob not found for the version specified".to_string())

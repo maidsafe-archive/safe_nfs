@@ -15,21 +15,17 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use maidsafe_types;
-use routing;
-use routing::sendable::Sendable;
-use maidsafe_client;
-use maidsafe_types::TypeTag;
-use self_encryption;
+use ::maidsafe_types::TypeTag;
+use ::routing::sendable::Sendable;
 
 /// DirectoryHelper provides helper functions to perform Operations on Directory
 pub struct DirectoryHelper {
-    client: ::std::sync::Arc<::std::sync::Mutex<maidsafe_client::client::Client>>
+    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>
 }
 
 impl DirectoryHelper {
     /// Create a new DirectoryHelper instance
-    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<maidsafe_client::client::Client>>) -> DirectoryHelper {
+    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> DirectoryHelper {
         DirectoryHelper {
             client: client
         }
@@ -40,7 +36,7 @@ impl DirectoryHelper {
                   directory_name: String,
                   user_metadata: Vec<u8>) -> Result<::routing::NameType, String> {
         let directory = ::directory_listing::DirectoryListing::new(directory_name, user_metadata);
-        let mut sdv: maidsafe_types::StructuredData = maidsafe_types::StructuredData::new(directory.get_id().clone(),
+        let mut sdv: ::maidsafe_types::StructuredData = ::maidsafe_types::StructuredData::new(directory.get_id().clone(),
                                                                                           self.client.lock().unwrap().get_owner(),
                                                                                           Vec::new());
         match self.save_directory(&mut sdv, &directory) {
@@ -51,11 +47,11 @@ impl DirectoryHelper {
 
     /// Updates an existing DirectoryListing in the network.
     pub fn update(&mut self, directory: &::directory_listing::DirectoryListing) -> Result<(), String> {
-        let structured_data_type_id = maidsafe_types::data::StructuredDataTypeTag;
+        let structured_data_type_id = ::maidsafe_types::data::StructuredDataTypeTag;
         match self.network_get(structured_data_type_id.type_tag(), directory.get_id()) {
             Ok(serialised_sdv) => {
-                let mut sdv: maidsafe_types::StructuredData = match ::utils::deserialise_parser(serialised_sdv) {
-                    maidsafe_client::data_parser::Parser::StructuredData(obj) => obj,
+                let mut sdv: ::maidsafe_types::StructuredData = match ::utils::deserialise_parser(serialised_sdv) {
+                    ::maidsafe_client::data_parser::Parser::StructuredData(obj) => obj,
                     _ => return Err("Unexpected type".to_string())
                 };
                 self.save_directory(&mut sdv, directory)
@@ -65,12 +61,12 @@ impl DirectoryHelper {
     }
 
     /// Return the versions of the directory
-    pub fn get_versions(&mut self, directory_id: &routing::NameType) -> Result<Vec<routing::NameType>, String> {
-        let structured_data_type_id = maidsafe_types::data::StructuredDataTypeTag;
+    pub fn get_versions(&mut self, directory_id: &::routing::NameType) -> Result<Vec<::routing::NameType>, String> {
+        let structured_data_type_id = ::maidsafe_types::data::StructuredDataTypeTag;
         match self.network_get(structured_data_type_id.type_tag(), directory_id) {
             Ok(serialised_sdv) => {
-                let sdv: maidsafe_types::StructuredData = match ::utils::deserialise_parser(serialised_sdv) {
-                    maidsafe_client::data_parser::Parser::StructuredData(obj) => obj,
+                let sdv: ::maidsafe_types::StructuredData = match ::utils::deserialise_parser(serialised_sdv) {
+                    ::maidsafe_client::data_parser::Parser::StructuredData(obj) => obj,
                     _ => return Err("Unexpected type".to_string())
                 };
                 Ok(sdv.value())
@@ -81,13 +77,13 @@ impl DirectoryHelper {
 
     /// Return the DirectoryListing for the specified version
     pub fn get_by_version(&mut self,
-                          directory_id: &routing::NameType,
-                          version: &routing::NameType) -> Result<::directory_listing::DirectoryListing, String> {
-        let structured_data_type_id = maidsafe_types::data::StructuredDataTypeTag;
+                          directory_id: &::routing::NameType,
+                          version: &::routing::NameType) -> Result<::directory_listing::DirectoryListing, String> {
+        let structured_data_type_id = ::maidsafe_types::data::StructuredDataTypeTag;
         match self.network_get(structured_data_type_id.type_tag(), directory_id) {
             Ok(serialised_sdv) => {
-                let sdv: maidsafe_types::StructuredData = match ::utils::deserialise_parser(serialised_sdv) {
-                    maidsafe_client::data_parser::Parser::StructuredData(obj) => obj,
+                let sdv: ::maidsafe_types::StructuredData = match ::utils::deserialise_parser(serialised_sdv) {
+                    ::maidsafe_client::data_parser::Parser::StructuredData(obj) => obj,
                     _ => return Err("Unexpected type".to_string())
                 };
                 match sdv.value().iter().find(|v| *v == version) {
@@ -102,12 +98,12 @@ impl DirectoryHelper {
     }
 
     /// Return the DirectoryListing for the latest version
-    pub fn get(&mut self, directory_id: &routing::NameType) -> Result<::directory_listing::DirectoryListing, String> {
-        let structured_data_type_id = maidsafe_types::data::StructuredDataTypeTag;
+    pub fn get(&mut self, directory_id: &::routing::NameType) -> Result<::directory_listing::DirectoryListing, String> {
+        let structured_data_type_id = ::maidsafe_types::data::StructuredDataTypeTag;
         match self.network_get(structured_data_type_id.type_tag(), directory_id) {
             Ok(serialised_sdv) => {
-                let sdv: maidsafe_types::StructuredData = match ::utils::deserialise_parser(serialised_sdv) {
-                    maidsafe_client::data_parser::Parser::StructuredData(obj) => obj,
+                let sdv: ::maidsafe_types::StructuredData = match ::utils::deserialise_parser(serialised_sdv) {
+                    ::maidsafe_client::data_parser::Parser::StructuredData(obj) => obj,
                     _ => return Err("Unexpected type".to_string())
                 };
                 match sdv.value().last() {
@@ -122,9 +118,9 @@ impl DirectoryHelper {
     }
 
     fn save_directory(&self,
-        sdv: &mut maidsafe_types::StructuredData,
+        sdv: &mut ::maidsafe_types::StructuredData,
         directory: &::directory_listing::DirectoryListing) -> Result<(), String> {
-        let mut se = self_encryption::SelfEncryptor::new(::std::sync::Arc::new(::io::NetworkStorage::new(self.client.clone())), self_encryption::datamap::DataMap::None);
+        let mut se = ::self_encryption::SelfEncryptor::new(::std::sync::Arc::new(::io::NetworkStorage::new(self.client.clone())), ::self_encryption::datamap::DataMap::None);
         se.write(&::utils::serialise(directory.clone())[..], 0);
         let datamap = se.close();
 
@@ -136,7 +132,7 @@ impl DirectoryHelper {
 
         match encrypt_result {
             Ok(encrypted_data) => {
-                let immutable_data = maidsafe_types::ImmutableData::new(encrypted_data);
+                let immutable_data = ::maidsafe_types::ImmutableData::new(encrypted_data);
                 let name = immutable_data.name();
                 match self.network_put(immutable_data) {
                     Ok(_) => {
@@ -157,11 +153,11 @@ impl DirectoryHelper {
 
     fn get_directory_version(&self, directory_id: &::routing::NameType,
         version: &::routing::NameType) -> Result<::directory_listing::DirectoryListing, String> {
-        let immutable_data_type_id = maidsafe_types::data::ImmutableDataTypeTag;
+        let immutable_data_type_id = ::maidsafe_types::data::ImmutableDataTypeTag;
         match self.network_get(immutable_data_type_id.type_tag(), &version) {
             Ok(serialised_data) => {
-                let imm: maidsafe_types::ImmutableData = match ::utils::deserialise_parser(serialised_data) {
-                    maidsafe_client::data_parser::Parser::ImmutableData(obj) => obj,
+                let imm: ::maidsafe_types::ImmutableData = match ::utils::deserialise_parser(serialised_data) {
+                    ::maidsafe_client::data_parser::Parser::ImmutableData(obj) => obj,
                     _ => return Err("Unexpected type".to_string())
                 };
                 let client_mutex = self.client.clone();
@@ -179,12 +175,12 @@ impl DirectoryHelper {
 
     fn deserialise_directory(&self, decrypted_data: Vec<u8>) -> ::directory_listing::DirectoryListing {
         let datamap = ::utils::deserialise(decrypted_data);
-        let mut se = self_encryption::SelfEncryptor::new(::std::sync::Arc::new(::io::NetworkStorage::new(self.client.clone())), datamap);
+        let mut se = ::self_encryption::SelfEncryptor::new(::std::sync::Arc::new(::io::NetworkStorage::new(self.client.clone())), datamap);
         let size = se.len();
         ::utils::deserialise(se.read(0, size))
     }
 
-    fn network_get(&self, tag_id: u64, name: &routing::NameType) -> Result<Vec<u8>, String> {
+    fn network_get(&self, tag_id: u64, name: &::routing::NameType) -> Result<Vec<u8>, String> {
         let get_result = self.client.lock().unwrap().get(tag_id, name.clone());
         if get_result.is_err() {
             return Err("Network IO Error".to_string());
@@ -208,7 +204,7 @@ impl DirectoryHelper {
         }
     }
 
-    fn get_nonce(&self, id: &routing::NameType) -> Option<::sodiumoxide::crypto::box_::Nonce> {
+    fn get_nonce(&self, id: &::routing::NameType) -> Option<::sodiumoxide::crypto::box_::Nonce> {
         let mut nonce = [0u8;24];
         for i in 0..24 {
             nonce[i] = id.0[i * 2]

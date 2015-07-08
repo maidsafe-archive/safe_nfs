@@ -15,19 +15,14 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use time;
-use routing;
-use maidsafe_client;
-use self_encryption;
-
 /// File provides helper functions to perform Operations on Files
 pub struct FileHelper {
-    client: ::std::sync::Arc<::std::sync::Mutex<maidsafe_client::client::Client>>
+    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>
 }
 
 impl FileHelper {
     /// Create a new FileHelper instance
-    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<maidsafe_client::client::Client>>) -> FileHelper {
+    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> FileHelper {
         FileHelper {
             client: client
         }
@@ -43,7 +38,7 @@ impl FileHelper {
         match self.file_exists(directory, &name) {
             Some(_) => Err("File already exists".to_string()),
             None => {
-                let file = ::file::File::new(::metadata::Metadata::new(name, user_metatdata), self_encryption::datamap::DataMap::None);
+                let file = ::file::File::new(::metadata::Metadata::new(name, user_metatdata), ::self_encryption::datamap::DataMap::None);
                 Ok(::io::Writer::new(directory.clone(), file, self.client.clone(), ::io::writer::Mode::Overwrite))
             }
         }
@@ -83,14 +78,14 @@ impl FileHelper {
 
     /// Return the versions of a directory containing modified versions of a file
     pub fn get_versions(&mut self,
-                        directory_id: &routing::NameType,
-                        file: &::file::File) -> Result<Vec<routing::NameType>, String> {
-        let mut versions = Vec::<routing::NameType>::new();
+                        directory_id: &::routing::NameType,
+                        file: &::file::File) -> Result<Vec<::routing::NameType>, String> {
+        let mut versions = Vec::<::routing::NameType>::new();
         let mut directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
 
         match directory_helper.get_versions(directory_id) {
             Ok(sdv_versions) => {
-                let mut modified_time = time::empty_tm();
+                let mut modified_time = ::time::empty_tm();
                 for version_id in sdv_versions {
                     match directory_helper.get_by_version(directory_id, &version_id) {
                         Ok(directory_listing) => {

@@ -15,8 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use time;
-
 #[allow(dead_code)]
 /// Blob represents a File - Music, Video, Text etc
 pub struct Blob {
@@ -43,12 +41,12 @@ impl Blob {
     }
 
     /// Get the creation time for Blob
-    pub fn get_created_time(&self) -> time::Tm {
+    pub fn get_created_time(&self) -> ::time::Tm {
         self.file.get_metadata().get_created_time()
     }
 
     /// Get the last modified time for the Blob
-    pub fn get_modified_time(&self) -> time::Tm {
+    pub fn get_modified_time(&self) -> ::time::Tm {
         self.file.get_metadata().get_modified_time()
     }
 

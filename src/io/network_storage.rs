@@ -15,29 +15,25 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use self_encryption;
-use maidsafe_types;
-use maidsafe_client;
-use routing;
-use routing::sendable::Sendable;
-use maidsafe_types::TypeTag;
+use ::routing::sendable::Sendable;
+use ::maidsafe_types::TypeTag;
 
 /// Network storage is the concrete type which self-encryption crate will use to put or get data
 /// from the network
 pub struct NetworkStorage {
-    client: ::std::sync::Arc<::std::sync::Mutex<maidsafe_client::client::Client>>
+    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>
 }
 
 impl NetworkStorage {
     /// Create a new NetworkStorage instance
-    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<maidsafe_client::client::Client>>) -> NetworkStorage {
+    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> NetworkStorage {
         NetworkStorage {
             client: client
         }
     }
 }
 
-impl self_encryption::Storage for NetworkStorage {
+impl ::self_encryption::Storage for NetworkStorage {
     fn get(&self, name: Vec<u8>) -> Vec<u8> {
         let mut name_id = [0u8;64];
         assert_eq!(name.len(), 64);
@@ -46,8 +42,8 @@ impl self_encryption::Storage for NetworkStorage {
         }
         let client_mutex = self.client.clone();
         let mut client = client_mutex.lock().unwrap();
-        let immutable_data_type_id = maidsafe_types::data::ImmutableDataTypeTag;
-        let get_result = client.get(immutable_data_type_id.type_tag(), routing::NameType(name_id));
+        let immutable_data_type_id = ::maidsafe_types::data::ImmutableDataTypeTag;
+        let get_result = client.get(immutable_data_type_id.type_tag(), ::routing::NameType(name_id));
         if get_result.is_err() {
             return Vec::new();
         }
@@ -55,7 +51,7 @@ impl self_encryption::Storage for NetworkStorage {
         match get_result.ok().unwrap().get() {
             Ok(data) => {
                 match ::utils::deserialise_parser(data) {
-                    maidsafe_client::data_parser::Parser::ImmutableData(obj) => obj.value().clone(),
+                    ::maidsafe_client::data_parser::Parser::ImmutableData(obj) => obj.value().clone(),
                     _ => Vec::new()
                 }
             },
@@ -64,7 +60,7 @@ impl self_encryption::Storage for NetworkStorage {
     }
 
     fn put(&self, _: Vec<u8>, data: Vec<u8>) {
-        let sendable = maidsafe_types::ImmutableData::new(data);
+        let sendable = ::maidsafe_types::ImmutableData::new(data);
         let client_mutex = self.client.clone();
         let mut client = client_mutex.lock().unwrap();
         let put_result = client.put(sendable);

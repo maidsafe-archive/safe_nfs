@@ -15,8 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use time;
-
 /// Wrapper over DirectoryInfo to present Rest-friendly name to the Restful interface users
 pub struct ContainerInfo {
     info: ::directory_info::DirectoryInfo,
@@ -43,7 +41,7 @@ impl ContainerInfo {
     // }
 
     /// Get the creation time for this Container
-    pub fn get_created_time(&self) -> time::Tm {
+    pub fn get_created_time(&self) -> ::time::Tm {
         self.info.get_metadata().get_created_time()
     }
 
