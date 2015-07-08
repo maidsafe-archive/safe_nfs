@@ -50,7 +50,7 @@ impl DirectoryHelper {
         let structured_data_type_id = ::maidsafe_types::data::StructuredDataTypeTag;
         match self.network_get(structured_data_type_id.type_tag(), directory.get_id()) {
             Ok(serialised_sdv) => {
-                let mut sdv: ::maidsafe_types::StructuredData = match ::utils::deserialise_parser(serialised_sdv) {
+                let mut sdv: ::maidsafe_types::StructuredData = match ::maidsafe_client::utility::deserialise_parser(serialised_sdv) {
                     ::maidsafe_client::data_parser::Parser::StructuredData(obj) => obj,
                     _ => return Err("Unexpected type".to_string())
                 };
@@ -65,7 +65,7 @@ impl DirectoryHelper {
         let structured_data_type_id = ::maidsafe_types::data::StructuredDataTypeTag;
         match self.network_get(structured_data_type_id.type_tag(), directory_id) {
             Ok(serialised_sdv) => {
-                let sdv: ::maidsafe_types::StructuredData = match ::utils::deserialise_parser(serialised_sdv) {
+                let sdv: ::maidsafe_types::StructuredData = match ::maidsafe_client::utility::deserialise_parser(serialised_sdv) {
                     ::maidsafe_client::data_parser::Parser::StructuredData(obj) => obj,
                     _ => return Err("Unexpected type".to_string())
                 };
@@ -82,7 +82,7 @@ impl DirectoryHelper {
         let structured_data_type_id = ::maidsafe_types::data::StructuredDataTypeTag;
         match self.network_get(structured_data_type_id.type_tag(), directory_id) {
             Ok(serialised_sdv) => {
-                let sdv: ::maidsafe_types::StructuredData = match ::utils::deserialise_parser(serialised_sdv) {
+                let sdv: ::maidsafe_types::StructuredData = match ::maidsafe_client::utility::deserialise_parser(serialised_sdv) {
                     ::maidsafe_client::data_parser::Parser::StructuredData(obj) => obj,
                     _ => return Err("Unexpected type".to_string())
                 };
@@ -102,7 +102,7 @@ impl DirectoryHelper {
         let structured_data_type_id = ::maidsafe_types::data::StructuredDataTypeTag;
         match self.network_get(structured_data_type_id.type_tag(), directory_id) {
             Ok(serialised_sdv) => {
-                let sdv: ::maidsafe_types::StructuredData = match ::utils::deserialise_parser(serialised_sdv) {
+                let sdv: ::maidsafe_types::StructuredData = match ::maidsafe_client::utility::deserialise_parser(serialised_sdv) {
                     ::maidsafe_client::data_parser::Parser::StructuredData(obj) => obj,
                     _ => return Err("Unexpected type".to_string())
                 };
@@ -121,13 +121,13 @@ impl DirectoryHelper {
                       sdv: &mut ::maidsafe_types::StructuredData,
                       directory: &::directory_listing::DirectoryListing) -> Result<(), String> {
         let mut se = ::self_encryption::SelfEncryptor::new(::std::sync::Arc::new(::io::NetworkStorage::new(self.client.clone())), ::self_encryption::datamap::DataMap::None);
-        se.write(&::utils::serialise(directory.clone())[..], 0);
+        se.write(&::maidsafe_client::utility::serialise(directory.clone())[..], 0);
         let datamap = se.close();
 
         let encrypt_result: _;
         {
             let client = self.client.lock().unwrap();
-            encrypt_result = client.hybrid_encrypt(&::utils::serialise(datamap)[..], self.get_nonce(directory.get_id()));
+            encrypt_result = client.hybrid_encrypt(&::maidsafe_client::utility::serialise(datamap)[..], self.get_nonce(directory.get_id()));
         }
 
         match encrypt_result {
@@ -156,7 +156,7 @@ impl DirectoryHelper {
         let immutable_data_type_id = ::maidsafe_types::data::ImmutableDataTypeTag;
         match self.network_get(immutable_data_type_id.type_tag(), &version) {
             Ok(serialised_data) => {
-                let imm: ::maidsafe_types::ImmutableData = match ::utils::deserialise_parser(serialised_data) {
+                let imm: ::maidsafe_types::ImmutableData = match ::maidsafe_client::utility::deserialise_parser(serialised_data) {
                     ::maidsafe_client::data_parser::Parser::ImmutableData(obj) => obj,
                     _ => return Err("Unexpected type".to_string())
                 };
@@ -174,10 +174,10 @@ impl DirectoryHelper {
     }
 
     fn deserialise_directory(&self, decrypted_data: Vec<u8>) -> ::directory_listing::DirectoryListing {
-        let datamap = ::utils::deserialise(decrypted_data);
+        let datamap = ::maidsafe_client::utility::deserialise(decrypted_data);
         let mut se = ::self_encryption::SelfEncryptor::new(::std::sync::Arc::new(::io::NetworkStorage::new(self.client.clone())), datamap);
         let size = se.len();
-        ::utils::deserialise(se.read(0, size))
+        ::maidsafe_client::utility::deserialise(se.read(0, size))
     }
 
     fn network_get(&self, tag_id: u64, name: &::routing::NameType) -> Result<Vec<u8>, String> {
@@ -218,9 +218,9 @@ mod test {
     use super::*;
 
     fn get_new_client() -> ::maidsafe_client::client::Client {
-        let keyword = ::utils::test::generate_random_string(10);
-        let password = ::utils::test::generate_random_string(10);
-        let pin = ::utils::test::generate_random_pin();
+        let keyword = ::maidsafe_client::utility::generate_random_string(10);
+        let password = ::maidsafe_client::utility::generate_random_string(10);
+        let pin = ::maidsafe_client::utility::generate_random_pin();
 
         ::maidsafe_client::client::Client::create_account(&keyword,
                                          pin,

@@ -50,7 +50,7 @@ impl ::self_encryption::Storage for NetworkStorage {
 
         match get_result.ok().unwrap().get() {
             Ok(data) => {
-                match ::utils::deserialise_parser(data) {
+                match ::maidsafe_client::utility::deserialise_parser(data) {
                     ::maidsafe_client::data_parser::Parser::ImmutableData(obj) => obj.value().clone(),
                     _ => Vec::new()
                 }

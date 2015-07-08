@@ -133,9 +133,9 @@ mod test {
     use ::std::ops::Index;
 
     fn get_dummy_client() -> ::maidsafe_client::client::Client {
-        let keyword = ::utils::test::generate_random_string(10);
-        let password = ::utils::test::generate_random_string(10);
-        let pin = ::utils::test::generate_random_pin();
+        let keyword = ::maidsafe_client::utility::generate_random_string(10);
+        let password = ::maidsafe_client::utility::generate_random_string(10);
+        let pin = ::maidsafe_client::utility::generate_random_pin();
 
         ::maidsafe_client::client::Client::create_account(&keyword,
                                          pin,

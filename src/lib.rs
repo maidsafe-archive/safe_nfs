@@ -50,14 +50,12 @@ extern crate sodiumoxide;
 extern crate rustc_serialize;
 extern crate maidsafe_types;
 extern crate maidsafe_client;
-extern crate rand;
 
 mod helper;
 mod file;
 mod metadata;
 mod directory_info;
 mod directory_listing;
-mod utils;
 
 /// Module for Restful interfaces for storage
 pub mod rest;
