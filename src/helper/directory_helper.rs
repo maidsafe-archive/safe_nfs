@@ -31,6 +31,19 @@ impl DirectoryHelper {
         }
     }
 
+    pub fn init_root_dir(&mut self) -> Result<::routing::NameType, String> {
+        self.create("root".to_string(), Vec::new()).and_then(|dir_id| {
+                self.create("SAFE-Drive".to_string(), Vec::new()).and_then(|safe_drive_id| {
+                        self.get(&safe_drive_id).and_then(|safe_dir| {
+                            self.get(&dir_id).and_then(|mut root_dir| {
+                                    root_dir.get_mut_sub_directories().push(safe_dir.get_info().clone());
+                                    self.update(&root_dir).and_then(|_| {Ok(dir_id)})
+                                })
+                        })
+                    })
+            })
+    }
+
     /// Creates a Directory in the network.
     pub fn create(&mut self,
                   directory_name: String,
