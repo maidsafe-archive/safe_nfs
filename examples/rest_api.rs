@@ -81,7 +81,7 @@ fn get_user_string(placeholder: &str) -> String {
         println!("------Enter Container name--------");
         std::io::stdin().read_line(&mut txt);
     }
-    txt
+    txt.trim().to_string()
 }
 
 fn format_version_id(version_id: &[u8; 64]) -> String {
