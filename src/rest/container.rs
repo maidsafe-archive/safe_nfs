@@ -417,6 +417,14 @@ mod test {
     }
 
     #[test]
+    fn safe_drive_creation() {
+        let client = Arc::new(Mutex::new(test_client()));
+        let container = Container::authorise(client.clone(), None).unwrap();
+        assert_eq!(container.get_containers().len(), 1);
+        assert!(container.get_containers().iter().find(|&entry| *entry.get_name() == "SAFE-Drive".to_string()).is_some());
+    }
+
+    #[test]
     fn create_container() {
         let client = Arc::new(Mutex::new(test_client()));
         let mut container = Container::authorise(client.clone(), None).unwrap();
