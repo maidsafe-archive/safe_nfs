@@ -15,10 +15,12 @@
 
 ##TODO (rust_3 sprint)
 ### [0.0.1]
-- [ ] [MAID-1209](https://maidsafe.atlassian.net/browse/MAID-1209) Move NFS API from maidsafe_client
+- [X] [MAID-1209](https://maidsafe.atlassian.net/browse/MAID-1209) Move NFS API from maidsafe_client
 
 ### [0.0.2]
 - [ ] [MAID-1219](https://maidsafe.atlassian.net/browse/MAID-1219) Use types from maidsafe_client
+- [X] [MAID-1220](https://maidsafe.atlassian.net/browse/MAID-1220) Create SAFE-Drive folder in root directory
+- [ ] [MAID-1221](https://maidsafe.atlassian.net/browse/MAID-1221) Update test cases for SAFE-Drive assertion
 
 ### [0.1.0]
 - [ ] [MAID-1249](https://maidsafe.atlassian.net/browse/MAID-1249) Implement Unified Structured Datatype

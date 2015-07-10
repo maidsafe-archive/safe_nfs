@@ -24,15 +24,15 @@ pub struct Container {
 }
 
 impl Container {
+
     /// Authorises the directory access and returns the Container, if authorisation is successful.
     /// Operations can be performed only after the authorisation is successful.
     pub fn authorise(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
                     dir_id: Option<[u8; 64]>) -> Result<Container, String> {
         let mut directory_helper = ::helper::DirectoryHelper::new(client.clone());
         let fake_id = ::routing::NameType([0u8; 64]);
-        let mut directory_id: ::routing::NameType = fake_id.clone();
-        match dir_id {
-            Some(id) => directory_id = ::routing::NameType(id),
+        let directory_id = match dir_id {
+            Some(id) => ::routing::NameType(id),
             None => {
                 let mut set_root_id = false;
                  {
@@ -40,31 +40,21 @@ impl Container {
                          set_root_id = true;
                      }
                  }
-                 if set_root_id {
-                     match directory_helper.create("root".to_string(), Vec::new()) {
-                         Ok(dir_id) =>  {
-                             let _ = client.lock().unwrap().set_root_directory_id(dir_id.clone());
-                             directory_id = dir_id;
-                         },
-                         Err(msg) => println!("Error:: {}", msg)
-                     }
-                 } else {
-                     directory_id = client.lock().unwrap().get_root_directory_id().unwrap().clone();
+                 match set_root_id {
+                     true => directory_helper.init_root_dir().unwrap_or(fake_id.clone()),
+                     false => client.lock().unwrap().get_root_directory_id().unwrap().clone(),
                  }
             },
         };
-
         if directory_id == fake_id {
             Err("Directory initialisation failed".to_string())
         } else {
-            let result = directory_helper.get(&directory_id);
-            match result {
-               Ok(listing) => Ok(Container {
-                   client: client,
-                   directory_listing: listing
-               }),
-               Err(msg) => Err(msg),
-           }
+            directory_helper.get(&directory_id).map(|listing| {
+                    Container {
+                        client: client,
+                        directory_listing: listing
+                    }
+                })
         }
     }
 
@@ -432,8 +422,8 @@ mod test {
         let mut container = Container::authorise(client.clone(), None).unwrap();
         container.create("Home".to_string()).unwrap();
 
-        assert_eq!(container.get_containers().len(), 1);
-        assert_eq!(container.get_containers()[0].get_name(), "Home");
+        assert_eq!(container.get_containers().len(), 2);
+        container.get_containers().iter().find(|&entry| *entry.get_name() == "Home".to_string()).unwrap();
     }
 
 
@@ -443,13 +433,12 @@ mod test {
         let mut container = Container::authorise(client, None).unwrap();
         container.create("Home".to_string()).unwrap();
 
-        assert_eq!(container.get_containers().len(), 1);
-        assert_eq!(container.get_containers()[0].get_name(), "Home");
+        assert_eq!(container.get_containers().len(), 2);
 
         container.delete_container("Home".to_string()).unwrap();
 
-        assert_eq!(container.get_containers().len(), 0);
-        assert_eq!(container.get_versions().unwrap().len(), 3);
+        assert_eq!(container.get_containers().len(), 1);
+        assert_eq!(container.get_versions().unwrap().len(), 4);
     }
 
     #[test]
@@ -458,8 +447,7 @@ mod test {
         let mut container = Container::authorise(client.clone(), None).unwrap();
         container.create("Home".to_string()).unwrap();
 
-        assert_eq!(container.get_containers().len(), 1);
-        assert_eq!(container.get_containers()[0].get_name(), "Home");
+        assert_eq!(container.get_containers().len(), 2);
 
         let mut home_container = container.get_container("Home".to_string(), None).unwrap();
         let mut writer = home_container.create_blob("sample.txt".to_string(), None).unwrap();
