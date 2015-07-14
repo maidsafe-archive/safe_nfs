@@ -14,17 +14,11 @@
 |:------:|:-------:|:-------:|:-------:|
 
 ##TODO (rust_3 sprint)
-### [0.0.1]
-- [ ] [MAID-1209](https://maidsafe.atlassian.net/browse/MAID-1209) Move NFS API from maidsafe_client
-
 ### [0.0.2]
-- [ ] [MAID-1219](https://maidsafe.atlassian.net/browse/MAID-1219) Use types from maidsafe_client
+- [X] [MAID-1209](https://maidsafe.atlassian.net/browse/MAID-1209) Move NFS API from maidsafe_client
 
 ### [0.1.0]
 - [ ] [MAID-1249](https://maidsafe.atlassian.net/browse/MAID-1249) Implement Unified Structured Datatype
-    - [ ] [MAID-1230](https://maidsafe.atlassian.net/browse/MAID-1230) Implement a handler for Storing Versioned Structured Data
-    - [ ] [MAID-1231](https://maidsafe.atlassian.net/browse/MAID-1231) Implement a handler for Retrieving Versioned Structured Data
-    - [ ] [MAID-1232](https://maidsafe.atlassian.net/browse/MAID-1232) Write Test Cases for Versioned Structured Data handler
     - [ ] [MAID-1233](https://maidsafe.atlassian.net/browse/MAID-1233) Metadata to indicate versioning support and type (Private, Public, Shared)
     - [ ] [MAID-1234](https://maidsafe.atlassian.net/browse/MAID-1234) Update the Hybrid encrypt and decrypt
     - [ ] [MAID-1235](https://maidsafe.atlassian.net/browse/MAID-1235) Handle Container Creation
