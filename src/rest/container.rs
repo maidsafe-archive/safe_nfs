@@ -36,20 +36,20 @@ impl Container {
             None => {
                 let mut set_root_id = false;
                  {
-                     if client.lock().unwrap().get_root_directory_id().is_none() {
+                     if client.lock().unwrap().get_user_root_directory_id().is_none() {
                          set_root_id = true;
                      }
                  }
                  if set_root_id {
                      match directory_helper.create("root".to_string(), Vec::new()) {
                          Ok(dir_id) =>  {
-                             let _ = client.lock().unwrap().set_root_directory_id(dir_id.clone());
+                             let _ = client.lock().unwrap().set_user_root_directory_id(dir_id.clone());
                              directory_id = dir_id;
                          },
-                         Err(msg) => println!("Error:: {}", msg)
+                         Err(msg) => panic!("Error:")
                      }
                  } else {
-                     directory_id = client.lock().unwrap().get_root_directory_id().unwrap().clone();
+                     directory_id = client.lock().unwrap().get_user_root_directory_id().unwrap().clone();
                  }
             },
         };
@@ -63,7 +63,7 @@ impl Container {
                    client: client,
                    directory_listing: listing
                }),
-               Err(msg) => Err(msg),
+               Err(_) => Err("Error".to_string()),
            }
         }
     }
@@ -90,13 +90,13 @@ impl Container {
                                         let mut directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
                                         match directory_helper.update(&self.directory_listing) {
                                             Ok(_) => Ok(()),
-                                            Err(msg) => Err(msg)
+                                            Err(_) => Err("Error".to_string())
                                         }
                                     },
-                                    Err(msg) => Err(msg)
+                                    Err(_) => Err("Error".to_string())
                                 }
                             },
-                            Err(msg) => Err(msg)
+                            Err(_) => Err("Error".to_string())
                         }
                     }
                 }
@@ -146,7 +146,7 @@ impl Container {
                         Some(blob) => Ok(blob),
                         None => Err("Blob not found for the version specified".to_string())
                     },
-                    Err(msg) => Err(msg)
+                    Err(_) => Err("Error".to_string())
                 }
             },
             None => match self.find_file(&name, &self.directory_listing) {
@@ -171,7 +171,7 @@ impl Container {
     //             let mut directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
     //             match directory_helper.update(&self.directory_listing) {
     //                 Ok(_) => Ok(()),
-    //                 Err(msg) => Err(msg),
+    //                 Err(_) => Err("Error".to_string()),
     //             }
     //         },
     //         Err(err) => Err(err),
@@ -205,7 +205,7 @@ impl Container {
                         client: self.client.clone(),
                         directory_listing: dir_listing
                     }),
-                    Err(msg) => Err(msg)
+                    Err(_) => Err("Error".to_string())
                 }
             },
             None => Err("Container not found".to_string()),
@@ -220,7 +220,7 @@ impl Container {
                 let mut directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
                 match directory_helper.update(&self.directory_listing) {
                     Ok(_) => Ok(()),
-                    Err(msg) => Err(msg)
+                    Err(_) => Err("Error".to_string())
                 }
             },
             None => {
@@ -270,7 +270,7 @@ impl Container {
                 let size = reader.size();
                 reader.read(0, size)
             },
-            Err(msg) => Err(msg),
+            Err(_) => Err("Error".to_string()),
         }
     }
 
@@ -289,7 +289,7 @@ impl Container {
                     Ok(versions) => {
                         Ok(versions.iter().map(|x| x.0).collect())
                     },
-                    Err(msg) => Err(msg),
+                    Err(_) => Err("Error".to_string()),
                 }
             },
             None => Err("Blob not found".to_string()),
@@ -308,7 +308,7 @@ impl Container {
                     None => Err("Blob not found".to_string()),
                 }
             },
-            Err(msg) => Err(msg),
+            Err(_) => Err("Error".to_string()),
         }
     }
 
@@ -320,7 +320,7 @@ impl Container {
                 let mut directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
                 match directory_helper.update(&self.directory_listing) {
                     Ok(_) => Ok(()),
-                    Err(msg) => Err(msg),
+                    Err(_) => Err("Error".to_string()),
                 }
             },
             None => Err("Blob not found".to_string()),
@@ -345,12 +345,12 @@ impl Container {
                                 to_dir_listing.get_mut_files().push(file);
                                 match  directory_helper.update(&to_dir_listing) {
                                     Ok(_) => Ok(()),
-                                    Err(msg) => Err(msg),
+                                    Err(_) => Err("Error".to_string()),
                                 }
                             }
                         }
                     },
-                    Err(msg) => Err(msg),
+                    Err(_) => Err("Error".to_string()),
                 }
             },
             None => Err("Blob not found".to_string()),
@@ -400,7 +400,7 @@ impl Container {
             Ok(versions) => {
                 Ok(versions.iter().map(|v| v.0).collect())
             },
-            Err(msg) => Err(msg),
+            Err(_) => Err("Error".to_string()),
         }
     }
 }
@@ -413,11 +413,7 @@ mod test {
     use ::std::sync::Mutex;
 
     fn test_client() -> Client {
-        let keyword = ::maidsafe_client::utility::generate_random_string(10);
-        let password = ::maidsafe_client::utility::generate_random_string(10);
-        let pin = ::maidsafe_client::utility::generate_random_pin();
-
-        Client::create_account(&keyword, pin, &password).ok().unwrap()
+        ::maidsafe_client::utility::test_utils::get_client().ok().unwrap()
     }
 
     #[test]
@@ -503,4 +499,5 @@ mod test {
         let _ = home_container.delete_blob("sample.txt".to_string());
         assert_eq!(home_container.get_blobs().len(), 0);
     }
+    
 }

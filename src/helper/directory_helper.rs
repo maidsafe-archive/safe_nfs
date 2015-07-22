@@ -37,11 +37,11 @@ impl DirectoryHelper {
         let directory = ::directory_listing::DirectoryListing::new(directory_name, user_metadata);
 
         let serialised_data = try!(::maidsafe_client::utility::serialise(&directory));
-        let mut maid = self.get_maid();
-
         let version = try!(::utility::save_as_immutable_data(self.client.clone(),
                                                              serialised_data,
                                                              ::maidsafe_client::client::ImmutableDataType::Normal));
+        let signing_key = ::utility::get_secret_signing_key(self.client.clone());
+        let owner_key = ::utility::get_public_signing_key(self.client.clone());
         let mut mutex_client = self.client.lock().unwrap();
         let mut client = mutex_client.deref_mut();
         let structured_data = try!(::maidsafe_client::structured_data_operations::versioned::create(client,
@@ -49,9 +49,9 @@ impl DirectoryHelper {
                                                                                                     ::VERSION_DIRECTORY_LISTING_TAG,
                                                                                                     directory.get_id().clone(),
                                                                                                     0,
-                                                                                                    vec![maid.public_keys().0],
+                                                                                                    vec![owner_key],
                                                                                                     Vec::new(),
-                                                                                                    &maid.secret_keys().0));
+                                                                                                    &signing_key));
         client.put(directory.get_id().clone(), ::maidsafe_client::client::Data::StructuredData(structured_data));
         Ok(directory.get_id().clone())
     }
@@ -61,19 +61,20 @@ impl DirectoryHelper {
     pub fn update(&mut self, directory: &::directory_listing::DirectoryListing) -> Result<(), ::errors::NFSError> {
 
         let serialised_data = try!(::maidsafe_client::utility::serialise(&directory));
-        let mut maid = self.get_maid();
         let version = try!(::utility::save_as_immutable_data(self.client.clone(),
                                                              serialised_data,
                                                              ::maidsafe_client::client::ImmutableDataType::Normal));
         let structured_data = try!(::utility::get_structured_data(self.client.clone(),
                                                                   directory.get_id().clone(),
                                                                   ::VERSION_DIRECTORY_LISTING_TAG));
+        let signing_key = ::utility::get_secret_signing_key(self.client.clone());
+
         let mut mutex_client = self.client.lock().unwrap();
         let mut client = mutex_client.deref_mut();
         let updated_structured_data = try!(::maidsafe_client::structured_data_operations::versioned::append_version(client,
-                                                                                                            structured_data,
-                                                                                                            version,
-                                                                                                            &maid.secret_keys().0));
+                                                                                                                    structured_data,
+                                                                                                                    version,
+                                                                                                                    &signing_key));
         client.post(directory.get_id().clone(), ::maidsafe_client::client::Data::StructuredData(updated_structured_data));
         Ok(())
     }
@@ -99,7 +100,7 @@ impl DirectoryHelper {
                                                                  ::maidsafe_client::client::ImmutableDataType::Normal));
         Ok(try!(::maidsafe_client::utility::deserialise(&serialised_data.value())))
     }
-/*
+
     /// Return the DirectoryListing for the latest version
     // TODO version parameter change it to value instead of &
     pub fn get(&mut self, directory_id: &::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NFSError> {
@@ -108,13 +109,17 @@ impl DirectoryHelper {
         let mut mutex_client = self.client.lock().unwrap();
         let mut client = mutex_client.deref_mut();
         let versions = try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(client, &structured_data));
-        self.get_by_version(directory_id, versions.last().unwrap())
+        let mut response_getter = try!(client.get(versions.last().unwrap().clone(),
+                                                  ::maidsafe_client::client::DataRequest::ImmutableData(::maidsafe_client::client::ImmutableDataType::Normal)));
+        let data = try!(response_getter.get());
+        let fetch_result = match data {
+            ::maidsafe_client::client::Data::ImmutableData(immutable_data) => Ok(immutable_data),
+            _ => Err(::errors::NFSError::from(::maidsafe_client::errors::ClientError::ReceivedUnexpectedData)),
+        };
+        let immutable_data = try!(fetch_result);
+        Ok(try!(::maidsafe_client::utility::deserialise(&immutable_data.value())))
     }
-*/
-    fn get_maid(&self) -> ::maidsafe_client::id::IdType {
-        let mutex = self.client.lock().unwrap();
-        mutex.get_maid().clone()
-    }
+
 
 }
 

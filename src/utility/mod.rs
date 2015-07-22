@@ -15,6 +15,14 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+pub fn get_secret_signing_key(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> ::sodiumoxide::crypto::sign::SecretKey {
+    client.lock().unwrap().get_secret_signing_key().clone()
+}
+
+pub fn get_public_signing_key(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> ::sodiumoxide::crypto::sign::PublicKey {
+    client.lock().unwrap().get_public_signing_key().clone()
+}
+
 /// Saves the data as ImmutableData in the network and returns the name
 pub fn save_as_immutable_data(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
                              data: Vec<u8>,
@@ -35,7 +43,7 @@ pub fn get_structured_data(client: ::std::sync::Arc<::std::sync::Mutex<::maidsaf
     let data = try!(response_getter.get());
     match data {
         ::maidsafe_client::client::Data::StructuredData(structured_data) => Ok(structured_data),
-        _ => Err(::errors::NFSError::ReceivedUnexpectedData),
+        _ => Err(::errors::NFSError::from(::maidsafe_client::errors::ClientError::ReceivedUnexpectedData)),
     }
 }
 
@@ -47,6 +55,6 @@ pub fn get_immutable_data(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe
     let data = try!(response_getter.get());
     match data {
         ::maidsafe_client::client::Data::ImmutableData(immutable_data) => Ok(immutable_data),
-        _ => Err(::errors::NFSError::ReceivedUnexpectedData),
+        _ => Err(::errors::NFSError::from(::maidsafe_client::errors::ClientError::ReceivedUnexpectedData)),
     }
 }

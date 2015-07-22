@@ -123,26 +123,16 @@ impl FileHelper {
 
 }
 
-/*
+
 #[cfg(test)]
 mod test {
     use super::*;
     use ::std::ops::Index;
 
-    fn get_dummy_client() -> ::maidsafe_client::client::Client {
-        let keyword = ::maidsafe_client::utility::generate_random_string(10);
-        let password = ::maidsafe_client::utility::generate_random_string(10);
-        let pin = ::maidsafe_client::utility::generate_random_pin();
-
-        ::maidsafe_client::client::Client::create_account(&keyword,
-                                         pin,
-                                         &password).ok().unwrap()
-    }
-
-
     #[test]
     fn create_read_update() {
-        let client = ::std::sync::Arc::new(::std::sync::Mutex::new(get_dummy_client()));
+        let test_client = ::maidsafe_client::utility::test_utils::get_client().unwrap_or_else(|error| { println!("Error: {}", error); unimplemented!() });
+        let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
         let mut dir_helper = ::helper::DirectoryHelper::new(client.clone());
 
         let created_dir_id: _;
@@ -226,4 +216,3 @@ mod test {
         }
     }
 }
-*/
