@@ -23,15 +23,30 @@ pub fn get_public_signing_key(client: ::std::sync::Arc<::std::sync::Mutex<::maid
     client.lock().unwrap().get_public_signing_key().clone()
 }
 
-/// Saves the data as ImmutableData in the network and returns the name
-pub fn save_as_immutable_data(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-                             data: Vec<u8>,
-                             data_type: ::maidsafe_client::client::ImmutableDataType) -> Result<::routing::NameType, ::errors::NFSError> {
-    let immutable_data = ::maidsafe_client::client::ImmutableData::new(data_type, data);
-    let name = immutable_data.name();
-    client.lock().unwrap().put(name.clone(),
-               ::maidsafe_client::client::Data::ImmutableData(immutable_data));
-    Ok(name)
+/// Saves the DirectoryListing in the network
+pub fn save_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+                              directory_listing: &::directory_listing::DirectoryListing) -> Result<::routing::NameType, ::errors::NFSError> {
+    let serialised_data = try!(::maidsafe_client::utility::serialise(directory_listing));
+    let mut se = ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), ::self_encryption::datamap::DataMap::None);
+    se.write(&serialised_data, 0);
+    let datamap = se.close();
+    let serialised_data_map = try!(::maidsafe_client::utility::serialise(&datamap));
+    save_as_immutable_data(client.clone(), serialised_data_map, ::maidsafe_client::client::ImmutableDataType::Normal)
+}
+
+/// Get DirectoryListing from the network
+pub fn get_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+                              id: ::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NFSError> {
+    // Get immutable data
+    let immutable_data = try!(get_immutable_data(client.clone(), id, ::maidsafe_client::client::ImmutableDataType::Normal));
+    // Desriase Datamap
+    let datamap: ::self_encryption::datamap::DataMap = try!(::maidsafe_client::utility::deserialise(immutable_data.value()));
+    // read Data
+    let mut se = ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), datamap);
+    let length = se.len();
+    let serialised_directory_listing = se.read(0, length);
+    // Desrialise Directorylisting
+    Ok(try!(::maidsafe_client::utility::deserialise(&serialised_directory_listing)))
 }
 
 /// Get StructuredData
@@ -57,4 +72,15 @@ pub fn get_immutable_data(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe
         ::maidsafe_client::client::Data::ImmutableData(immutable_data) => Ok(immutable_data),
         _ => Err(::errors::NFSError::from(::maidsafe_client::errors::ClientError::ReceivedUnexpectedData)),
     }
+}
+
+/// Saves the data as ImmutableData in the network and returns the name
+pub fn save_as_immutable_data(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+                             data: Vec<u8>,
+                             data_type: ::maidsafe_client::client::ImmutableDataType) -> Result<::routing::NameType, ::errors::NFSError> {
+    let immutable_data = ::maidsafe_client::client::ImmutableData::new(data_type, data);
+    let name = immutable_data.name();
+    client.lock().unwrap().put(name.clone(),
+                               ::maidsafe_client::client::Data::ImmutableData(immutable_data));
+    Ok(name)
 }

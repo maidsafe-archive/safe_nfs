@@ -9,6 +9,9 @@ readme = "README.md"
 license = "GPL-3.0"
 homepage = "http://maidsafe.net"
 
+[features]
+USE_ACTUAL_ROUTING = ["maidsafe_client/USE_ACTUAL_ROUTING"]
+
 [dependencies]
 cbor = "*"
 rustc-serialize = "*"
@@ -18,6 +21,6 @@ self_encryption = "0.2.*"
 time="*"
 
 [dependencies.maidsafe_client]
-path = "../maidsafe_client"
+git = "https://github.com/maidsafe/maidsafe_client.git"
 # version = "*"
 # features = ["USE_ACTUAL_ROUTING"]
