@@ -57,6 +57,32 @@ pub fn get_user_root_directory_id(client: ::std::sync::Arc<::std::sync::Mutex<::
     }
 }
 
+/// Returns the Directory Id for the directory name from the configuration root folder
+pub fn get_configuration_directory_id(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+                                      directory_name: String) -> Result<::routing::NameType, ::errors::NFSError> {
+    let config_root_directory;
+    {
+        config_root_directory = match client.lock().unwrap().get_configuration_root_directory_id() {
+            Some(id) => Some(id.clone()),
+            None => None,
+        }
+    }
+    let mut directory_helper = ::helper::DirectoryHelper::new(client.clone());
+    let config_root_id = match config_root_directory {
+        Some(id) => id.clone(),
+        None => {
+            let created_directory_id = try!(directory_helper.create("MaidSafe_Configuration".to_string(), Vec::new()));
+            let _ = try!(client.lock().unwrap().set_configuration_root_directory_id(created_directory_id.clone()));
+            created_directory_id
+        }
+    };
+    let config_directory_listing = try!(directory_helper.get(&config_root_id));
+    match config_directory_listing.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == directory_name.clone()) {
+        Some(index) =>  Ok(config_directory_listing.get_sub_directories()[index].get_id().clone()),
+        None => Ok(try!(directory_helper.create(directory_name, Vec::new()))),
+    }
+}
+
 /// Generates a nonce based on the directory_id
 pub fn generate_nonce(directory_id: &::routing::NameType) -> ::sodiumoxide::crypto::box_::Nonce {
     let mut nonce = [0u8; ::sodiumoxide::crypto::box_::NONCEBYTES];
