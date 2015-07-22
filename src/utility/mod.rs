@@ -23,6 +23,23 @@ pub fn get_public_signing_key(client: ::std::sync::Arc<::std::sync::Mutex<::maid
     client.lock().unwrap().get_public_signing_key().clone()
 }
 
+pub fn get_secret_encryption_key(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> ::sodiumoxide::crypto::box_::SecretKey {
+    client.lock().unwrap().get_secret_encryption_key().clone()
+}
+
+pub fn get_public_encryption_key(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> ::sodiumoxide::crypto::box_::PublicKey {
+    client.lock().unwrap().get_public_encryption_key().clone()
+}
+
+/// Generates a nonce based on the directory_id
+pub fn generate_nonce(directory_id: &::routing::NameType) -> ::sodiumoxide::crypto::box_::Nonce {
+    let mut nonce = [0u8; ::sodiumoxide::crypto::box_::NONCEBYTES];
+    for i in 0..nonce.len() {
+        nonce[i] = directory_id.0[i];
+    }
+    ::sodiumoxide::crypto::box_::Nonce(nonce)
+}
+
 /// Saves the DirectoryListing in the network
 pub fn save_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
                               directory_listing: &::directory_listing::DirectoryListing) -> Result<::routing::NameType, ::errors::NFSError> {
@@ -31,16 +48,22 @@ pub fn save_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maid
     se.write(&serialised_data, 0);
     let datamap = se.close();
     let serialised_data_map = try!(::maidsafe_client::utility::serialise(&datamap));
-    save_as_immutable_data(client.clone(), serialised_data_map, ::maidsafe_client::client::ImmutableDataType::Normal)
+    let encrypted_data_map = try!(client.lock().unwrap().hybrid_encrypt(&serialised_data_map[..],
+                                                                        Some(&generate_nonce(directory_listing.get_id()))));
+    save_as_immutable_data(client.clone(), encrypted_data_map, ::maidsafe_client::client::ImmutableDataType::Normal)
 }
 
 /// Get DirectoryListing from the network
 pub fn get_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-                              id: ::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NFSError> {
+                              directory_id: &::routing::NameType,
+                              version: ::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NFSError> {
     // Get immutable data
-    let immutable_data = try!(get_immutable_data(client.clone(), id, ::maidsafe_client::client::ImmutableDataType::Normal));
+    let nonce = generate_nonce(directory_id);
+    let immutable_data = try!(get_immutable_data(client.clone(), version, ::maidsafe_client::client::ImmutableDataType::Normal));
+    // Hybrid Decrypt
+    let decrypted_data_map = try!(client.lock().unwrap().hybrid_decrypt(&immutable_data.value()[..], Some(&nonce)));
     // Desriase Datamap
-    let datamap: ::self_encryption::datamap::DataMap = try!(::maidsafe_client::utility::deserialise(immutable_data.value()));
+    let datamap: ::self_encryption::datamap::DataMap = try!(::maidsafe_client::utility::deserialise(&decrypted_data_map));
     // read Data
     let mut se = ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), datamap);
     let length = se.len();
@@ -49,7 +72,7 @@ pub fn get_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maids
     Ok(try!(::maidsafe_client::utility::deserialise(&serialised_directory_listing)))
 }
 
-/// Get StructuredData
+/// Get StructuredData from the Network
 pub fn get_structured_data(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
                            id: ::routing::NameType,
                            type_tag: u64) -> Result<::maidsafe_client::client::StructuredData, ::errors::NFSError> {
@@ -62,7 +85,7 @@ pub fn get_structured_data(client: ::std::sync::Arc<::std::sync::Mutex<::maidsaf
     }
 }
 
-/// Get ImmutableData
+/// Gets ImmutableData from the Network
 pub fn get_immutable_data(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
                            id: ::routing::NameType,
                            data_type: ::maidsafe_client::client::ImmutableDataType) -> Result<::maidsafe_client::client::ImmutableData, ::errors::NFSError> {

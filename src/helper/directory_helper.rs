@@ -84,12 +84,11 @@ impl DirectoryHelper {
     }
 
     /// Return the DirectoryListing for the specified version
-    // TODO remove _directory_id not used anymore
     // TODO version parameter change it to value instead of &
     pub fn get_by_version(&mut self,
-                          _directory_id: &::routing::NameType,
+                          directory_id: &::routing::NameType,
                           version: &::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NFSError> {
-        Ok(try!(::utility::get_directory_listing(self.client.clone(), version.clone())))
+        Ok(try!(::utility::get_directory_listing(self.client.clone(), directory_id, version.clone())))
     }
 
     /// Return the DirectoryListing for the latest version
@@ -103,7 +102,7 @@ impl DirectoryHelper {
            versions = try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(client, &structured_data));
         }
         let latest_version = versions.last().unwrap();
-        self.get_by_version(&latest_version, &latest_version)
+        self.get_by_version(directory_id, &latest_version)
     }
 
 
