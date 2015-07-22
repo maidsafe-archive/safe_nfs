@@ -109,10 +109,6 @@ impl FileHelper {
         Ok(versions)
     }
 
-    // pub fn read(&mut self, file: file::File) -> ::io::Reader {
-    //     ::io::Reader::new(file, self.client.clone())
-    // }
-
     fn file_exists(&self,
                    directory: &::directory_listing::DirectoryListing,
                    file_name: &String) -> Option<String> {
@@ -127,6 +123,7 @@ impl FileHelper {
 
 }
 
+/*
 #[cfg(test)]
 mod test {
     use super::*;
@@ -229,3 +226,4 @@ mod test {
         }
     }
 }
+*/

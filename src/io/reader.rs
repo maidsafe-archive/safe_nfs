@@ -20,18 +20,17 @@
 /// large
 pub struct Reader {
     file: ::file::File,
-    self_encryptor: ::self_encryption::SelfEncryptor<::io::network_storage::NetworkStorage>,
+    self_encryptor: ::self_encryption::SelfEncryptor<::maidsafe_client::SelfEncryptionStorage>,
     client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
 }
 
 impl Reader {
     /// Create a new instance of Reader
     pub fn new(file: ::file::File,
-               client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> Reader {
-        let storage = ::std::sync::Arc::new(::io::network_storage::NetworkStorage::new(client.clone()));
+               client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> Reader {        
         Reader {
             file: file.clone(),
-            self_encryptor: ::self_encryption::SelfEncryptor::new(storage.clone(), file.get_datamap().clone()),
+            self_encryptor: ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), file.get_datamap().clone()),
             client: client,
         }
     }

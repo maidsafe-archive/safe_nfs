@@ -58,7 +58,7 @@ mod directory_info;
 mod directory_listing;
 
 /// Module for input/output to network/file
-// pub mod io;
+pub mod io;
 /// Module for Restful interfaces for storage
 // pub mod rest;
 mod utility;
