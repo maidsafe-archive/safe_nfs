@@ -15,22 +15,29 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+/// Return the Secret Signing Key
 pub fn get_secret_signing_key(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> ::sodiumoxide::crypto::sign::SecretKey {
     client.lock().unwrap().get_secret_signing_key().clone()
 }
 
+/// Returns the Public Signing Key
 pub fn get_public_signing_key(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> ::sodiumoxide::crypto::sign::PublicKey {
     client.lock().unwrap().get_public_signing_key().clone()
 }
 
+/// Return the Secret Encryption Key
+#[allow(dead_code)]
 pub fn get_secret_encryption_key(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> ::sodiumoxide::crypto::box_::SecretKey {
     client.lock().unwrap().get_secret_encryption_key().clone()
 }
 
+/// Return the Public Encryption Key
+#[allow(dead_code)]
 pub fn get_public_encryption_key(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> ::sodiumoxide::crypto::box_::PublicKey {
     client.lock().unwrap().get_public_encryption_key().clone()
 }
 
+/// Returns the Root Directory
 pub fn get_user_root_directory_id(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> Result<::routing::NameType, ::errors::NFSError> {
     let root_directory;
     {
@@ -122,7 +129,7 @@ pub fn save_as_immutable_data(client: ::std::sync::Arc<::std::sync::Mutex<::maid
                              data_type: ::maidsafe_client::client::ImmutableDataType) -> Result<::routing::NameType, ::errors::NFSError> {
     let immutable_data = ::maidsafe_client::client::ImmutableData::new(data_type, data);
     let name = immutable_data.name();
-    client.lock().unwrap().put(name.clone(),
+    let _ = client.lock().unwrap().put(name.clone(),
                                ::maidsafe_client::client::Data::ImmutableData(immutable_data));
     Ok(name)
 }

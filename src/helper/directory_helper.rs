@@ -49,7 +49,7 @@ impl DirectoryHelper {
                                                                                                     vec![owner_key],
                                                                                                     Vec::new(),
                                                                                                     &signing_key));
-        client.put(directory.get_id().clone(), ::maidsafe_client::client::Data::StructuredData(structured_data));
+        let _ = client.put(directory.get_id().clone(), ::maidsafe_client::client::Data::StructuredData(structured_data));
         Ok(directory.get_id().clone())
     }
 
@@ -69,7 +69,7 @@ impl DirectoryHelper {
                                                                                                                     structured_data,
                                                                                                                     version,
                                                                                                                     &signing_key));
-        client.post(directory.get_id().clone(), ::maidsafe_client::client::Data::StructuredData(updated_structured_data));
+        let _ = client.post(directory.get_id().clone(), ::maidsafe_client::client::Data::StructuredData(updated_structured_data));
         Ok(())
     }
 
