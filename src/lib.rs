@@ -50,12 +50,12 @@ extern crate sodiumoxide;
 extern crate rustc_serialize;
 extern crate maidsafe_client;
 
-mod file;
-mod errors;
-mod helper;
-mod metadata;
-mod directory_info;
-mod directory_listing;
+pub mod file;
+pub mod errors;
+pub mod helper;
+pub mod metadata;
+pub mod directory_info;
+pub mod directory_listing;
 
 /// Module for input/output to network/file
 pub mod io;

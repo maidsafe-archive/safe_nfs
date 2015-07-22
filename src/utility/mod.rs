@@ -31,6 +31,25 @@ pub fn get_public_encryption_key(client: ::std::sync::Arc<::std::sync::Mutex<::m
     client.lock().unwrap().get_public_encryption_key().clone()
 }
 
+pub fn get_user_root_directory_id(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> Result<::routing::NameType, ::errors::NFSError> {
+    let root_directory;
+    {
+        root_directory = match client.lock().unwrap().get_user_root_directory_id() {
+            Some(id) => Some(id.clone()),
+            None => None,
+        }
+    }
+    match root_directory {
+        Some(id) => Ok(id.clone()),
+        None => {
+            let mut directory_helper = ::helper::DirectoryHelper::new(client.clone());
+            let created_directory_id = try!(directory_helper.create("root".to_string(), Vec::new()));
+            let _ = try!(client.lock().unwrap().set_user_root_directory_id(created_directory_id.clone()));
+            Ok(created_directory_id.clone())
+        }
+    }
+}
+
 /// Generates a nonce based on the directory_id
 pub fn generate_nonce(directory_id: &::routing::NameType) -> ::sodiumoxide::crypto::box_::Nonce {
     let mut nonce = [0u8; ::sodiumoxide::crypto::box_::NONCEBYTES];
