@@ -20,7 +20,7 @@
 #![doc(html_logo_url = "http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
               html_root_url = "http://dirvine.github.io/dirvine/maidsafe_nfs/")]
-
+/*
 ///////////////////////////////////////////////////
 //               LINT
 ///////////////////////////////////////////////////
@@ -37,7 +37,7 @@ unused_features, unused_parens, while_true)]
 unused_qualifications, variant_size_differences)]
 
 ///////////////////////////////////////////////////
-
+*/
 //! #Maidsafe-Nfs Library
 //! [Project github page](https://github.com/maidsafe/maidsafe_nfs)
 
@@ -48,16 +48,19 @@ extern crate cbor;
 extern crate routing;
 extern crate sodiumoxide;
 extern crate rustc_serialize;
-extern crate maidsafe_types;
 extern crate maidsafe_client;
 
-mod helper;
 mod file;
+mod errors;
+mod helper;
 mod metadata;
 mod directory_info;
 mod directory_listing;
 
-/// Module for Restful interfaces for storage
-pub mod rest;
 /// Module for input/output to network/file
-pub mod io;
+// pub mod io;
+/// Module for Restful interfaces for storage
+// pub mod rest;
+mod utility;
+/// Tag representing the Versioned Directory Listing
+pub const VERSION_DIRECTORY_LISTING_TAG: u64 = ::maidsafe_client::MAIDSAFE_TAG + 1;

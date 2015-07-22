@@ -18,9 +18,9 @@
 - [X] [MAID-1209](https://maidsafe.atlassian.net/browse/MAID-1209) Move NFS API from maidsafe_client
 
 ### [0.1.0]
+- [ ] [MAID-1260](https://maidsafe.atlassian.net/browse/MAID-1260) Refactor to interface with maidsafe_client (0.1.3)
 - [ ] [MAID-1249](https://maidsafe.atlassian.net/browse/MAID-1249) Implement Unified Structured Datatype
     - [ ] [MAID-1233](https://maidsafe.atlassian.net/browse/MAID-1233) Metadata to indicate versioning support and type (Private, Public, Shared)
-    - [ ] [MAID-1234](https://maidsafe.atlassian.net/browse/MAID-1234) Update the Hybrid encrypt and decrypt
     - [ ] [MAID-1235](https://maidsafe.atlassian.net/browse/MAID-1235) Handle Container Creation
     - [ ] [MAID-1236](https://maidsafe.atlassian.net/browse/MAID-1236) Update FileHelper and Writer to handle new Structured data changes
     - [ ] [MAID-1237](https://maidsafe.atlassian.net/browse/MAID-1237) Error handling in Version related API
