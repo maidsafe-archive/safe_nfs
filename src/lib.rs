@@ -61,6 +61,7 @@ pub mod directory_listing;
 pub mod io;
 /// Module for Restful interfaces for storage
 pub mod rest;
-mod utility;
+/// Utility functions
+pub mod utility;
 /// Tag representing the Versioned Directory Listing
 pub const VERSION_DIRECTORY_LISTING_TAG: u64 = ::maidsafe_client::MAIDSAFE_TAG + 1;
