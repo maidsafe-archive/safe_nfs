@@ -46,10 +46,11 @@ impl DirectoryHelper {
                                                                                                     vec![owner_key],
                                                                                                     Vec::new(),
                                                                                                     &signing_key));
+        // TODO Wrong: location of structured data is
+        // StructuredData::compute_location(::VERSION_DIRECTORY_LISTING_TAG, directory.get_id())
         let _ = mutex_client.put(directory.get_id().clone(), ::maidsafe_client::client::Data::StructuredData(structured_data));
         Ok(directory.get_id().clone())
     }
-
 
     /// Updates an existing DirectoryListing in the network.
     pub fn update(&mut self, directory: &::directory_listing::DirectoryListing) -> Result<(), ::errors::NFSError> {
