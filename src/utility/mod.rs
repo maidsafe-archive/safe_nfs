@@ -64,7 +64,7 @@ pub fn get_user_root_directory_id(client: ::std::sync::Arc<::std::sync::Mutex<::
 /// Returns the Directory Id for the directory name from the configuration root folder
 #[allow(dead_code)]
 pub fn get_configuration_directory_id(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-                                      directory_name: String) -> Result<::routing::NameType, ::errors::NFSError> {
+                                      directory_name: String) -> Result<::directory_listing::DirectoryListing, ::errors::NFSError> {
     let config_root_directory;
     {
         config_root_directory = match client.lock().unwrap().get_configuration_root_directory_id() {
@@ -83,13 +83,13 @@ pub fn get_configuration_directory_id(client: ::std::sync::Arc<::std::sync::Mute
     };
     let mut config_directory_listing = try!(directory_helper.get(&config_root_id));
     match config_directory_listing.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == directory_name.clone()) {
-        Some(index) =>  Ok(config_directory_listing.get_sub_directories()[index].get_id().clone()),
+        Some(index) => Ok(try!(directory_helper.get(config_directory_listing.get_sub_directories()[index].get_id()))),
         None => {
             let new_sub_dir_id = try!(directory_helper.create(directory_name, Vec::new()));
             let new_dir_listing = try!(directory_helper.get(&new_sub_dir_id));
             config_directory_listing.get_mut_sub_directories().push(new_dir_listing.get_info().clone());
             try!(directory_helper.update(&config_directory_listing));
-            Ok(new_sub_dir_id)
+            Ok(new_dir_listing)
         },
     }
 }
@@ -131,7 +131,7 @@ pub fn get_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maids
     let mut se = ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), datamap);
     let length = se.len();
     let serialised_directory_listing = se.read(0, length);
-    // Desrialise Directorylisting
+    // Desrialise DirectoryListing
     Ok(try!(::maidsafe_client::utility::deserialise(&serialised_directory_listing)))
 }
 
