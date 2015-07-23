@@ -68,7 +68,7 @@ mod test {
 
     #[test]
     fn create() {
-        let name = ::maidsafe_client::utility::generate_random_string(10);
+        let name = ::maidsafe_client::utility::generate_random_string(10).unwrap_or_else(|error| { println!("Error: {}", error); unimplemented!() });
         let metadata = Metadata::new(name.clone(), Vec::new());
         let container_info = ContainerInfo{ info: DirectoryInfo::new(metadata) };
 
@@ -77,7 +77,7 @@ mod test {
 
     #[test]
     fn convert_from() {
-        let name = ::maidsafe_client::utility::generate_random_string(10);
+        let name = ::maidsafe_client::utility::generate_random_string(10).unwrap_or_else(|error| { println!("Error: {}", error); unimplemented!() });
         let metadata = Metadata::new(name.clone(), Vec::new());
         let directory_info = DirectoryInfo::new(metadata);
 
@@ -91,7 +91,7 @@ mod test {
 
     #[test]
     fn convert_to() {
-        let name = ::maidsafe_client::utility::generate_random_string(10);
+        let name = ::maidsafe_client::utility::generate_random_string(10).unwrap_or_else(|error| { println!("Error: {}", error); unimplemented!() });
         let metadata = Metadata::new(name.clone(), Vec::new());
         let container_info = ContainerInfo{ info: DirectoryInfo::new(metadata) };
 

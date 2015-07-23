@@ -15,10 +15,23 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-/// Module for Writer
-pub mod writer;
-/// Module for Reader
-pub mod reader;
 
-pub use self::writer::Writer;
-pub use self::reader::*;
+/// NFS Errors
+pub enum NFSError {
+    /// ClientError
+    ClientError(::maidsafe_client::errors::ClientError),
+}
+
+impl From<::maidsafe_client::errors::ClientError> for NFSError {
+    fn from(error: ::maidsafe_client::errors::ClientError) -> NFSError {
+        NFSError::ClientError(error)
+    }
+}
+
+impl ::std::fmt::Display for NFSError {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        match *self {
+            NFSError::ClientError(_)                         => ::std::fmt::Display::fmt("NFSError::ClientError", f), // TODO Improve these containing nested stuff to print as well
+        }
+    }
+}
