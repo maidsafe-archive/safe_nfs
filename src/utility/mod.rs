@@ -15,22 +15,26 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+// TODO remove this function - needless indirection
 /// Return the Secret Signing Key
 pub fn get_secret_signing_key(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> ::sodiumoxide::crypto::sign::SecretKey {
     client.lock().unwrap().get_secret_signing_key().clone()
 }
 
+// TODO remove this function - needless indirection
 /// Returns the Public Signing Key
 pub fn get_public_signing_key(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> ::sodiumoxide::crypto::sign::PublicKey {
     client.lock().unwrap().get_public_signing_key().clone()
 }
 
+// TODO remove this function - needless indirection
 /// Return the Secret Encryption Key
 #[allow(dead_code)]
 pub fn get_secret_encryption_key(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> ::sodiumoxide::crypto::box_::SecretKey {
     client.lock().unwrap().get_secret_encryption_key().clone()
 }
 
+// TODO remove this function - needless indirection
 /// Return the Public Encryption Key
 #[allow(dead_code)]
 pub fn get_public_encryption_key(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> ::sodiumoxide::crypto::box_::PublicKey {
@@ -58,6 +62,7 @@ pub fn get_user_root_directory_id(client: ::std::sync::Arc<::std::sync::Mutex<::
 }
 
 /// Returns the Directory Id for the directory name from the configuration root folder
+#[allow(dead_code)]
 pub fn get_configuration_directory_id(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
                                       directory_name: String) -> Result<::routing::NameType, ::errors::NFSError> {
     let config_root_directory;
@@ -72,14 +77,20 @@ pub fn get_configuration_directory_id(client: ::std::sync::Arc<::std::sync::Mute
         Some(id) => id.clone(),
         None => {
             let created_directory_id = try!(directory_helper.create("MaidSafe_Configuration".to_string(), Vec::new()));
-            let _ = try!(client.lock().unwrap().set_configuration_root_directory_id(created_directory_id.clone()));
+            try!(client.lock().unwrap().set_configuration_root_directory_id(created_directory_id.clone()));
             created_directory_id
         }
     };
-    let config_directory_listing = try!(directory_helper.get(&config_root_id));
+    let mut config_directory_listing = try!(directory_helper.get(&config_root_id));
     match config_directory_listing.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == directory_name.clone()) {
         Some(index) =>  Ok(config_directory_listing.get_sub_directories()[index].get_id().clone()),
-        None => Ok(try!(directory_helper.create(directory_name, Vec::new()))),
+        None => {
+            let new_sub_dir_id = try!(directory_helper.create(directory_name, Vec::new()));
+            let new_dir_listing = try!(directory_helper.get(&new_sub_dir_id));
+            config_directory_listing.get_mut_sub_directories().push(new_dir_listing.get_info().clone());
+            try!(directory_helper.update(&config_directory_listing));
+            Ok(new_sub_dir_id)
+        },
     }
 }
 
@@ -100,15 +111,15 @@ pub fn save_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maid
     se.write(&serialised_data, 0);
     let datamap = se.close();
     let serialised_data_map = try!(::maidsafe_client::utility::serialise(&datamap));
-    let encrypted_data_map = try!(client.lock().unwrap().hybrid_encrypt(&serialised_data_map[..],
+    let encrypted_data_map = try!(client.lock().unwrap().hybrid_encrypt(&serialised_data_map,
                                                                         Some(&generate_nonce(directory_listing.get_id()))));
     save_as_immutable_data(client.clone(), encrypted_data_map, ::maidsafe_client::client::ImmutableDataType::Normal)
 }
 
 /// Get DirectoryListing from the network
 pub fn get_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-                              directory_id: &::routing::NameType,
-                              version: ::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NFSError> {
+                             directory_id: &::routing::NameType,
+                             version: ::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NFSError> {
     // Get immutable data
     let nonce = generate_nonce(directory_id);
     let immutable_data = try!(get_immutable_data(client.clone(), version, ::maidsafe_client::client::ImmutableDataType::Normal));
@@ -128,7 +139,7 @@ pub fn get_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maids
 pub fn get_structured_data(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
                            id: ::routing::NameType,
                            type_tag: u64) -> Result<::maidsafe_client::client::StructuredData, ::errors::NFSError> {
-
+    // TODO Wrong - location of structured data is StructuredData::compute_location(tag, &id)
     let mut response_getter = try!(client.lock().unwrap().get(id, ::maidsafe_client::client::DataRequest::StructuredData(type_tag)));
     let data = try!(response_getter.get());
     match data {
