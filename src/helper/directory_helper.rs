@@ -15,8 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::ops::DerefMut;
-
 /// DirectoryHelper provides helper functions to perform Operations on Directory
 pub struct DirectoryHelper {
     client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
@@ -40,8 +38,7 @@ impl DirectoryHelper {
         let signing_key = ::utility::get_secret_signing_key(self.client.clone());
         let owner_key = ::utility::get_public_signing_key(self.client.clone());
         let mut mutex_client = self.client.lock().unwrap();
-        let mut client = mutex_client.deref_mut();
-        let structured_data = try!(::maidsafe_client::structured_data_operations::versioned::create(client,
+        let structured_data = try!(::maidsafe_client::structured_data_operations::versioned::create(&mut *mutex_client,
                                                                                                     version,
                                                                                                     ::VERSION_DIRECTORY_LISTING_TAG,
                                                                                                     directory.get_id().clone(),
@@ -49,7 +46,7 @@ impl DirectoryHelper {
                                                                                                     vec![owner_key],
                                                                                                     Vec::new(),
                                                                                                     &signing_key));
-        let _ = client.put(directory.get_id().clone(), ::maidsafe_client::client::Data::StructuredData(structured_data));
+        let _ = mutex_client.put(directory.get_id().clone(), ::maidsafe_client::client::Data::StructuredData(structured_data));
         Ok(directory.get_id().clone())
     }
 
@@ -64,12 +61,11 @@ impl DirectoryHelper {
         let signing_key = ::utility::get_secret_signing_key(self.client.clone());
 
         let mut mutex_client = self.client.lock().unwrap();
-        let mut client = mutex_client.deref_mut();
-        let updated_structured_data = try!(::maidsafe_client::structured_data_operations::versioned::append_version(client,
+        let updated_structured_data = try!(::maidsafe_client::structured_data_operations::versioned::append_version(&mut *mutex_client,
                                                                                                                     structured_data,
                                                                                                                     version,
                                                                                                                     &signing_key));
-        let _ = client.post(directory.get_id().clone(), ::maidsafe_client::client::Data::StructuredData(updated_structured_data));
+        let _ = mutex_client.post(directory.get_id().clone(), ::maidsafe_client::client::Data::StructuredData(updated_structured_data));
         Ok(())
     }
 
@@ -77,10 +73,7 @@ impl DirectoryHelper {
     // TODO version parameter change it to value instead of &
     pub fn get_versions(&mut self, directory_id: &::routing::NameType) -> Result<Vec<::routing::NameType>, ::errors::NFSError> {
         let structured_data = try!(::utility::get_structured_data(self.client.clone(), directory_id.clone(), ::VERSION_DIRECTORY_LISTING_TAG));
-
-        let mut mutex_client = self.client.lock().unwrap();
-        let mut client = mutex_client.deref_mut();
-        Ok(try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(client, &structured_data)))
+        Ok(try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data)))
     }
 
     /// Return the DirectoryListing for the specified version
@@ -95,12 +88,7 @@ impl DirectoryHelper {
     // TODO version parameter change it to value instead of &
     pub fn get(&mut self, directory_id: &::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NFSError> {
         let structured_data = try!(::utility::get_structured_data(self.client.clone(), directory_id.clone(), ::VERSION_DIRECTORY_LISTING_TAG));
-        let versions: _;
-        {
-           let mut mutex_client = self.client.lock().unwrap();
-           let mut client = mutex_client.deref_mut();
-           versions = try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(client, &structured_data));
-        }
+        let versions = try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data));        
         let latest_version = versions.last().unwrap();
         self.get_by_version(directory_id, &latest_version)
     }

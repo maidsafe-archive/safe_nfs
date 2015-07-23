@@ -27,7 +27,7 @@ pub struct Reader {
 impl Reader {
     /// Create a new instance of Reader
     pub fn new(file: ::file::File,
-               client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> Reader {        
+               client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> Reader {
         Reader {
             file: file.clone(),
             self_encryptor: ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), file.get_datamap().clone()),
