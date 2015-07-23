@@ -88,7 +88,7 @@ impl DirectoryHelper {
     // TODO version parameter change it to value instead of &
     pub fn get(&mut self, directory_id: &::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NFSError> {
         let structured_data = try!(::utility::get_structured_data(self.client.clone(), directory_id.clone(), ::VERSION_DIRECTORY_LISTING_TAG));
-        let versions = try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data));        
+        let versions = try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data));
         let latest_version = versions.last().unwrap();
         self.get_by_version(directory_id, &latest_version)
     }
