@@ -27,7 +27,7 @@ impl Container {
     /// Authorises the directory access and returns the Container, if authorisation is successful.
     /// Operations can be performed only after the authorisation is successful.
     pub fn authorise(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-                    dir_id: Option<[u8; 64]>) -> Result<Container, ::errors::NFSError> {
+                    dir_id: Option<[u8; 64]>) -> Result<Container, ::errors::NfsError> {
         let directory_id = match dir_id {
             Some(id) => ::routing::NameType(id),
             None => try!(::utility::get_user_root_directory_id(client.clone())),

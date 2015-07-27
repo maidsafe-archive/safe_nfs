@@ -31,48 +31,32 @@ impl DirectoryHelper {
     /// Creates a Directory in the network.
     pub fn create(&mut self,
                   directory_name: String,
-                  user_metadata: Vec<u8>) -> Result<::routing::NameType, ::errors::NFSError> {
-        let directory = ::directory_listing::DirectoryListing::new(directory_name, user_metadata);
+                  user_metadata: Option<Vec<u8>>,
+                  versioned: bool,
+                  share_level: ::ShareLevel) -> Result<&::directory_listing::DirectoryListing, ::errors::NfsError> {
+        let directory = ::directory_listing::DirectoryListing::new(directory_name, user_metadata,
+                                                                   versioned, share_level);
 
-        let version = try!(::utility::save_directory_listing(self.client.clone(), &directory));
-        let signing_key = ::utility::get_secret_signing_key(self.client.clone());
-        let owner_key = ::utility::get_public_signing_key(self.client.clone());
-        let mut mutex_client = self.client.lock().unwrap();
-        let structured_data = try!(::maidsafe_client::structured_data_operations::versioned::create(&mut *mutex_client,
-                                                                                                    version,
-                                                                                                    ::VERSION_DIRECTORY_LISTING_TAG,
-                                                                                                    directory.get_id().clone(),
-                                                                                                    0,
-                                                                                                    vec![owner_key],
-                                                                                                    Vec::new(),
-                                                                                                    &signing_key));
-        // TODO Wrong: location of structured data is
-        // StructuredData::compute_location(::VERSION_DIRECTORY_LISTING_TAG, directory.get_id())
-        let _ = mutex_client.put(directory.get_id().clone(), ::maidsafe_client::client::Data::StructuredData(structured_data));
-        Ok(directory.get_id().clone())
+        let structured_data = try!(::utility::directory_listing_util::save_directory_listing(self.client.clone(), &directory));
+
+        let tag = structured_data.get_tag_type();
+        let id = structured_data.get_identifier();
+        let _ = self.client.lock().unwrap().put(::maidsafe_client::client::StructuredData::compute_name(tag, id),
+                                                ::maidsafe_client::client::Data::StructuredData(structured_data));
+        Ok(&directory)
     }
 
     /// Updates an existing DirectoryListing in the network.
-    pub fn update(&mut self, directory: &::directory_listing::DirectoryListing) -> Result<(), ::errors::NFSError> {
-
-        let version = try!(::utility::save_directory_listing(self.client.clone(), &directory));
-        let structured_data = try!(::utility::get_structured_data(self.client.clone(),
-                                                                  directory.get_id().clone(),
-                                                                  ::VERSION_DIRECTORY_LISTING_TAG));
-        let signing_key = ::utility::get_secret_signing_key(self.client.clone());
-
-        let mut mutex_client = self.client.lock().unwrap();
-        let updated_structured_data = try!(::maidsafe_client::structured_data_operations::versioned::append_version(&mut *mutex_client,
-                                                                                                                    structured_data,
-                                                                                                                    version,
-                                                                                                                    &signing_key));
-        let _ = mutex_client.post(directory.get_id().clone(), ::maidsafe_client::client::Data::StructuredData(updated_structured_data));
+    pub fn update(&mut self, directory: &::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
+        let updated_structured_data = try!(::utility::directory_listing_util::save_directory_listing(self.client.clone(), &directory));
+        let _ = self.client.lock().unwrap().post(directory.get_id().clone(),
+                                  ::maidsafe_client::client::Data::StructuredData(updated_structured_data));
         Ok(())
     }
-
+/*
     /// Return the versions of the directory
     // TODO version parameter change it to value instead of &
-    pub fn get_versions(&mut self, directory_id: &::routing::NameType) -> Result<Vec<::routing::NameType>, ::errors::NFSError> {
+    pub fn get_versions(&mut self, directory_id: &::routing::NameType) -> Result<Vec<::routing::NameType>, ::errors::NfsError> {
         let structured_data = try!(::utility::get_structured_data(self.client.clone(), directory_id.clone(), ::VERSION_DIRECTORY_LISTING_TAG));
         Ok(try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data)))
     }
@@ -81,23 +65,29 @@ impl DirectoryHelper {
     // TODO version parameter change it to value instead of &
     pub fn get_by_version(&mut self,
                           directory_id: &::routing::NameType,
-                          version: &::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NFSError> {
+                          version: &::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         Ok(try!(::utility::get_directory_listing(self.client.clone(), directory_id, version.clone())))
     }
 
     /// Return the DirectoryListing for the latest version
     // TODO version parameter change it to value instead of &
-    pub fn get(&mut self, directory_id: &::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NFSError> {
+    pub fn get(&mut self, directory_id: &::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         let structured_data = try!(::utility::get_structured_data(self.client.clone(), directory_id.clone(), ::VERSION_DIRECTORY_LISTING_TAG));
         let versions = try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data));
         let latest_version = versions.last().unwrap();
         self.get_by_version(directory_id, &latest_version)
     }
-
+*/
+    fn get_type_tag(&self, versioned: bool) -> u64 {
+        match versioned {
+            true => ::VERSION_DIRECTORY_LISTING_TAG,
+            false => ::UNVERSION_DIRECTORY_LISTING_TAG,
+        }
+    }
 
 }
 
-
+/*
 #[cfg(test)]
 mod test {
     use super::*;
@@ -202,4 +192,4 @@ mod test {
             assert_eq!(*rxd_dir_listing.get_metadata().get_name(), "DirName2".to_string());
         }
     }
-}
+}*/

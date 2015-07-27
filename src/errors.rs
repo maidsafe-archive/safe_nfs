@@ -17,21 +17,23 @@
 
 
 /// NFS Errors
-pub enum NFSError {
+pub enum NfsError {
     /// ClientError
+    MetaDataMissingOrCorrupted,
     ClientError(::maidsafe_client::errors::ClientError),
 }
 
-impl From<::maidsafe_client::errors::ClientError> for NFSError {
-    fn from(error: ::maidsafe_client::errors::ClientError) -> NFSError {
-        NFSError::ClientError(error)
+impl From<::maidsafe_client::errors::ClientError> for NfsError {
+    fn from(error: ::maidsafe_client::errors::ClientError) -> NfsError {
+        NfsError::ClientError(error)
     }
 }
 
-impl ::std::fmt::Display for NFSError {
+impl ::std::fmt::Debug for NfsError {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         match *self {
-            NFSError::ClientError(_)                         => ::std::fmt::Display::fmt("NFSError::ClientError", f), // TODO Improve these containing nested stuff to print as well
+            MetaDataMissingOrCorrupted              => ::std::fmt::Display::fmt("NfsError::MetaDataMissingOrCorrupted", f),
+            NfsError::ClientError(_)                => ::std::fmt::Display::fmt("NfsError::ClientError", f), // TODO Improve these containing nested stuff to print as well
         }
     }
 }

@@ -58,10 +58,23 @@ pub mod directory_info;
 pub mod directory_listing;
 
 /// Module for input/output to network/file
-pub mod io;
+// pub mod io;
 /// Module for Restful interfaces for storage
-pub mod rest;
+// pub mod rest;
 /// Utility functions
 pub mod utility;
+/// Root directory name
+pub const ROOT_DIRECTORY_NAME: &'static str = "root";
+/// Configuration directory Name stored in the session packet
+pub const CONFIGURATION_DIRECTORY_NAME: &'static str = "MaidSafe_Configuration";
 /// Tag representing the Versioned Directory Listing
-pub const VERSION_DIRECTORY_LISTING_TAG: u64 = ::maidsafe_client::MAIDSAFE_TAG + 1;
+pub const VERSION_DIRECTORY_LISTING_TAG: u64 = ::maidsafe_client::MAIDSAFE_TAG + 100;
+/// Tag representing the Versioned Directory Listing
+pub const UNVERSION_DIRECTORY_LISTING_TAG: u64 = ::maidsafe_client::MAIDSAFE_TAG + 101;
+
+/// ShareLebvel indicates whether the container is private or public shared
+#[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
+pub enum ShareLevel {
+    PRIVATE,
+    PUBLIC,
+}
