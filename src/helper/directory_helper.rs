@@ -53,36 +53,27 @@ impl DirectoryHelper {
                                   ::maidsafe_client::client::Data::StructuredData(updated_structured_data));
         Ok(())
     }
-/*
+
     /// Return the versions of the directory
-    // TODO version parameter change it to value instead of &
     pub fn get_versions(&mut self, directory_id: &::routing::NameType) -> Result<Vec<::routing::NameType>, ::errors::NfsError> {
         let structured_data = try!(::utility::get_structured_data(self.client.clone(), directory_id.clone(), ::VERSION_DIRECTORY_LISTING_TAG));
         Ok(try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data)))
     }
 
     /// Return the DirectoryListing for the specified version
-    // TODO version parameter change it to value instead of &
     pub fn get_by_version(&mut self,
                           directory_id: &::routing::NameType,
-                          version: &::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
-        Ok(try!(::utility::get_directory_listing(self.client.clone(), directory_id, version.clone())))
+                          share_level: ::ShareLevel,
+                          version: ::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+        ::utility::directory_listing_util::get_directory_listing_for_version(self.client.clone(), directory_id, share_level, version)
     }
 
     /// Return the DirectoryListing for the latest version
-    // TODO version parameter change it to value instead of &
-    pub fn get(&mut self, directory_id: &::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
-        let structured_data = try!(::utility::get_structured_data(self.client.clone(), directory_id.clone(), ::VERSION_DIRECTORY_LISTING_TAG));
-        let versions = try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data));
-        let latest_version = versions.last().unwrap();
-        self.get_by_version(directory_id, &latest_version)
-    }
-*/
-    fn get_type_tag(&self, versioned: bool) -> u64 {
-        match versioned {
-            true => ::VERSION_DIRECTORY_LISTING_TAG,
-            false => ::UNVERSION_DIRECTORY_LISTING_TAG,
-        }
+    pub fn get(&mut self, directory_id: ::routing::NameType, versioned: bool, share_level: ::ShareLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+        ::utility::directory_listing_util::get_directory_listing(self.client.clone(),
+                                                                &directory_id,
+                                                                versioned,
+                                                                share_level)
     }
 
 }

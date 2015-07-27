@@ -25,22 +25,14 @@ pub fn generate_nonce(directory_id: &::routing::NameType) -> ::sodiumoxide::cryp
 }
 
 /// Get DirectoryListing from the network
-pub fn get_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-                             directory_id: &::routing::NameType,
-                             version: ::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+pub fn get_directory_listing_for_version(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+                                         directory_id: &::routing::NameType,
+                                         share_level: ::ShareLevel,
+                                         version: ::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
     // Get immutable data
     let nonce = generate_nonce(directory_id);
     let immutable_data = try!(::utility::get_immutable_data(client.clone(), version, ::maidsafe_client::client::ImmutableDataType::Normal));
-    // Hybrid Decrypt
-    let decrypted_data_map = try!(client.lock().unwrap().hybrid_decrypt(&immutable_data.value()[..], Some(&nonce)));
-    // Desrialise Datamap
-    let datamap: ::self_encryption::datamap::DataMap = try!(::maidsafe_client::utility::deserialise(&decrypted_data_map));
-    // read Data
-    let mut se = ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), datamap);
-    let length = se.len();
-    let serialised_directory_listing = se.read(0, length);
-    // Desrialise DirectoryListing
-    Ok(try!(::maidsafe_client::utility::deserialise(&serialised_directory_listing)))
+    ::utility::directory_listing_util::decrypt_directory_listing(client.clone(), directory_id, share_level, immutable_data.value().clone())
 }
 
 /// Get DirectoryInfo of sub_directory within a DirectoryListing.
@@ -55,6 +47,19 @@ pub fn find_sub_directory(directory_listing: &::directory_listing::DirectoryList
 pub fn find_file(directory_listing: &::directory_listing::DirectoryListing,
                  file_name: String) -> Option<&::file::File> {
     directory_listing.get_files().iter().find(|file| *file.get_name() == file_name)
+}
+
+pub fn get_encryption_keys(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+                           share_level: ::ShareLevel,
+                           directory_id: &::routing::NameType) -> Option<(&::sodiumoxide::crypto::box_::PublicKey,
+                                                                          &::sodiumoxide::crypto::box_::SecretKey,
+                                                                          &::sodiumoxide::crypto::box_::Nonce)> {
+    match share_level {
+        PRIVATE => Some((client.lock().unwrap().get_public_encryption_key(),
+                         client.lock().unwrap().get_secret_encryption_key(),
+                         &::utility::directory_listing_util::generate_nonce(directory_id))),
+        PUBLIC => None,
+    }
 }
 
 /// Saves the DirectoryListing in the network
@@ -80,32 +85,66 @@ pub fn save_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maid
                                                                  encrypted_data,
                                                                  ::maidsafe_client::client::ImmutableDataType::Normal));
             Ok(try!(::maidsafe_client::structured_data_operations::versioned::create(&mut *client.lock().unwrap(),
-                                                                                  version,
-                                                                                  ::VERSION_DIRECTORY_LISTING_TAG,
-                                                                                  directory.get_id().clone(),
-                                                                                  0,
-                                                                                  vec![owner_key.clone()],
-                                                                                  Vec::new(),
-                                                                                  &signing_key)))
+                                                                                     version,
+                                                                                     ::VERSION_DIRECTORY_LISTING_TAG,
+                                                                                     directory.get_id().clone(),
+                                                                                     0,
+                                                                                     vec![owner_key.clone()],
+                                                                                     Vec::new(),
+                                                                                     &signing_key)))
         },
         false => {
-            let encryption_keys = match share_level {
-                PRIVATE => Some((client.lock().unwrap().get_public_encryption_key(),
-                                 client.lock().unwrap().get_secret_encryption_key(),
-                                 &::utility::directory_listing_util::generate_nonce(directory.get_id()))),
-                PUBLIC => None,
-            };
+            let encryption_keys = ::utility::directory_listing_util::get_encryption_keys(client.clone(),
+                                                                                         share_level,
+                                                                                         directory.get_id());
             Ok(try!(::maidsafe_client::structured_data_operations::unversioned::create(client.clone(),
-                                                                                    ::UNVERSION_DIRECTORY_LISTING_TAG,
-                                                                                    directory.get_id().clone(),
-                                                                                    0,
-                                                                                    encrypted_data,
-                                                                                    vec![owner_key.clone()],
-                                                                                    Vec::new(),
-                                                                                    &signing_key,
-                                                                                    encryption_keys)))
+                                                                                       ::UNVERSION_DIRECTORY_LISTING_TAG,
+                                                                                       directory.get_id().clone(),
+                                                                                       0,
+                                                                                       encrypted_data,
+                                                                                       vec![owner_key.clone()],
+                                                                                       Vec::new(),
+                                                                                       &signing_key,
+                                                                                       encryption_keys)))
         },
     }
+}
+
+pub fn get_tag_type(versioned: bool) -> u64 {
+    match versioned {
+        true => ::VERSION_DIRECTORY_LISTING_TAG,
+        false => ::UNVERSION_DIRECTORY_LISTING_TAG,
+    }
+}
+
+pub fn get_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+                             directory_id: &::routing::NameType,
+                             versioned: bool,
+                             share_level: ::ShareLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+        // get structured_data
+        let tag = get_tag_type(versioned);
+        let structured_data = try!(::utility::get_structured_data(client.clone(),
+                                                                  ::maidsafe_client::client::StructuredData::compute_name(tag, directory_id),
+                                                                  tag));
+        match versioned {
+            true => {
+                let versions = try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *client.lock().unwrap(), &structured_data));
+                let latest_version = versions.last().unwrap();
+                get_directory_listing_for_version(client.clone(), directory_id, share_level, latest_version.clone())
+            },
+            false => {
+                let encryption_keys = ::utility::directory_listing_util::get_encryption_keys(client.clone(),
+                                                                                             share_level,
+                                                                                             directory_id);
+                let structured_data = try!(::maidsafe_client::structured_data_operations::unversioned::get_data(client.clone(),
+                                                                                                                &structured_data,
+                                                                                                                encryption_keys));
+                ::utility::directory_listing_util::decrypt_directory_listing(client.clone(),
+                                                                             directory_id,
+                                                                             share_level,
+                                                                             structured_data)
+            },
+        };
 }
 
 pub fn encrypt_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
@@ -115,5 +154,22 @@ pub fn encrypt_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::m
     se.write(&serialised_data, 0);
     let datamap = se.close();
     let serialised_data_map = try!(::maidsafe_client::utility::serialise(&datamap));
-    try!(client.lock().unwrap().hybrid_encrypt(&serialised_data_map, Some(&generate_nonce(directory_listing.get_id()))));
+    try!(client.lock().unwrap().hybrid_encrypt(&serialised_data_map,
+                                               Some(&::utility::directory_listing_util::generate_nonce(directory_listing.get_id()))));
+}
+
+pub fn decrypt_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+                                 directory_id: &::routing::NameType,
+                                 share_level: ::ShareLevel,
+                                 data: Vec<u8>) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+     let decrypted_data_map = match share_level {
+         ::ShareLevel::PRIVATE => try!(client.lock().unwrap().hybrid_decrypt(&data[..],
+                                                                             Some(&::utility::directory_listing_util::generate_nonce(directory_id)))),
+         ::ShareLevel::PUBLIC => data,
+     };
+     let datamap: ::self_encryption::datamap::DataMap = try!(::maidsafe_client::utility::deserialise(&decrypted_data_map));
+     let mut se = ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), datamap);
+     let length = se.len();
+     let serialised_directory_listing = se.read(0, length);
+     Ok(try!(::maidsafe_client::utility::deserialise(&serialised_directory_listing)))
 }
