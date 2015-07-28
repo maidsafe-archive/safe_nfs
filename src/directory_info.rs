@@ -20,12 +20,12 @@
 pub struct DirectoryInfo {
     id: ::routing::NameType,
     // parent_dir_id: ::routing::NameType,
-    metadata: ::metadata::Metadata,
+    metadata: ::directory_metadata::DirectoryMetadata,
 }
 
 impl DirectoryInfo {
     /// Create a new DirectoryInfo
-    pub fn new(metadata: ::metadata::Metadata) -> DirectoryInfo {
+    pub fn new(metadata: ::directory_metadata::DirectoryMetadata) -> DirectoryInfo {
         DirectoryInfo {
             id: ::routing::test_utils::Random::generate_random(),
             // parent_dir_id: parent_dir_id,
@@ -34,19 +34,19 @@ impl DirectoryInfo {
     }
 
     /// Get the unique ID representing this directory in the network
-    pub fn get_id(&self) -> &::routing::NameType {
-        &self.id
+    pub fn get_key(&self) -> (&::routing::NameType, u64) {
+        (&self.id, self.metadata.get_type_tag())
     }
 
     #[allow(dead_code)]
     /// Get the metadata of this directory. Since return value is mutable it can also be used to
     /// update the metadata
-    pub fn get_mut_metadata(&mut self) -> &mut ::metadata::Metadata {
+    pub fn get_mut_metadata(&mut self) -> &mut ::directory_metadata::DirectoryMetadata {
         &mut self.metadata
     }
 
     /// Get the metadata of this directory
-    pub fn get_metadata(&self) -> &::metadata::Metadata {
+    pub fn get_metadata(&self) -> &::directory_metadata::DirectoryMetadata {
         &self.metadata
     }
 
@@ -62,16 +62,16 @@ impl DirectoryInfo {
 
 impl ::std::fmt::Debug for DirectoryInfo {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "metadata: {}, id: {}", *self.get_metadata(), *self.get_id())
+        write!(f, "metadata: {}, key: {}, {}", *self.get_metadata(), *self.get_key().0, self.get_key().1)
     }
 }
 
 impl ::std::fmt::Display for DirectoryInfo {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "metadata: {}, id: {}", *self.get_metadata(), *self.get_id())
+        write!(f, "metadata: {}, key: {}, {}", *self.get_metadata(), *self.get_key().0, self.get_key().1)
     }
 }
-
+/*
 #[cfg(test)]
 mod test {
     use super::*;
@@ -90,3 +90,4 @@ mod test {
         assert_eq!(obj_before, obj_after);
     }
 }
+*/

@@ -40,7 +40,7 @@ pub fn encrypt_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::m
     se.write(&serialised_data, 0);
     let datamap = se.close();
     let serialised_data_map = try!(::maidsafe_client::utility::serialise(&datamap));
-    Ok(try!(client.lock().unwrap().hybrid_encrypt(&serialised_data_map, Some(&::utility::directory_listing_util::generate_nonce(directory_listing.get_id())))))
+    Ok(try!(client.lock().unwrap().hybrid_encrypt(&serialised_data_map, Some(&::utility::directory_listing_util::generate_nonce(directory_listing.get_key().0)))))
 }
 
 /// Get DirectoryInfo of sub_directory within a DirectoryListing.
@@ -133,8 +133,8 @@ pub fn save_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maid
                               directory: &::directory_listing::DirectoryListing) -> Result<::maidsafe_client::client::StructuredData, ::errors::NfsError> {
     let signing_key = client.lock().unwrap().get_secret_signing_key().clone();
     let owner_key = client.lock().unwrap().get_public_signing_key().clone();
-    let share_level = try!(directory.get_metadata().get_share_level().ok_or(::errors::NfsError::MetaDataMissingOrCorrupted));
-    let versioned = try!(directory.get_metadata().is_versioned().ok_or(::errors::NfsError::MetaDataMissingOrCorrupted));
+    let share_level = directory.get_metadata().get_access_level();
+    let versioned = directory.get_metadata().is_versioned();
     let encrypted_data = match share_level {
         ::AccessLevel::Private => try!(::utility::directory_listing_util::encrypt_directory_listing(client.clone(), &directory)),
         ::AccessLevel::Public => try!(::maidsafe_client::utility::serialise(&directory)),
@@ -147,7 +147,7 @@ pub fn save_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maid
             Ok(try!(::maidsafe_client::structured_data_operations::versioned::create(&mut *client.lock().unwrap(),
                                                                                      version,
                                                                                      ::VERSION_DIRECTORY_LISTING_TAG,
-                                                                                     directory.get_id().clone(),
+                                                                                     directory.get_key().0.clone(),
                                                                                      0,
                                                                                      vec![owner_key.clone()],
                                                                                      Vec::new(),
@@ -156,7 +156,7 @@ pub fn save_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maid
         false => {
             let private_key = client.lock().unwrap().get_public_encryption_key().clone();
             let secret_key = client.lock().unwrap().get_secret_encryption_key().clone();
-            let nonce = ::utility::directory_listing_util::generate_nonce(directory.get_id());
+            let nonce = ::utility::directory_listing_util::generate_nonce(directory.get_key().0);
             let encryption_keys = match share_level {
                 ::AccessLevel::Private => Some((&private_key,
                                                &secret_key,
@@ -165,7 +165,7 @@ pub fn save_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maid
             };
             Ok(try!(::maidsafe_client::structured_data_operations::unversioned::create(client.clone(),
                                                                                        ::UNVERSION_DIRECTORY_LISTING_TAG,
-                                                                                       directory.get_id().clone(),
+                                                                                       directory.get_key().0.clone(),
                                                                                        0,
                                                                                        encrypted_data,
                                                                                        vec![owner_key.clone()],

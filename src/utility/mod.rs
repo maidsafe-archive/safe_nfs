@@ -30,11 +30,12 @@ pub fn get_user_root_directory_id(client: ::std::sync::Arc<::std::sync::Mutex<::
     let directory_helper = ::helper::DirectoryHelper::new(client.clone());
     match root_directory {
         Some(id) => {
-            directory_helper.get(id, false, ::AccessLevel::Private)
+            directory_helper.get((&id, ::UNVERSION_DIRECTORY_LISTING_TAG), false, ::AccessLevel::Private)
         },
         None => {
-            let created_directory = try!(directory_helper.create(::ROOT_DIRECTORY_NAME.to_string(), None, false, ::AccessLevel::Private));
-            let _ = try!(client.lock().unwrap().set_user_root_directory_id(created_directory.get_id().clone()));
+            let created_directory = try!(directory_helper.create(::ROOT_DIRECTORY_NAME.to_string(), ::UNVERSION_DIRECTORY_LISTING_TAG,
+                                                                 None, false, ::AccessLevel::Private));
+            let _ = try!(client.lock().unwrap().set_user_root_directory_id(created_directory.get_key().0.clone()));
             Ok(created_directory)
         }
     }
@@ -54,19 +55,20 @@ pub fn get_configuration_directory(client: ::std::sync::Arc<::std::sync::Mutex<:
     }
     let directory_helper = ::helper::DirectoryHelper::new(client.clone());
     let mut config_directory_listing = match config_root_directory {
-        Some(id) => try!(directory_helper.get(id, false, ::AccessLevel::Private)),
+        Some(id) => try!(directory_helper.get((&id, ::UNVERSION_DIRECTORY_LISTING_TAG), false, ::AccessLevel::Private)),
         None => {
-            let created_directory = try!(directory_helper.create(::CONFIGURATION_DIRECTORY_NAME.to_string(), None, false, ::AccessLevel::Private));
-            try!(client.lock().unwrap().set_configuration_root_directory_id(created_directory.get_id().clone()));
+            let created_directory = try!(directory_helper.create(::CONFIGURATION_DIRECTORY_NAME.to_string(), ::UNVERSION_DIRECTORY_LISTING_TAG,
+                                                                 None, false, ::AccessLevel::Private));
+            try!(client.lock().unwrap().set_configuration_root_directory_id(created_directory.get_key().0.clone()));
             created_directory
         }
     };
     match config_directory_listing.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == directory_name.clone()) {
-        Some(index) => Ok(try!(directory_helper.get(config_directory_listing.get_sub_directories()[index].get_id().clone(),
+        Some(index) => Ok(try!(directory_helper.get(config_directory_listing.get_sub_directories()[index].get_key(),
                                                     false,
                                                     ::AccessLevel::Private))),
         None => {
-            let new_dir_listing = try!(directory_helper.create(directory_name, None, false, ::AccessLevel::Private));
+            let new_dir_listing = try!(directory_helper.create(directory_name, ::UNVERSION_DIRECTORY_LISTING_TAG, None, false, ::AccessLevel::Private));
             config_directory_listing.get_mut_sub_directories().push(new_dir_listing.get_info().clone());
             try!(directory_helper.update(&config_directory_listing));
             Ok(new_dir_listing)

@@ -25,13 +25,14 @@ pub struct DirectoryListing {
 
 impl DirectoryListing {
     /// Create a new DirectoryListing
-    pub fn new(name: String, user_metadata: Option<Vec<u8>>,
+    pub fn new(name: String, tag_type: u64, user_metadata: Option<Vec<u8>>,
                versioned: bool, share_level: ::AccessLevel) -> DirectoryListing {
         DirectoryListing {
-            info: ::directory_info::DirectoryInfo::new(::metadata::Metadata::new(name,
-                                                                                 user_metadata,
-                                                                                 Some(versioned),
-                                                                                 Some(share_level))),
+            info: ::directory_info::DirectoryInfo::new(::directory_metadata::DirectoryMetadata::new(name,
+                                                                                                    tag_type,
+                                                                                                    user_metadata,
+                                                                                                    versioned,
+                                                                                                    share_level)),
             sub_directories: Vec::new(),
             files: Vec::new(),
         }
@@ -44,12 +45,12 @@ impl DirectoryListing {
 
     #[allow(dead_code)]
     /// Get Directory metadata in mutable format so that it can also be updated
-    pub fn get_mut_metadata(&mut self) -> &mut ::metadata::Metadata {
+    pub fn get_mut_metadata(&mut self) -> &mut ::directory_metadata::DirectoryMetadata {
         self.info.get_mut_metadata()
     }
 
     /// Get Directory metadata
-    pub fn get_metadata(&self) -> &::metadata::Metadata {
+    pub fn get_metadata(&self) -> &::directory_metadata::DirectoryMetadata {
         self.info.get_metadata()
     }
 
@@ -86,23 +87,23 @@ impl DirectoryListing {
     }
 
     /// Get the unique ID that represents this DirectoryListing in the network
-    pub fn get_id(&self) -> &::routing::NameType {
-        self.info.get_id()
+    pub fn get_key(&self) ->  (&::routing::NameType, u64) {
+        self.info.get_key()
     }
 }
 
 impl ::std::fmt::Debug for DirectoryListing {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "id: {}, metadata: {}", *self.info.get_id(), *self.info.get_metadata())
+        write!(f, "info: {}", self.info)
     }
 }
 
 impl ::std::fmt::Display for DirectoryListing {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "id: {}, metadata: {}", *self.info.get_id(), *self.info.get_metadata())
+        write!(f, "info: {}", self.info)
     }
 }
-
+/*
 #[cfg(test)]
 mod test {
     use super::*;
@@ -121,3 +122,4 @@ mod test {
         assert_eq!(obj_before, obj_after);
     }
 }
+*/

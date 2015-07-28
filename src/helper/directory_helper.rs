@@ -31,17 +31,17 @@ impl DirectoryHelper {
     /// Creates a Directory in the network.
     pub fn create(&self,
                   directory_name: String,
+                  tag_type: u64,
                   user_metadata: Option<Vec<u8>>,
                   versioned: bool,
                   share_level: ::AccessLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
-        let directory = ::directory_listing::DirectoryListing::new(directory_name, user_metadata,
+        let directory = ::directory_listing::DirectoryListing::new(directory_name, tag_type, user_metadata,
                                                                    versioned, share_level);
 
         let structured_data = try!(::utility::directory_listing_util::save_directory_listing(self.client.clone(), &directory));
 
-        let tag = structured_data.get_tag_type();
         let id = structured_data.get_identifier();
-        let _ = self.client.lock().unwrap().put(::maidsafe_client::client::StructuredData::compute_name(tag, id),
+        let _ = self.client.lock().unwrap().put(::maidsafe_client::client::StructuredData::compute_name(tag_type, id),
                                                 ::maidsafe_client::client::Data::StructuredData(structured_data.clone()));
         Ok(directory)
     }
@@ -62,29 +62,30 @@ impl DirectoryHelper {
     /// Updates an existing DirectoryListing in the network.
     pub fn update(&self, directory: &::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
         let updated_structured_data = try!(::utility::directory_listing_util::save_directory_listing(self.client.clone(), &directory));
-        let _ = self.client.lock().unwrap().post(directory.get_id().clone(),
-                                  ::maidsafe_client::client::Data::StructuredData(updated_structured_data));
+        let _ = self.client.lock().unwrap().post(directory.get_key().0.clone(),
+                                                 ::maidsafe_client::client::Data::StructuredData(updated_structured_data));
         Ok(())
     }
 
     /// Return the versions of the directory
-    pub fn get_versions(&self, directory_id: &::routing::NameType) -> Result<Vec<::routing::NameType>, ::errors::NfsError> {
-        let structured_data = try!(::utility::get_structured_data(self.client.clone(), directory_id.clone(), ::VERSION_DIRECTORY_LISTING_TAG));
+    pub fn get_versions(&self, directory_key: (&::routing::NameType, u64)) -> Result<Vec<::routing::NameType>, ::errors::NfsError> {
+        let structured_data = try!(::utility::get_structured_data(self.client.clone(), directory_key.0.clone(), ::VERSION_DIRECTORY_LISTING_TAG));
         Ok(try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data)))
     }
 
     /// Return the DirectoryListing for the specified version
     pub fn get_by_version(&self,
-                          directory_id: &::routing::NameType,
+                          directory_key: (&::routing::NameType, u64),
                           share_level: ::AccessLevel,
                           version: ::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
-        ::utility::directory_listing_util::get_directory_listing_for_version(self.client.clone(), directory_id, share_level, version)
+        ::utility::directory_listing_util::get_directory_listing_for_version(self.client.clone(), directory_key.0, share_level, version)
     }
 
     /// Return the DirectoryListing for the latest version
-    pub fn get(&self, directory_id: ::routing::NameType, versioned: bool, share_level: ::AccessLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+    pub fn get(&self, directory_key: (&::routing::NameType, u64),
+               versioned: bool, share_level: ::AccessLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         ::utility::directory_listing_util::get_directory_listing(self.client.clone(),
-                                                                &directory_id,
+                                                                directory_key.0,
                                                                 versioned,
                                                                 share_level)
     }

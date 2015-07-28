@@ -53,6 +53,7 @@ extern crate maidsafe_client;
 pub mod file;
 pub mod errors;
 pub mod helper;
+pub mod directory_metadata;
 pub mod metadata;
 pub mod directory_info;
 pub mod directory_listing;
@@ -73,7 +74,7 @@ pub const VERSION_DIRECTORY_LISTING_TAG: u64 = ::maidsafe_client::MAIDSAFE_TAG +
 pub const UNVERSION_DIRECTORY_LISTING_TAG: u64 = ::maidsafe_client::MAIDSAFE_TAG + 101;
 
 /// ShareLebvel indicates whether the container is Private or Public shared
-#[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub enum AccessLevel {
     Private,
     Public,
