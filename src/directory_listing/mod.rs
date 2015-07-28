@@ -15,11 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+pub mod directory_info;
+
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
 /// DirectoryListing is the representation of a deserialised Directory in the network
 pub struct DirectoryListing {
-    info: ::directory_info::DirectoryInfo,
-    sub_directories: Vec<::directory_info::DirectoryInfo>,
+    info: ::directory_listing::directory_info::DirectoryInfo,
+    sub_directories: Vec<::directory_listing::directory_info::DirectoryInfo>,
     files: Vec<::file::File>,
 }
 
@@ -28,18 +30,18 @@ impl DirectoryListing {
     pub fn new(name: String, tag_type: u64, user_metadata: Option<Vec<u8>>,
                versioned: bool, share_level: ::AccessLevel) -> DirectoryListing {
         DirectoryListing {
-            info: ::directory_info::DirectoryInfo::new(::directory_metadata::DirectoryMetadata::new(name,
-                                                                                                    tag_type,
-                                                                                                    user_metadata,
-                                                                                                    versioned,
-                                                                                                    share_level)),
+            info: ::directory_listing::directory_info::DirectoryInfo::new(::directory_metadata::DirectoryMetadata::new(name,
+                                                                                                                       tag_type,
+                                                                                                                       user_metadata,
+                                                                                                                       versioned,
+                                                                                                                       share_level)),
             sub_directories: Vec::new(),
             files: Vec::new(),
         }
     }
 
-    /// Get ::directory_info::DirectoryInfo
-    pub fn get_info(&self) -> &::directory_info::DirectoryInfo {
+    /// Get ::directory_listing::directory_info::DirectoryInfo
+    pub fn get_info(&self) -> &::directory_listing::directory_info::DirectoryInfo {
         &self.info
     }
 
@@ -77,12 +79,12 @@ impl DirectoryListing {
     }
 
     /// Get all subdirectories in this DirectoryListing
-    pub fn get_sub_directories(&self) -> &Vec<::directory_info::DirectoryInfo> {
+    pub fn get_sub_directories(&self) -> &Vec<::directory_listing::directory_info::DirectoryInfo> {
         &self.sub_directories
     }
 
     /// Get all subdirectories in this DirectoryListing with mutability to update the listing of subdirectories
-    pub fn get_mut_sub_directories(&mut self) -> &mut Vec<::directory_info::DirectoryInfo> {
+    pub fn get_mut_sub_directories(&mut self) -> &mut Vec<::directory_listing::directory_info::DirectoryInfo> {
         &mut self.sub_directories
     }
 

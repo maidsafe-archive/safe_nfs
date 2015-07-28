@@ -91,8 +91,8 @@ pub fn get_structured_data(client: ::std::sync::Arc<::std::sync::Mutex<::maidsaf
 
 /// Get ImmutableData from the Network
 pub fn get_immutable_data(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-                           id: ::routing::NameType,
-                           data_type: ::maidsafe_client::client::ImmutableDataType) -> Result<::maidsafe_client::client::ImmutableData, ::errors::NfsError> {
+                          id: ::routing::NameType,
+                          data_type: ::maidsafe_client::client::ImmutableDataType) -> Result<::maidsafe_client::client::ImmutableData, ::errors::NfsError> {
     let mut response_getter = try!(client.lock().unwrap().get(id, ::maidsafe_client::client::DataRequest::ImmutableData(data_type)));
     let data = try!(response_getter.get());
     match data {
@@ -103,8 +103,8 @@ pub fn get_immutable_data(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe
 
 /// Saves the data as ImmutableData in the network and returns the name
 pub fn save_as_immutable_data(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-                             data: Vec<u8>,
-                             data_type: ::maidsafe_client::client::ImmutableDataType) -> Result<::routing::NameType, ::errors::NfsError> {
+                              data: Vec<u8>,
+                              data_type: ::maidsafe_client::client::ImmutableDataType) -> Result<::routing::NameType, ::errors::NfsError> {
     let immutable_data = ::maidsafe_client::client::ImmutableData::new(data_type, data);
     let name = immutable_data.name();
     let _ = client.lock().unwrap().put(name.clone(),

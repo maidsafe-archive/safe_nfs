@@ -54,7 +54,7 @@ pub fn find_file(directory_listing: &::directory_listing::DirectoryListing,
 /// Get DirectoryInfo of sub_directory within a DirectoryListing.
 /// Returns the Option<DirectoryInfo> for the directory_name from the DirectoryListing
 pub fn find_sub_directory(directory_listing: &::directory_listing::DirectoryListing,
-                          directory_name: String) -> Option<&::directory_info::DirectoryInfo> {
+                          directory_name: String) -> Option<&::directory_listing::directory_info::DirectoryInfo> {
     directory_listing.get_sub_directories().iter().find(|info| *info.get_name() == directory_name)
 }
 

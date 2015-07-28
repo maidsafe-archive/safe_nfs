@@ -55,7 +55,6 @@ pub mod errors;
 pub mod helper;
 pub mod directory_metadata;
 pub mod metadata;
-pub mod directory_info;
 pub mod directory_listing;
 
 /// Module for input/output to network/file
