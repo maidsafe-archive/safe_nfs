@@ -74,7 +74,7 @@ pub const UNVERSION_DIRECTORY_LISTING_TAG: u64 = ::maidsafe_client::MAIDSAFE_TAG
 
 /// ShareLebvel indicates whether the container is Private or Public shared
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
-pub enum ShareLevel {
+pub enum AccessLevel {
     Private,
     Public,
 }

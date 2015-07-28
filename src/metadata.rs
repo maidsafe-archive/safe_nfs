@@ -26,12 +26,12 @@ pub struct Metadata {
     modified_time: ::time::Tm,
     user_metadata: Option<Vec<u8>>,
     versioned: Option<bool>,
-    share_level: Option<::ShareLevel>,
+    share_level: Option<::AccessLevel>,
 }
 
 impl Metadata {
     /// Create a new instance of Metadata
-    pub fn new(name: String, user_metadata: Option<Vec<u8>>, versioned: Option<bool>, share_level: Option<::ShareLevel>) -> Metadata {
+    pub fn new(name: String, user_metadata: Option<Vec<u8>>, versioned: Option<bool>, share_level: Option<::AccessLevel>) -> Metadata {
         Metadata {
             name: name,
             size: 0,
@@ -59,8 +59,8 @@ impl Metadata {
         &self.name
     }
 
-    /// Returns the Sharelevel
-    pub fn get_share_level(&self) -> Option<::ShareLevel> {
+    /// Returns the AccessLevel
+    pub fn get_share_level(&self) -> Option<::AccessLevel> {
         self.share_level.clone()
     }
 

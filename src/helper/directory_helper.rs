@@ -33,7 +33,7 @@ impl DirectoryHelper {
                   directory_name: String,
                   user_metadata: Option<Vec<u8>>,
                   versioned: bool,
-                  share_level: ::ShareLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+                  share_level: ::AccessLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         let directory = ::directory_listing::DirectoryListing::new(directory_name, user_metadata,
                                                                    versioned, share_level);
 
@@ -76,13 +76,13 @@ impl DirectoryHelper {
     /// Return the DirectoryListing for the specified version
     pub fn get_by_version(&self,
                           directory_id: &::routing::NameType,
-                          share_level: ::ShareLevel,
+                          share_level: ::AccessLevel,
                           version: ::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         ::utility::directory_listing_util::get_directory_listing_for_version(self.client.clone(), directory_id, share_level, version)
     }
 
     /// Return the DirectoryListing for the latest version
-    pub fn get(&self, directory_id: ::routing::NameType, versioned: bool, share_level: ::ShareLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+    pub fn get(&self, directory_id: ::routing::NameType, versioned: bool, share_level: ::AccessLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         ::utility::directory_listing_util::get_directory_listing(self.client.clone(),
                                                                 &directory_id,
                                                                 versioned,

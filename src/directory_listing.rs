@@ -26,7 +26,7 @@ pub struct DirectoryListing {
 impl DirectoryListing {
     /// Create a new DirectoryListing
     pub fn new(name: String, user_metadata: Option<Vec<u8>>,
-               versioned: bool, share_level: ::ShareLevel) -> DirectoryListing {
+               versioned: bool, share_level: ::AccessLevel) -> DirectoryListing {
         DirectoryListing {
             info: ::directory_info::DirectoryInfo::new(::metadata::Metadata::new(name,
                                                                                  user_metadata,
@@ -110,7 +110,7 @@ mod test {
 
     #[test]
     fn serialise() {
-        let obj_before = DirectoryListing::new("Home".to_string(), Some("{mime:\"application/json\"}".to_string().into_bytes()), true, ::ShareLevel::Private);
+        let obj_before = DirectoryListing::new("Home".to_string(), Some("{mime:\"application/json\"}".to_string().into_bytes()), true, ::AccessLevel::Private);
 
         let mut e = cbor::Encoder::from_memory();
         e.encode(&[&obj_before]).unwrap();
