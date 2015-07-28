@@ -120,6 +120,7 @@ pub fn get_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maids
         }
 }
 
+/// Returns the type tag for versioend and unversioned types
 pub fn get_tag_type(versioned: bool) -> u64 {
     match versioned {
         true => ::VERSION_DIRECTORY_LISTING_TAG,
@@ -132,14 +133,8 @@ pub fn save_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maid
                               directory: &::directory_listing::DirectoryListing) -> Result<::maidsafe_client::client::StructuredData, ::errors::NfsError> {
     let signing_key = client.lock().unwrap().get_secret_signing_key().clone();
     let owner_key = client.lock().unwrap().get_public_signing_key().clone();
-    let share_level = match directory.get_metadata().get_share_level() {
-        Some(share_level) => share_level,
-        None => return Err(::errors::NfsError::MetaDataMissingOrCorrupted),
-    };
-    let versioned = match directory.get_metadata().is_versioned() {
-        Some(enabled) => enabled,
-        None => return Err(::errors::NfsError::MetaDataMissingOrCorrupted),
-    };
+    let share_level = try!(directory.get_metadata().get_share_level().ok_or(::errors::NfsError::MetaDataMissingOrCorrupted));
+    let versioned = try!(directory.get_metadata().is_versioned().ok_or(::errors::NfsError::MetaDataMissingOrCorrupted));
     let encrypted_data = match share_level {
         ::ShareLevel::PRIVATE => try!(::utility::directory_listing_util::encrypt_directory_listing(client.clone(), &directory)),
         ::ShareLevel::PUBLIC => try!(::maidsafe_client::utility::serialise(&directory)),

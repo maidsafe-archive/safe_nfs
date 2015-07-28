@@ -26,16 +26,18 @@ pub enum Mode {
 /// Writer is used to write contents to a File and especially in chunks if the file happens to be
 /// too large
 pub struct Writer {
+    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
     file: ::file::File,
     directory: ::directory_listing::DirectoryListing,
     self_encryptor: ::self_encryption::SelfEncryptor<::maidsafe_client::SelfEncryptionStorage>,
-    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
 }
 
 impl Writer {
     /// Create new instance of Writer
-    pub fn new(directory: ::directory_listing::DirectoryListing, file: ::file::File,
-              client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>, mode: Mode) -> Writer {
+    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+               mode: Mode,
+               directory: ::directory_listing::DirectoryListing,
+               file: ::file::File) -> Writer {
         let datamap = match mode {
                 Mode::Overwrite => ::self_encryption::datamap::DataMap::None,
                 Mode::Modify => file.get_datamap().clone(),
@@ -55,7 +57,7 @@ impl Writer {
 
     /// close is invoked only after alll the data is completely written
     /// The file/blob is saved only when the close is invoked.
-    pub fn close(mut self) -> Result<(), String> {
+    pub fn close(mut self) -> Result<(), ::errors::NfsError> {
         let ref mut file = self.file;
         let ref mut directory = self.directory;
         let size = self.self_encryptor.len();
@@ -67,10 +69,7 @@ impl Writer {
 
         directory.upsert_file(file.clone());
 
-        let mut directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
-        match directory_helper.update(directory) {
-            Ok(_) => Ok(()),
-            Err(_) => Err("Failed to save".to_string()),
-        }
+        let directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
+        directory_helper.update(directory)
     }
 }

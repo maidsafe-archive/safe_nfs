@@ -19,15 +19,15 @@
 /// Reader is used to read contents of a File. It can read in chunks if the file happens to be very
 /// large
 pub struct Reader {
+    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
     file: ::file::File,
     self_encryptor: ::self_encryption::SelfEncryptor<::maidsafe_client::SelfEncryptionStorage>,
-    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
 }
 
 impl Reader {
     /// Create a new instance of Reader
-    pub fn new(file: ::file::File,
-               client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> Reader {
+    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+               file: ::file::File) -> Reader {
         Reader {
             file: file.clone(),
             self_encryptor: ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), file.get_datamap().clone()),
@@ -41,10 +41,11 @@ impl Reader {
     }
 
     /// Read data from file/blob
-    pub fn read(&mut self,  position: u64, length: u64) -> Result<Vec<u8>, String> {
+    pub fn read(&mut self,  position: u64, length: u64) -> Result<Vec<u8>, ::errors::NfsError> {
         if (position + length) > self.size() {
-            return Err("Invalid range specified".to_string());
+            Err(::errors::NfsError::InvalidRangeSpecified)
+        } else {
+            Ok(self.self_encryptor.read(position, length))
         }
-        Ok(self.self_encryptor.read(position, length))
     }
 }
