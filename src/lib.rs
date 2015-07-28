@@ -61,8 +61,6 @@ pub mod directory_listing;
 pub mod io;
 /// Module for Restful interfaces for storage
 // pub mod rest;
-/// Utility functions
-pub mod utility;
 /// Root directory name
 pub const ROOT_DIRECTORY_NAME: &'static str = "root";
 /// Configuration directory Name stored in the session packet

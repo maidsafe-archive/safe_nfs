@@ -92,6 +92,63 @@ impl DirectoryListing {
     pub fn get_key(&self) ->  (&::routing::NameType, u64) {
         self.info.get_key()
     }
+
+    /// Decrypts a directory listing
+    pub fn decrypt(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+                   directory_id: &::routing::NameType,
+                   share_level: ::AccessLevel,
+                   data: Vec<u8>) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+         let decrypted_data_map = match share_level {
+             ::AccessLevel::Private => try!(client.lock().unwrap().hybrid_decrypt(&data[..],
+                                                                                 Some(&::directory_listing::DirectoryListing::generate_nonce(directory_id)))),
+             ::AccessLevel::Public => data,
+         };
+         let datamap: ::self_encryption::datamap::DataMap = try!(::maidsafe_client::utility::deserialise(&decrypted_data_map));
+         let mut se = ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), datamap);
+         let length = se.len();
+         let serialised_directory_listing = se.read(0, length);
+         Ok(try!(::maidsafe_client::utility::deserialise(&serialised_directory_listing)))
+    }
+
+    /// Encrypts the directory listing
+    pub fn encrypt(&self,
+                   client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> Result<Vec<u8>, ::errors::NfsError> {
+        let serialised_data = try!(::maidsafe_client::utility::serialise(&self));
+        let mut se = ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), ::self_encryption::datamap::DataMap::None);
+        se.write(&serialised_data, 0);
+        let datamap = se.close();
+        let serialised_data_map = try!(::maidsafe_client::utility::serialise(&datamap));
+        Ok(try!(client.lock().unwrap().hybrid_encrypt(&serialised_data_map, Some(&::directory_listing::DirectoryListing::generate_nonce(self.get_key().0)))))
+    }
+
+    /// Get DirectoryInfo of sub_directory within a DirectoryListing.
+    /// Returns the Option<DirectoryInfo> for the directory_name from the DirectoryListing
+    pub fn find_file(&self,
+                     file_name: String) -> Option<&::file::File> {
+        self.get_files().iter().find(|file| *file.get_name() == file_name)
+    }
+
+    /// Get DirectoryInfo of sub_directory within a DirectoryListing.
+    /// Returns the Option<DirectoryInfo> for the directory_name from the DirectoryListing
+    pub fn find_sub_directory(&self,
+                              directory_name: String) -> Option<&::directory_listing::directory_info::DirectoryInfo> {
+        self.get_sub_directories().iter().find(|info| *info.get_name() == directory_name)
+    }
+
+    pub fn get_sub_directory_index(&self,
+                              directory_name: String) -> Option<usize> {
+        self.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == directory_name)
+    }
+
+    /// Generates a nonce based on the directory_id
+    pub fn generate_nonce(directory_id: &::routing::NameType) -> ::sodiumoxide::crypto::box_::Nonce {
+        let mut nonce = [0u8; ::sodiumoxide::crypto::box_::NONCEBYTES];
+        for i in 0..nonce.len() {
+            nonce[i] = directory_id.0[i];
+        }
+        ::sodiumoxide::crypto::box_::Nonce(nonce)
+    }
+
 }
 
 impl ::std::fmt::Debug for DirectoryListing {

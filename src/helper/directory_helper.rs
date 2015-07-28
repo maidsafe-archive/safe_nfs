@@ -35,10 +35,13 @@ impl DirectoryHelper {
                   user_metadata: Option<Vec<u8>>,
                   versioned: bool,
                   share_level: ::AccessLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
-        let directory = ::directory_listing::DirectoryListing::new(directory_name, tag_type, user_metadata,
-                                                                   versioned, share_level);
+        let directory = ::directory_listing::DirectoryListing::new(directory_name,
+                                                                   tag_type,
+                                                                   user_metadata,
+                                                                   versioned,
+                                                                   share_level);
 
-        let structured_data = try!(::utility::directory_listing_util::save_directory_listing(self.client.clone(), &directory));
+        let structured_data = try!(self.save_directory_listing(&directory));
 
         let id = structured_data.get_identifier();
         let _ = self.client.lock().unwrap().put(::maidsafe_client::client::StructuredData::compute_name(tag_type, id),
@@ -49,7 +52,7 @@ impl DirectoryHelper {
     /// Deletes a sub directory
     pub fn delete(&self, directory: &mut ::directory_listing::DirectoryListing,
                   directory_to_delete: String) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
-        match ::utility::directory_listing_util::get_sub_directory_index(directory, directory_to_delete) {
+        match directory.get_sub_directory_index(directory_to_delete) {
             Some(pos) => {
                 directory.get_mut_sub_directories().remove(pos);
                 try!(self.update(directory));
@@ -61,7 +64,7 @@ impl DirectoryHelper {
 
     /// Updates an existing DirectoryListing in the network.
     pub fn update(&self, directory: &::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
-        let updated_structured_data = try!(::utility::directory_listing_util::save_directory_listing(self.client.clone(), &directory));
+        let updated_structured_data = try!(self.save_directory_listing(directory));
         let _ = self.client.lock().unwrap().post(directory.get_key().0.clone(),
                                                  ::maidsafe_client::client::Data::StructuredData(updated_structured_data));
         Ok(())
@@ -69,7 +72,7 @@ impl DirectoryHelper {
 
     /// Return the versions of the directory
     pub fn get_versions(&self, directory_key: (&::routing::NameType, u64)) -> Result<Vec<::routing::NameType>, ::errors::NfsError> {
-        let structured_data = try!(::utility::get_structured_data(self.client.clone(), directory_key.0.clone(), ::VERSION_DIRECTORY_LISTING_TAG));
+        let structured_data = try!(self.get_structured_data(directory_key.0, ::VERSION_DIRECTORY_LISTING_TAG));
         Ok(try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data)))
     }
 
@@ -78,18 +81,184 @@ impl DirectoryHelper {
                           directory_key: (&::routing::NameType, u64),
                           share_level: ::AccessLevel,
                           version: ::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
-        ::utility::directory_listing_util::get_directory_listing_for_version(self.client.clone(), directory_key.0, share_level, version)
+          let immutable_data = try!(self.get_immutable_data(version, ::maidsafe_client::client::ImmutableDataType::Normal));
+          ::directory_listing::DirectoryListing::decrypt(self.client.clone(), directory_key.0, share_level, immutable_data.value().clone())
     }
 
     /// Return the DirectoryListing for the latest version
     pub fn get(&self, directory_key: (&::routing::NameType, u64),
                versioned: bool, share_level: ::AccessLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
-        ::utility::directory_listing_util::get_directory_listing(self.client.clone(),
-                                                                directory_key.0,
-                                                                versioned,
-                                                                share_level)
+        let structured_data = try!(self.get_structured_data(directory_key.0,
+                                                            directory_key.1));
+        match versioned {
+            true => {
+               let versions = try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data));
+               let latest_version = versions.last().unwrap();
+               self.get_by_version(directory_key, share_level, latest_version.clone())
+            },
+            false => {
+               let private_key = self.client.lock().unwrap().get_public_encryption_key().clone();
+               let secret_key = self.client.lock().unwrap().get_secret_encryption_key().clone();
+               let nonce = ::directory_listing::DirectoryListing::generate_nonce(directory_key.0);
+               let encryption_keys = match share_level {
+                   ::AccessLevel::Private => Some((&private_key,
+                                                   &secret_key,
+                                                   &nonce)),
+                   ::AccessLevel::Public => None,
+               };
+               let structured_data = try!(::maidsafe_client::structured_data_operations::unversioned::get_data(self.client.clone(),
+                                                                                                               &structured_data,
+                                                                                                               encryption_keys));
+               ::directory_listing::DirectoryListing::decrypt(self.client.clone(),
+                                                              directory_key.0,
+                                                              share_level,
+                                                              structured_data)
+            },
+        }
     }
 
+
+    /// Returns the Root Directory
+    pub fn get_user_root_directory_listing(&self) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+        let root_directory;
+        {
+            root_directory = match self.client.lock().unwrap().get_user_root_directory_id() {
+                Some(id) => Some(id.clone()),
+                None => None,
+            }
+        }
+        match root_directory {
+            Some(id) => {
+                self.get((&id, ::UNVERSION_DIRECTORY_LISTING_TAG), false, ::AccessLevel::Private)
+            },
+            None => {
+                let created_directory = try!(self.create(::ROOT_DIRECTORY_NAME.to_string(),
+                                                         ::UNVERSION_DIRECTORY_LISTING_TAG,
+                                                         None,
+                                                         false,
+                                                         ::AccessLevel::Private));
+                let _ = try!(self.client.lock().unwrap().set_user_root_directory_id(created_directory.get_key().0.clone()));
+                Ok(created_directory)
+            }
+        }
+    }
+
+    /// Returns the Configuration DirectoryListing from the configuration root folder
+    /// Creates the directory if the directory does not exists
+    #[allow(dead_code)]
+    pub fn get_configuration_directory_listing(&self,
+                                       directory_name: String) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+        let config_root_directory;
+        {
+            config_root_directory = match self.client.lock().unwrap().get_configuration_root_directory_id() {
+                Some(id) => Some(id.clone()),
+                None => None,
+            }
+        }
+        let mut config_directory_listing = match config_root_directory {
+            Some(id) => try!(self.get((&id, ::UNVERSION_DIRECTORY_LISTING_TAG), false, ::AccessLevel::Private)),
+            None => {
+                let created_directory = try!(self.create(::CONFIGURATION_DIRECTORY_NAME.to_string(),
+                                                         ::UNVERSION_DIRECTORY_LISTING_TAG,
+                                                         None,
+                                                         false,
+                                                         ::AccessLevel::Private));
+                try!(self.client.lock().unwrap().set_configuration_root_directory_id(created_directory.get_key().0.clone()));
+                created_directory
+            }
+        };
+        match config_directory_listing.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == directory_name.clone()) {
+            Some(index) => Ok(try!(self.get(config_directory_listing.get_sub_directories()[index].get_key(),
+                                            false,
+                                            ::AccessLevel::Private))),
+            None => {
+                let new_dir_listing = try!(self.create(directory_name, ::UNVERSION_DIRECTORY_LISTING_TAG, None, false, ::AccessLevel::Private));
+                config_directory_listing.get_mut_sub_directories().push(new_dir_listing.get_info().clone());
+                try!(self.update(&config_directory_listing));
+                Ok(new_dir_listing)
+            },
+        }
+    }
+
+    fn save_directory_listing(&self, directory: &::directory_listing::DirectoryListing) -> Result<::maidsafe_client::client::StructuredData, ::errors::NfsError> {
+        let signing_key = self.client.lock().unwrap().get_secret_signing_key().clone();
+        let owner_key = self.client.lock().unwrap().get_public_signing_key().clone();
+        let share_level = directory.get_metadata().get_access_level();
+        let versioned = directory.get_metadata().is_versioned();
+        let encrypted_data = match share_level {
+            ::AccessLevel::Private => try!(directory.encrypt(self.client.clone())),
+            ::AccessLevel::Public => try!(::maidsafe_client::utility::serialise(&directory)),
+        };
+        match versioned {
+            true => {
+                let version = try!(self.save_as_immutable_data(encrypted_data,
+                                                               ::maidsafe_client::client::ImmutableDataType::Normal));
+                Ok(try!(::maidsafe_client::structured_data_operations::versioned::create(&mut *self.client.lock().unwrap(),
+                                                                                         version,
+                                                                                         ::VERSION_DIRECTORY_LISTING_TAG,
+                                                                                         directory.get_key().0.clone(),
+                                                                                         0,
+                                                                                         vec![owner_key.clone()],
+                                                                                         Vec::new(),
+                                                                                         &signing_key)))
+            },
+            false => {
+                let private_key = self.client.lock().unwrap().get_public_encryption_key().clone();
+                let secret_key = self.client.lock().unwrap().get_secret_encryption_key().clone();
+                let nonce = ::directory_listing::DirectoryListing::generate_nonce(directory.get_key().0);
+                let encryption_keys = match share_level {
+                    ::AccessLevel::Private => Some((&private_key,
+                                                    &secret_key,
+                                                    &nonce)),
+                    ::AccessLevel::Public => None,
+                };
+                Ok(try!(::maidsafe_client::structured_data_operations::unversioned::create(self.client.clone(),
+                                                                                           ::UNVERSION_DIRECTORY_LISTING_TAG,
+                                                                                           directory.get_key().0.clone(),
+                                                                                           0,
+                                                                                           encrypted_data,
+                                                                                           vec![owner_key.clone()],
+                                                                                           Vec::new(),
+                                                                                           &signing_key,
+                                                                                           encryption_keys)))
+            },
+        }
+    }
+
+    /// Saves the data as ImmutableData in the network and returns the name
+    fn save_as_immutable_data(&self,
+                              data: Vec<u8>,
+                              data_type: ::maidsafe_client::client::ImmutableDataType) -> Result<::routing::NameType, ::errors::NfsError> {
+        let immutable_data = ::maidsafe_client::client::ImmutableData::new(data_type, data);
+        let name = immutable_data.name();
+        let _ = self.client.lock().unwrap().put(name.clone(),
+                                                ::maidsafe_client::client::Data::ImmutableData(immutable_data));
+        Ok(name)
+    }
+
+    fn get_structured_data(&self,
+                           id: &::routing::NameType,
+                           type_tag: u64) -> Result<::maidsafe_client::client::StructuredData, ::errors::NfsError> {
+        let mut response_getter = try!(self.client.lock().unwrap().get(::maidsafe_client::client::StructuredData::compute_name(type_tag, id),
+                                                                  ::maidsafe_client::client::DataRequest::StructuredData(type_tag)));
+        let data = try!(response_getter.get());
+        match data {
+            ::maidsafe_client::client::Data::StructuredData(structured_data) => Ok(structured_data),
+            _ => Err(::errors::NfsError::from(::maidsafe_client::errors::ClientError::ReceivedUnexpectedData)),
+        }
+    }
+
+    /// Get ImmutableData from the Network
+    fn get_immutable_data(&self,
+                          id: ::routing::NameType,
+                          data_type: ::maidsafe_client::client::ImmutableDataType) -> Result<::maidsafe_client::client::ImmutableData, ::errors::NfsError> {
+        let mut response_getter = try!(self.client.lock().unwrap().get(id, ::maidsafe_client::client::DataRequest::ImmutableData(data_type)));
+        let data = try!(response_getter.get());
+        match data {
+            ::maidsafe_client::client::Data::ImmutableData(immutable_data) => Ok(immutable_data),
+            _ => Err(::errors::NfsError::from(::maidsafe_client::errors::ClientError::ReceivedUnexpectedData)),
+        }
+    }
 }
 
 /*
