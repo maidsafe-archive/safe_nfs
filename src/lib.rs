@@ -28,7 +28,7 @@
 #![forbid(bad_style, warnings)]
 
 #![deny(deprecated, improper_ctypes, missing_docs, non_shorthand_field_patterns,
-overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
+overflowing_literals, plugin_as_library, Private_no_mangle_fns, Private_no_mangle_statics,
 raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints, unsafe_code,
 unsigned_negation, unused, unused_allocation, unused_attributes, unused_comparisons,
 unused_features, unused_parens, while_true)]
@@ -72,9 +72,9 @@ pub const VERSION_DIRECTORY_LISTING_TAG: u64 = ::maidsafe_client::MAIDSAFE_TAG +
 /// Tag representing the Versioned Directory Listing
 pub const UNVERSION_DIRECTORY_LISTING_TAG: u64 = ::maidsafe_client::MAIDSAFE_TAG + 101;
 
-/// ShareLebvel indicates whether the container is private or public shared
+/// ShareLebvel indicates whether the container is Private or Public shared
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub enum ShareLevel {
-    PRIVATE,
-    PUBLIC,
+    Private,
+    Public,
 }

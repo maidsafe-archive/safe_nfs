@@ -461,11 +461,11 @@ mod test {
         assert_eq!(home_container.get_blob("sample.txt".to_string(), None).unwrap().get_metadata().unwrap(), metadata);
 
         container.create("Public".to_string()).unwrap();
-        let mut public_container = container.get_container("Public".to_string(), None).unwrap();
-        assert_eq!(public_container.get_blobs().len(), 0);
-        let _ = home_container.copy_blob("sample.txt".to_string(), public_container.get_id());
-        public_container = container.get_container("Public".to_string(), None).unwrap();
-        assert_eq!(public_container.get_blobs().len(), 1);
+        let mut Public_container = container.get_container("Public".to_string(), None).unwrap();
+        assert_eq!(Public_container.get_blobs().len(), 0);
+        let _ = home_container.copy_blob("sample.txt".to_string(), Public_container.get_id());
+        Public_container = container.get_container("Public".to_string(), None).unwrap();
+        assert_eq!(Public_container.get_blobs().len(), 1);
 
         let _ = home_container.delete_blob("sample.txt".to_string());
         assert_eq!(home_container.get_blobs().len(), 0);

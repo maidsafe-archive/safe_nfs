@@ -110,7 +110,7 @@ mod test {
 
     #[test]
     fn serialise() {
-        let obj_before = DirectoryListing::new("Home".to_string(), Some("{mime:\"application/json\"}".to_string().into_bytes()), true, ::ShareLevel::PRIVATE);
+        let obj_before = DirectoryListing::new("Home".to_string(), Some("{mime:\"application/json\"}".to_string().into_bytes()), true, ::ShareLevel::Private);
 
         let mut e = cbor::Encoder::from_memory();
         e.encode(&[&obj_before]).unwrap();
