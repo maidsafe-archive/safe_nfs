@@ -27,7 +27,7 @@ pub fn get_user_root_directory_id(client: ::std::sync::Arc<::std::sync::Mutex<::
             None => None,
         }
     }
-    let mut directory_helper = ::helper::DirectoryHelper::new(client.clone());
+    let directory_helper = ::helper::DirectoryHelper::new(client.clone());
     match root_directory {
         Some(id) => {
             directory_helper.get(id, false, ::ShareLevel::PRIVATE)
@@ -52,7 +52,7 @@ pub fn get_configuration_directory(client: ::std::sync::Arc<::std::sync::Mutex<:
             None => None,
         }
     }
-    let mut directory_helper = ::helper::DirectoryHelper::new(client.clone());
+    let directory_helper = ::helper::DirectoryHelper::new(client.clone());
     let mut config_directory_listing = match config_root_directory {
         Some(id) => try!(directory_helper.get(id, false, ::ShareLevel::PRIVATE)),
         None => {

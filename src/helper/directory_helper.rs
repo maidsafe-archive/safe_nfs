@@ -29,7 +29,7 @@ impl DirectoryHelper {
     }
 
     /// Creates a Directory in the network.
-    pub fn create(&mut self,
+    pub fn create(&self,
                   directory_name: String,
                   user_metadata: Option<Vec<u8>>,
                   versioned: bool,
@@ -47,7 +47,7 @@ impl DirectoryHelper {
     }
 
     /// Updates an existing DirectoryListing in the network.
-    pub fn update(&mut self, directory: &::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
+    pub fn update(&self, directory: &::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
         let updated_structured_data = try!(::utility::directory_listing_util::save_directory_listing(self.client.clone(), &directory));
         let _ = self.client.lock().unwrap().post(directory.get_id().clone(),
                                   ::maidsafe_client::client::Data::StructuredData(updated_structured_data));
@@ -55,13 +55,13 @@ impl DirectoryHelper {
     }
 
     /// Return the versions of the directory
-    pub fn get_versions(&mut self, directory_id: &::routing::NameType) -> Result<Vec<::routing::NameType>, ::errors::NfsError> {
+    pub fn get_versions(&self, directory_id: &::routing::NameType) -> Result<Vec<::routing::NameType>, ::errors::NfsError> {
         let structured_data = try!(::utility::get_structured_data(self.client.clone(), directory_id.clone(), ::VERSION_DIRECTORY_LISTING_TAG));
         Ok(try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data)))
     }
 
     /// Return the DirectoryListing for the specified version
-    pub fn get_by_version(&mut self,
+    pub fn get_by_version(&self,
                           directory_id: &::routing::NameType,
                           share_level: ::ShareLevel,
                           version: ::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
@@ -69,7 +69,7 @@ impl DirectoryHelper {
     }
 
     /// Return the DirectoryListing for the latest version
-    pub fn get(&mut self, directory_id: ::routing::NameType, versioned: bool, share_level: ::ShareLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+    pub fn get(&self, directory_id: ::routing::NameType, versioned: bool, share_level: ::ShareLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         ::utility::directory_listing_util::get_directory_listing(self.client.clone(),
                                                                 &directory_id,
                                                                 versioned,
