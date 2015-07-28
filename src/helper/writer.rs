@@ -69,7 +69,7 @@ impl Writer {
 
         directory.upsert_file(file.clone());
 
-        let directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
-        directory_helper.update(directory)
+        let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
+        directory_helper.update(&directory)
     }
 }

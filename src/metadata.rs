@@ -25,21 +25,17 @@ pub struct Metadata {
     created_time:  ::time::Tm,
     modified_time: ::time::Tm,
     user_metadata: Option<Vec<u8>>,
-    versioned: Option<bool>,
-    share_level: Option<::AccessLevel>,
 }
 
 impl Metadata {
     /// Create a new instance of Metadata
-    pub fn new(name: String, user_metadata: Option<Vec<u8>>, versioned: Option<bool>, share_level: Option<::AccessLevel>) -> Metadata {
+    pub fn new(name: String, user_metadata: Option<Vec<u8>>) -> Metadata {
         Metadata {
             name: name,
             size: 0,
             created_time:  ::time::now_utc(),
             modified_time: ::time::now_utc(),
             user_metadata: user_metadata,
-            versioned: versioned,
-            share_level: share_level,
         }
     }
 
@@ -59,24 +55,18 @@ impl Metadata {
         &self.name
     }
 
-    /// Returns the AccessLevel
-    pub fn get_share_level(&self) -> Option<::AccessLevel> {
-        self.share_level.clone()
-    }
-
     /// Get size information
     pub fn get_size(&self) -> u64 {
         self.size
     }
 
+    pub fn set_size(&mut self, size: u64){
+        self.size = size;
+    }
+
     /// Get user setteble custom metadata
     pub fn get_user_metadata(&self) -> Option<Vec<u8>> {
         self.user_metadata.clone()
-    }
-
-    /// Returns whther the DirectoryListing is versioned or not
-    pub fn is_versioned(&self) -> Option<bool> {
-        self.versioned
     }
 
     #[allow(dead_code)]
@@ -91,11 +81,6 @@ impl Metadata {
         self.modified_time = modified_time
     }
 
-    /// Set size information
-    pub fn set_size(&mut self, size: u64) {
-        self.size = size;
-    }
-
     /// User setteble metadata for custom metadata
     pub fn set_user_metadata(&mut self, user_metadata: Option<Vec<u8>>) {
         self.user_metadata = user_metadata;
@@ -107,17 +92,20 @@ impl Encodable for Metadata {
     fn encode<E: Encoder>(&self, e: &mut E)->Result<(), E::Error> {
         let created_time = self.created_time.to_timespec();
         let modified_time = self.modified_time.to_timespec();
-        ::cbor::CborTagEncode::new(5483_000, &(self.name.clone(), self.size as usize, self.user_metadata.clone(),
-        created_time.sec, created_time.nsec, modified_time.sec,
-        modified_time.nsec, self.versioned, self.share_level.clone())).encode(e)
+        ::cbor::CborTagEncode::new(5483_000, &(self.name.clone(),
+                                               self.size as usize,
+                                               self.user_metadata.clone(),
+                                               created_time.sec,
+                                               created_time.nsec,
+                                               modified_time.sec,
+                                               modified_time.nsec)).encode(e)
     }
 }
 
 impl Decodable for Metadata {
     fn decode<D: Decoder>(d: &mut D)->Result<Metadata, D::Error> {
         try!(d.read_u64());
-        let (name, size, meta, created_sec, created_nsec, modified_sec,
-            modified_nsec, versioned, share_level) = try!(Decodable::decode(d));
+        let (name, size, meta, created_sec, created_nsec, modified_sec, modified_nsec) = try!(Decodable::decode(d));
 
         Ok(Metadata {
                 name: name,
@@ -131,8 +119,6 @@ impl Decodable for Metadata {
                         sec: modified_sec,
                         nsec: modified_nsec
                     }),
-                versioned: versioned,
-                share_level: share_level,
             })
     }
 }

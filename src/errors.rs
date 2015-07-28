@@ -23,6 +23,7 @@ pub enum NfsError {
     InvalidRangeSpecified,
     MetaDataMissingOrCorrupted,
     NotFound,
+    AlreadyExists,
 }
 
 impl From<::maidsafe_client::errors::ClientError> for NfsError {
@@ -38,6 +39,7 @@ impl ::std::fmt::Debug for NfsError {
             NfsError::InvalidRangeSpecified         => ::std::fmt::Display::fmt("NfsError::InvalidRangeSpecified", f),
             NfsError::MetaDataMissingOrCorrupted    => ::std::fmt::Display::fmt("NfsError::MetaDataMissingOrCorrupted", f),
             NfsError::NotFound                      => ::std::fmt::Display::fmt("NfsError::NotFound", f),
+            NfsError::AlreadyExists                 => ::std::fmt::Display::fmt("NfsError::AlreadyExists", f),
         }
     }
 }

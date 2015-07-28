@@ -57,8 +57,6 @@ pub mod directory_metadata;
 pub mod metadata;
 pub mod directory_listing;
 
-/// Module for input/output to network/file
-pub mod io;
 /// Module for Restful interfaces for storage
 // pub mod rest;
 /// Root directory name
