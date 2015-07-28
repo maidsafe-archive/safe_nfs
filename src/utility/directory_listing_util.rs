@@ -15,6 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+/// Decrypts a directory listing
 pub fn decrypt_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
                                  directory_id: &::routing::NameType,
                                  share_level: ::ShareLevel,
@@ -31,6 +32,7 @@ pub fn decrypt_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::m
      Ok(try!(::maidsafe_client::utility::deserialise(&serialised_directory_listing)))
 }
 
+/// Encrypts a directory listing
 pub fn encrypt_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
                               directory_listing: &::directory_listing::DirectoryListing) -> Result<Vec<u8>, ::errors::NfsError> {
     let serialised_data = try!(::maidsafe_client::utility::serialise(directory_listing));
@@ -56,6 +58,11 @@ pub fn find_sub_directory(directory_listing: &::directory_listing::DirectoryList
     directory_listing.get_sub_directories().iter().find(|info| *info.get_name() == directory_name)
 }
 
+pub fn get_sub_directory_index(directory_listing: &::directory_listing::DirectoryListing,
+                          directory_name: String) -> Option<usize> {
+    directory_listing.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == directory_name)
+}
+
 /// Generates a nonce based on the directory_id
 pub fn generate_nonce(directory_id: &::routing::NameType) -> ::sodiumoxide::crypto::box_::Nonce {
     let mut nonce = [0u8; ::sodiumoxide::crypto::box_::NONCEBYTES];
@@ -75,6 +82,8 @@ pub fn get_directory_listing_for_version(client: ::std::sync::Arc<::std::sync::M
     ::utility::directory_listing_util::decrypt_directory_listing(client.clone(), directory_id, share_level, immutable_data.value().clone())
 }
 
+/// Returns Directorylisting
+/// Fetches the directory listing based on the versioning support and also on share_level
 pub fn get_directory_listing(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
                              directory_id: &::routing::NameType,
                              versioned: bool,

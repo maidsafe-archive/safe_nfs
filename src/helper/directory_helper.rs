@@ -46,6 +46,19 @@ impl DirectoryHelper {
         Ok(directory)
     }
 
+    /// Deletes a sub directory
+    pub fn delete(&self, directory: &mut ::directory_listing::DirectoryListing,
+                  directory_to_delete: String) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+        match ::utility::directory_listing_util::get_sub_directory_index(directory, directory_to_delete) {
+            Some(pos) => {
+                directory.get_mut_sub_directories().remove(pos);
+                try!(self.update(directory));
+                Ok(directory.clone())
+            },
+            None => Err(::errors::NfsError::NotFound),
+        }
+    }
+
     /// Updates an existing DirectoryListing in the network.
     pub fn update(&self, directory: &::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
         let updated_structured_data = try!(::utility::directory_listing_util::save_directory_listing(self.client.clone(), &directory));
