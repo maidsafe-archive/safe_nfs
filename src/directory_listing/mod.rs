@@ -27,14 +27,18 @@ pub struct DirectoryListing {
 
 impl DirectoryListing {
     /// Create a new DirectoryListing
-    pub fn new(name: String, tag_type: u64, user_metadata: Option<Vec<u8>>,
-               versioned: bool, share_level: ::AccessLevel) -> DirectoryListing {
+    pub fn new(name: String,
+               tag_type: u64,
+               user_metadata: Option<Vec<u8>>,
+               versioned: bool,
+               access_level: ::AccessLevel,
+               parent_dir: Option<(&::routing::NameType, u64)>) -> DirectoryListing {
         DirectoryListing {
             info: ::directory_listing::directory_info::DirectoryInfo::new(::directory_metadata::DirectoryMetadata::new(name,
-                                                                                                                       tag_type,
                                                                                                                        user_metadata,
                                                                                                                        versioned,
-                                                                                                                       share_level)),
+                                                                                                                       access_level,
+                                                                                                                       parent_dir), tag_type),
             sub_directories: Vec::new(),
             files: Vec::new(),
         }
@@ -55,10 +59,6 @@ impl DirectoryListing {
     pub fn get_metadata(&self) -> &::directory_metadata::DirectoryMetadata {
         self.info.get_metadata()
     }
-
-    // pub fn get_parent_dir_id(&self) -> &::routing::NameType {
-    //     self.info.get_parent_dir_id()
-    // }
 
     /// If file is present in the DirectoryListing then replace it else insert it
     pub fn upsert_file(&mut self, file: ::file::File) {
@@ -96,9 +96,9 @@ impl DirectoryListing {
     /// Decrypts a directory listing
     pub fn decrypt(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
                    directory_id: &::routing::NameType,
-                   share_level: ::AccessLevel,
+                   access_level: ::AccessLevel,
                    data: Vec<u8>) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
-         let decrypted_data_map = match share_level {
+         let decrypted_data_map = match access_level {
              ::AccessLevel::Private => try!(client.lock().unwrap().hybrid_decrypt(&data[..],
                                                                                  Some(&::directory_listing::DirectoryListing::generate_nonce(directory_id)))),
              ::AccessLevel::Public => data,

@@ -19,23 +19,23 @@
 /// Contains Information pertaining to a Directory
 pub struct DirectoryInfo {
     id: ::routing::NameType,
-    // parent_dir_id: ::routing::NameType,
+    type_tag: u64,
     metadata: ::directory_metadata::DirectoryMetadata,
 }
 
 impl DirectoryInfo {
     /// Create a new DirectoryInfo
-    pub fn new(metadata: ::directory_metadata::DirectoryMetadata) -> DirectoryInfo {
+    pub fn new(metadata: ::directory_metadata::DirectoryMetadata, type_tag: u64) -> DirectoryInfo {
         DirectoryInfo {
             id: ::routing::test_utils::Random::generate_random(),
-            // parent_dir_id: parent_dir_id,
+            type_tag: type_tag,
             metadata: metadata,
         }
     }
 
     /// Get the unique ID representing this directory in the network
     pub fn get_key(&self) -> (&::routing::NameType, u64) {
-        (&self.id, self.metadata.get_type_tag())
+        (&self.id, self.type_tag)
     }
 
     #[allow(dead_code)]

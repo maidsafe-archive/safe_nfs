@@ -23,21 +23,25 @@ pub struct DirectoryMetadata {
     name: String,
     created_time:  ::time::Tm,
     modified_time: ::time::Tm,
+    parent_dir: Option<(::routing::NameType, u64)>,
     user_metadata: Option<Vec<u8>>,
     versioned: bool,
-    type_tag: u64,
     access_level: ::AccessLevel,
 }
 
 impl DirectoryMetadata {
     /// Create a new instance of Metadata
-    pub fn new(name: String, type_tag: u64, user_metadata: Option<Vec<u8>>, versioned: bool, access_level: ::AccessLevel) -> DirectoryMetadata {
+    pub fn new(name: String,
+               user_metadata: Option<Vec<u8>>,
+               versioned: bool,
+               access_level: ::AccessLevel,
+               parent_dir: Option<(&::routing::NameType, u64)>) -> DirectoryMetadata {
         DirectoryMetadata {
             name: name,
             created_time:  ::time::now_utc(),
             modified_time: ::time::now_utc(),
             user_metadata: user_metadata,
-            type_tag: type_tag,
+            parent_dir: parent_dir.map(|key| { (key.0.clone(), key.1)}),
             versioned: versioned,
             access_level: access_level,
         }
@@ -62,11 +66,6 @@ impl DirectoryMetadata {
     /// Returns the AccessLevel
     pub fn get_access_level(&self) -> ::AccessLevel {
         self.access_level.clone()
-    }
-
-    /// Returns the type tag
-    pub fn get_type_tag(&self) -> u64 {
-        self.type_tag
     }
 
     /// Get user setteble custom metadata
@@ -102,22 +101,28 @@ impl Encodable for DirectoryMetadata {
     fn encode<E: Encoder>(&self, e: &mut E)->Result<(), E::Error> {
         let created_time = self.created_time.to_timespec();
         let modified_time = self.modified_time.to_timespec();
-        ::cbor::CborTagEncode::new(5483_000, &(self.name.clone(), self.type_tag as usize, self.user_metadata.clone(),
-                                               created_time.sec, created_time.nsec, modified_time.sec,
-                                               modified_time.nsec, self.versioned, self.access_level.clone())).encode(e)
+        ::cbor::CborTagEncode::new(5483_000, &(self.name.clone(),
+                                               self.parent_dir.clone(),
+                                               self.user_metadata.clone(),
+                                               created_time.sec,
+                                               created_time.nsec,
+                                               modified_time.sec,
+                                               modified_time.nsec,
+                                               self.versioned,
+                                               self.access_level.clone())).encode(e)
     }
 }
 
 impl Decodable for DirectoryMetadata {
     fn decode<D: Decoder>(d: &mut D)->Result<DirectoryMetadata, D::Error> {
         try!(d.read_u64());
-        let (name, type_tag, meta, created_sec, created_nsec, modified_sec,
+        let (name, parent_dir, meta, created_sec, created_nsec, modified_sec,
             modified_nsec, versioned, access_level) = try!(Decodable::decode(d));
 
         Ok(DirectoryMetadata {
                 name: name,
                 user_metadata: meta,
-                type_tag: type_tag,
+                parent_dir: parent_dir,
                 created_time: ::time::at_utc(::time::Timespec {
                         sec: created_sec,
                         nsec: created_nsec
@@ -134,12 +139,12 @@ impl Decodable for DirectoryMetadata {
 
 impl ::std::fmt::Debug for DirectoryMetadata {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "name: {}, tag: {}, versioned: {}", self.name, self.type_tag, self.versioned)
+        write!(f, "name: {}, versioned: {}", self.name, self.versioned)
     }
 }
 
 impl ::std::fmt::Display for DirectoryMetadata {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "name: {}, tag: {}, versioned: {}", self.name, self.type_tag, self.versioned)
+        write!(f, "name: {}, versioned: {}", self.name, self.versioned)
     }
 }
