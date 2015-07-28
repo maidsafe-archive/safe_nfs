@@ -100,8 +100,10 @@ impl DirectoryHelper {
     }
 
     /// Return the DirectoryListing for the latest version
-    pub fn get(&self, directory_key: (&::routing::NameType, u64),
-               versioned: bool, access_level: ::AccessLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+    pub fn get(&self,
+               directory_key: (&::routing::NameType, u64),
+               versioned: bool,
+               access_level: ::AccessLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         let structured_data = try!(self.get_structured_data(directory_key.0,
                                                             directory_key.1));
         match versioned {
@@ -162,7 +164,7 @@ impl DirectoryHelper {
     /// Creates the directory if the directory does not exists
     #[allow(dead_code)]
     pub fn get_configuration_directory_listing(&self,
-                                       directory_name: String) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+                                               directory_name: String) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         let config_root_directory;
         {
             config_root_directory = match self.client.lock().unwrap().get_configuration_root_directory_id() {
