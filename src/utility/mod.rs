@@ -19,7 +19,7 @@
 pub mod directory_listing_util;
 
 /// Returns the Root Directory
-pub fn get_user_root_directory_id(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> Result<::routing::NameType, ::errors::NfsError> {
+pub fn get_user_root_directory_id(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
     let root_directory;
     {
         root_directory = match client.lock().unwrap().get_user_root_directory_id() {
@@ -27,13 +27,15 @@ pub fn get_user_root_directory_id(client: ::std::sync::Arc<::std::sync::Mutex<::
             None => None,
         }
     }
+    let mut directory_helper = ::helper::DirectoryHelper::new(client.clone());
     match root_directory {
-        Some(id) => Ok(id.clone()),
+        Some(id) => {
+            directory_helper.get(id, false, ::ShareLevel::PRIVATE)
+        },
         None => {
-            let mut directory_helper = ::helper::DirectoryHelper::new(client.clone());
-            let created_directory_id = try!(directory_helper.create(::ROOT_DIRECTORY_NAME.to_string(), Vec::new()));
-            let _ = try!(client.lock().unwrap().set_user_root_directory_id(created_directory_id.clone()));
-            Ok(created_directory_id.clone())
+            let created_directory = try!(directory_helper.create(::ROOT_DIRECTORY_NAME.to_string(), None, false, ::ShareLevel::PRIVATE));
+            let _ = try!(client.lock().unwrap().set_user_root_directory_id(created_directory.get_id().clone()));
+            Ok(created_directory)
         }
     }
 }
@@ -51,20 +53,20 @@ pub fn get_configuration_directory(client: ::std::sync::Arc<::std::sync::Mutex<:
         }
     }
     let mut directory_helper = ::helper::DirectoryHelper::new(client.clone());
-    let config_root_id = match config_root_directory {
-        Some(id) => id.clone(),
+    let mut config_directory_listing = match config_root_directory {
+        Some(id) => try!(directory_helper.get(id, false, ::ShareLevel::PRIVATE)),
         None => {
-            let created_directory_id = try!(directory_helper.create(::CONFIGURATION_DIRECTORY_NAME.to_string(), Vec::new()));
-            try!(client.lock().unwrap().set_configuration_root_directory_id(created_directory_id.clone()));
-            created_directory_id
+            let created_directory = try!(directory_helper.create(::CONFIGURATION_DIRECTORY_NAME.to_string(), None, false, ::ShareLevel::PRIVATE));
+            try!(client.lock().unwrap().set_configuration_root_directory_id(created_directory.get_id().clone()));
+            created_directory
         }
     };
-    let mut config_directory_listing = try!(directory_helper.get(&config_root_id));
     match config_directory_listing.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == directory_name.clone()) {
-        Some(index) => Ok(try!(directory_helper.get(config_directory_listing.get_sub_directories()[index].get_id()))),
+        Some(index) => Ok(try!(directory_helper.get(config_directory_listing.get_sub_directories()[index].get_id().clone(),
+                                                    false,
+                                                    ::ShareLevel::PRIVATE))),
         None => {
-            let new_sub_dir_id = try!(directory_helper.create(directory_name, Vec::new()));
-            let new_dir_listing = try!(directory_helper.get(&new_sub_dir_id));
+            let new_dir_listing = try!(directory_helper.create(directory_name, None, false, ::ShareLevel::PRIVATE));
             config_directory_listing.get_mut_sub_directories().push(new_dir_listing.get_info().clone());
             try!(directory_helper.update(&config_directory_listing));
             Ok(new_dir_listing)

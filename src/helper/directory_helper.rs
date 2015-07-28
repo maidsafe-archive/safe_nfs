@@ -33,7 +33,7 @@ impl DirectoryHelper {
                   directory_name: String,
                   user_metadata: Option<Vec<u8>>,
                   versioned: bool,
-                  share_level: ::ShareLevel) -> Result<&::directory_listing::DirectoryListing, ::errors::NfsError> {
+                  share_level: ::ShareLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         let directory = ::directory_listing::DirectoryListing::new(directory_name, user_metadata,
                                                                    versioned, share_level);
 
@@ -42,8 +42,8 @@ impl DirectoryHelper {
         let tag = structured_data.get_tag_type();
         let id = structured_data.get_identifier();
         let _ = self.client.lock().unwrap().put(::maidsafe_client::client::StructuredData::compute_name(tag, id),
-                                                ::maidsafe_client::client::Data::StructuredData(structured_data));
-        Ok(&directory)
+                                                ::maidsafe_client::client::Data::StructuredData(structured_data.clone()));
+        Ok(directory)
     }
 
     /// Updates an existing DirectoryListing in the network.

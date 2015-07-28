@@ -32,7 +32,7 @@ impl From<::maidsafe_client::errors::ClientError> for NfsError {
 impl ::std::fmt::Debug for NfsError {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         match *self {
-            MetaDataMissingOrCorrupted              => ::std::fmt::Display::fmt("NfsError::MetaDataMissingOrCorrupted", f),
+            NfsError::MetaDataMissingOrCorrupted    => ::std::fmt::Display::fmt("NfsError::MetaDataMissingOrCorrupted", f),
             NfsError::ClientError(_)                => ::std::fmt::Display::fmt("NfsError::ClientError", f), // TODO Improve these containing nested stuff to print as well
         }
     }
