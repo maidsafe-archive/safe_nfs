@@ -17,13 +17,17 @@
 
 /// File provides helper functions to perform Operations on Files
 pub struct FileHelper {
-    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+    client           : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+    // TODO remove - this will become stale once writer.close() is done. You will need new
+    // directory listing after that. So Dir-listing to be provided in create() function. In the
+    // rest of the operations, parent_dir_listing can be found in metadata and accordingly fetched
+    // and updated and returned by writer.close(),  update_metadata() etc
     directory_listing: ::directory_listing::DirectoryListing,
 }
 
 impl FileHelper {
     /// Create a new FileHelper instance
-    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+    pub fn new(client           : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
                directory_listing: ::directory_listing::DirectoryListing) -> FileHelper {
         FileHelper {
             client: client,
@@ -35,8 +39,8 @@ impl FileHelper {
     /// A writer object is returned, through which the data for the file can be written to the network
     /// The file is actually saved in the directory listing only after `writer.close()` is invoked
     pub fn create(&self,
-                  name: String,
-                  user_metatdata: Option<Vec<u8>>) -> Result<::helper::writer::Writer, ::errors::NfsError> {
+                  name          : String,
+                  user_metatdata: Vec<u8>) -> Result<::helper::writer::Writer, ::errors::NfsError> {
         match self.directory_listing.find_file(name.clone()) {
             Some(_) => Err(::errors::NfsError::AlreadyExists),
             None => {
@@ -71,9 +75,10 @@ impl FileHelper {
     }
 
     /// Updates the file metadata. Returns the updated DirectoryListing
+    // TODO return new parent_dir_listing
     pub fn update_metadata(&mut self,
                            mut file: ::file::File,
-                           user_metadata: Option<Vec<u8>>) -> Result<(), ::errors::NfsError> {
+                           user_metadata: <Vec<u8>>) -> Result<(), ::errors::NfsError> {
         match self.directory_listing.find_file(file.get_name().clone()) {
             Some(_) => {
                 file.get_mut_metadata().set_user_metadata(user_metadata);
@@ -85,6 +90,7 @@ impl FileHelper {
         }
     }
 
+    // TODO return Vec<Files> not dir_ids
     /// Return the versions of a directory containing modified versions of a file
     pub fn get_versions(&self,
                         file: &::file::File) -> Result<Vec<::routing::NameType>, ::errors::NfsError> {
@@ -113,10 +119,9 @@ impl FileHelper {
     pub fn read(&self, file: ::file::File) -> Result<::helper::reader::Reader, ::errors::NfsError> {
         match self.directory_listing.find_file(file.get_name().clone()) {
             Some(_) => Ok(::helper::reader::Reader::new(self.client.clone(), file)),
-            None => Err(::errors::NfsError::NotFound),
+            None => Err(::errors::NfsError::NotFound), // TODO break into FileNotFound and DirectoryNotFound
         }
     }
-
 }
 
 /*

@@ -15,19 +15,19 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-#[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
 /// Contains Information pertaining to a Directory
+#[derive(Debug, RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct DirectoryInfo {
-    id: ::routing::NameType,
+    id      : ::routing::NameType,
     type_tag: u64,
-    metadata: ::directory_metadata::DirectoryMetadata,
+    metadata: ::metadata::directory_metadata::DirectoryMetadata,
 }
 
 impl DirectoryInfo {
     /// Create a new DirectoryInfo
-    pub fn new(metadata: ::directory_metadata::DirectoryMetadata, type_tag: u64) -> DirectoryInfo {
+    pub fn new(metadata: ::metadata::directory_metadata::DirectoryMetadata, type_tag: u64) -> DirectoryInfo {
         DirectoryInfo {
-            id: ::routing::test_utils::Random::generate_random(),
+            id      : ::routing::test_utils::Random::generate_random(),
             type_tag: type_tag,
             metadata: metadata,
         }
@@ -38,16 +38,16 @@ impl DirectoryInfo {
         (&self.id, self.type_tag)
     }
 
-    #[allow(dead_code)]
-    /// Get the metadata of this directory. Since return value is mutable it can also be used to
-    /// update the metadata
-    pub fn get_mut_metadata(&mut self) -> &mut ::directory_metadata::DirectoryMetadata {
-        &mut self.metadata
+    /// Get the metadata of this directory
+    pub fn get_metadata(&self) -> &::metadata::directory_metadata::DirectoryMetadata {
+        &self.metadata
     }
 
-    /// Get the metadata of this directory
-    pub fn get_metadata(&self) -> &::directory_metadata::DirectoryMetadata {
-        &self.metadata
+    /// Get the metadata of this directory. Since return value is mutable it can also be used to
+    /// update the metadata
+    #[allow(dead_code)]
+    pub fn get_mut_metadata(&mut self) -> &mut ::metadata::directory_metadata::DirectoryMetadata {
+        &mut self.metadata
     }
 
     /// Get the name of this directory
@@ -58,12 +58,6 @@ impl DirectoryInfo {
     // pub fn get_parent_dir_id(&self) -> &::routing::NameType {
     //     &self.parent_dir_id
     // }
-}
-
-impl ::std::fmt::Debug for DirectoryInfo {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "metadata: {}, key: {}, {}", *self.get_metadata(), *self.get_key().0, self.get_key().1)
-    }
 }
 
 impl ::std::fmt::Display for DirectoryInfo {

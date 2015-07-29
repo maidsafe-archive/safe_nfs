@@ -15,23 +15,24 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-#[allow(dead_code)]
+// TODO code after documentation: Point 8 in review checklist
 /// Reader is used to read contents of a File. It can read in chunks if the file happens to be very
 /// large
+#[allow(dead_code)]
 pub struct Reader {
-    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-    file: ::file::File,
+    client        : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
     self_encryptor: ::self_encryption::SelfEncryptor<::maidsafe_client::SelfEncryptionStorage>,
+    file          : ::file::File,
 }
 
 impl Reader {
     /// Create a new instance of Reader
     pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-               file: ::file::File) -> Reader {
+               file  : ::file::File) -> Reader {
         Reader {
-            file: file.clone(),
+            client        : client,
             self_encryptor: ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), file.get_datamap().clone()),
-            client: client,
+            file          : file, // TODO why clone
         }
     }
 

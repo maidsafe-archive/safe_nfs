@@ -43,31 +43,32 @@ unused_qualifications, variant_size_differences)]
 
 
 extern crate time;
-extern crate self_encryption;
 extern crate cbor;
 extern crate routing;
 extern crate sodiumoxide;
 extern crate rustc_serialize;
-#[macro_use]
-extern crate maidsafe_client;
+extern crate self_encryption;
+#[macro_use] extern crate maidsafe_client;
 
+// TODO arange in pyramid style
 pub mod file;
+/// Module for Restful interfaces for storage
+// pub mod rest;
+/// Errors
 pub mod errors;
-pub mod helper;
-pub mod directory_metadata;
+// pub mod helper;
 pub mod metadata;
 pub mod directory_listing;
 
-/// Module for Restful interfaces for storage
-pub mod rest;
+
 /// Root directory name
-pub const ROOT_DIRECTORY_NAME: &'static str = "root";
+pub const ROOT_DIRECTORY_NAME: &'static str = "USER_ROOT";
 /// Configuration directory Name stored in the session packet
-pub const CONFIGURATION_DIRECTORY_NAME: &'static str = "MaidSafe_Configuration";
+pub const CONFIGURATION_DIRECTORY_NAME: &'static str = "CONFIGURATION_ROOT";
 /// Tag representing the Versioned Directory Listing
-pub const VERSION_DIRECTORY_LISTING_TAG: u64 = ::maidsafe_client::MAIDSAFE_TAG + 100;
+pub const VERSION_DIRECTORY_LISTING_TAG: u64 = maidsafe_client::CLIENT_STRUCTURED_DATA_TAG + 100;
 /// Tag representing the Versioned Directory Listing
-pub const UNVERSION_DIRECTORY_LISTING_TAG: u64 = ::maidsafe_client::MAIDSAFE_TAG + 101;
+pub const UNVERSION_DIRECTORY_LISTING_TAG: u64 = VERSION_DIRECTORY_LISTING_TAG + 1;
 
 /// ShareLebvel indicates whether the container is Private or Public shared
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]

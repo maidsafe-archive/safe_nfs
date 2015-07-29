@@ -27,7 +27,8 @@ pub enum NfsError {
     NameIsEmpty,
     MetadataIsEmpty,
     DestinationAndSourceAreSame,
-    FileExistsInDestination
+    FileExistsInDestination,
+    FailedToUpdateFile,
 }
 
 impl From<::maidsafe_client::errors::ClientError> for NfsError {
@@ -47,7 +48,8 @@ impl ::std::fmt::Debug for NfsError {
             NfsError::NameIsEmpty                   => ::std::fmt::Display::fmt("NfsError::NameIsEmpty", f),
             NfsError::MetadataIsEmpty               => ::std::fmt::Display::fmt("NfsError::MetadataIsEmpty", f),
             NfsError::DestinationAndSourceAreSame   => ::std::fmt::Display::fmt("NfsError::DestinationAndSourceAreSame", f),
-            NfsError::FileExistsInDestination   => ::std::fmt::Display::fmt("NfsError::FileExistsInDestination", f),
+            NfsError::FileExistsInDestination       => ::std::fmt::Display::fmt("NfsError::FileExistsInDestination", f),
+            NfsError::FailedToUpdateFile            => ::std::fmt::Display::fmt("NfsError::FailedToUpdateFile", f),
         }
     }
 }
