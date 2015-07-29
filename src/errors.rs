@@ -26,6 +26,8 @@ pub enum NfsError {
     AlreadyExists,
     NameIsEmpty,
     MetadataIsEmpty,
+    DestinationAndSourceAreSame,
+    FileExistsInDestination
 }
 
 impl From<::maidsafe_client::errors::ClientError> for NfsError {
@@ -44,6 +46,8 @@ impl ::std::fmt::Debug for NfsError {
             NfsError::AlreadyExists                 => ::std::fmt::Display::fmt("NfsError::AlreadyExists", f),
             NfsError::NameIsEmpty                   => ::std::fmt::Display::fmt("NfsError::NameIsEmpty", f),
             NfsError::MetadataIsEmpty               => ::std::fmt::Display::fmt("NfsError::MetadataIsEmpty", f),
+            NfsError::DestinationAndSourceAreSame   => ::std::fmt::Display::fmt("NfsError::DestinationAndSourceAreSame", f),
+            NfsError::FileExistsInDestination   => ::std::fmt::Display::fmt("NfsError::FileExistsInDestination", f),
         }
     }
 }

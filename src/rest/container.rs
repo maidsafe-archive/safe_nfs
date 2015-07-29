@@ -227,52 +227,31 @@ impl Container {
         let mut file_helper = ::helper::file_helper::FileHelper::new(self.client.clone(), self.directory_listing.clone());
         file_helper.update_metadata(file.clone(), user_metadata)
     }
-/*
+
     /// Delete blob from the container
-    pub fn delete_blob(&mut self, name: String) -> Result<(), String> {
-        match self.directory_listing.get_files().iter().position(|file| *file.get_name() == name) {
-            Some(pos) => {
-                self.directory_listing.get_mut_files().remove(pos);
-                let mut directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
-                match directory_helper.update(&self.directory_listing) {
-                    Ok(_) => Ok(()),
-                    Err(_) => Err("Error".to_string()),
-                }
-            },
-            None => Err("Blob not found".to_string()),
-        }
+    pub fn delete_blob(&mut self, name: String) -> Result<(), ::errors::NfsError> {
+        let mut file_helper = ::helper::file_helper::FileHelper::new(self.client.clone(), self.directory_listing.clone());
+        file_helper.delete(name)
     }
 
     /// Copies the latest blob version from the container to the specified destination container
-    pub fn copy_blob(&mut self, blob_name: String, to_container: [u8; 64]) -> Result<(), String> {
-        let to_dir_id = ::routing::NameType(to_container);
-        if *self.directory_listing.get_id() == to_dir_id {
-            return Err("Destination and Source containers are the same".to_string());
+    pub fn copy_blob(&mut self, blob_name: String, to_container: &::rest::container_info::ContainerInfo) -> Result<(), ::errors::NfsError> {
+        let to_dir_info = to_container.convert_to_directory_info();
+        if self.directory_listing.get_key() == to_dir_info.get_key() {
+            return Err(::errors::NfsError::DestinationAndSourceAreSame);
         }
-        let mut directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
-        match self.directory_listing.get_files().iter().position(|file| *file.get_name() == blob_name) {
-            Some(file_pos) => {
-                match directory_helper.get(&to_dir_id) {
-                    Ok(mut to_dir_listing) => {
-                        match self.find_file(&blob_name, &to_dir_listing) {
-                            Some(_) => Err("File already exists in the destination Container".to_string()),
-                            None => {
-                                let file = self.directory_listing.get_files()[file_pos].clone();
-                                to_dir_listing.get_mut_files().push(file);
-                                match  directory_helper.update(&to_dir_listing) {
-                                    Ok(_) => Ok(()),
-                                    Err(_) => Err("Error".to_string()),
-                                }
-                            }
-                        }
-                    },
-                    Err(_) => Err("Error".to_string()),
-                }
-            },
-            None => Err("Blob not found".to_string()),
+        let file = try!(self.directory_listing.find_file(blob_name.clone()).ok_or(::errors::NfsError::NotFound));
+        let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
+        let mut destination = try!(directory_helper.get(to_dir_info.get_key(),
+                                                   to_dir_info.get_metadata().is_versioned(),
+                                                   to_dir_info.get_metadata().get_access_level()));
+        if destination.find_file(blob_name).is_some() {
+           return Err(::errors::NfsError::FileExistsInDestination);
         }
+        destination.get_mut_files().push(file.clone());
+        directory_helper.update(&destination)
     }
-*/
+
     fn get_writer_for_blob(&self, blob: &::rest::blob::Blob, mode: ::helper::writer::Mode) -> Result<::helper::writer::Writer, ::errors::NfsError> {
         let helper = ::helper::file_helper::FileHelper::new(self.client.clone(), self.directory_listing.clone());
         helper.update(blob.convert_to_file().clone(), mode)
