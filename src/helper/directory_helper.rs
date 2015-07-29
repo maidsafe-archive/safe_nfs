@@ -46,8 +46,7 @@ impl DirectoryHelper {
 
         let structured_data = try!(self.save_directory_listing(&directory));
 
-        let id = structured_data.get_identifier();
-        let _ = self.client.lock().unwrap().put(::maidsafe_client::client::StructuredData::compute_name(tag_type, id),
+        let _ = self.client.lock().unwrap().put(structured_data.name(),
                                                 ::maidsafe_client::client::Data::StructuredData(structured_data.clone()));
         match parent_directory_info {
             Some(parent_directory_info) => {
@@ -78,8 +77,48 @@ impl DirectoryHelper {
 
     /// Updates an existing DirectoryListing in the network.
     pub fn update(&self, directory: &::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
-        let updated_structured_data = try!(self.save_directory_listing(directory));
-        let _ = self.client.lock().unwrap().post(directory.get_key().0.clone(),
+        let directory_key = directory.get_info().get_key();
+        let structured_data = try!(self.get_structured_data(directory_key.0, directory_key.1));
+        // update SD
+        let signing_key = self.client.lock().unwrap().get_secret_signing_key().clone();
+        let owner_key = self.client.lock().unwrap().get_public_signing_key().clone();
+        let access_level = directory.get_metadata().get_access_level();
+        let versioned = directory.get_metadata().is_versioned();
+        let encrypted_data = match access_level {
+            ::AccessLevel::Private => try!(directory.encrypt(self.client.clone())),
+            ::AccessLevel::Public => try!(::maidsafe_client::utility::serialise(&directory)),
+        };
+        let updated_structured_data = match versioned {
+            true => {
+                let version = try!(self.save_as_immutable_data(encrypted_data,
+                                                               ::maidsafe_client::client::ImmutableDataType::Normal));
+                try!(::maidsafe_client::structured_data_operations::versioned::append_version(&mut *self.client.lock().unwrap(),
+                                                                                              structured_data,
+                                                                                              version,
+                                                                                              &signing_key))
+            },
+            false => {
+                let private_key = self.client.lock().unwrap().get_public_encryption_key().clone();
+                let secret_key = self.client.lock().unwrap().get_secret_encryption_key().clone();
+                let nonce = ::directory_listing::DirectoryListing::generate_nonce(directory.get_key().0);
+                let encryption_keys = match access_level {
+                    ::AccessLevel::Private => Some((&private_key,
+                                                    &secret_key,
+                                                    &nonce)),
+                    ::AccessLevel::Public => None,
+                };
+                try!(::maidsafe_client::structured_data_operations::unversioned::create(self.client.clone(),
+                                                                                           ::UNVERSION_DIRECTORY_LISTING_TAG,
+                                                                                           directory.get_key().0.clone(),
+                                                                                           structured_data.get_version() + 1,
+                                                                                           encrypted_data,
+                                                                                           vec![owner_key.clone()],
+                                                                                           Vec::new(),
+                                                                                           &signing_key,
+                                                                                           encryption_keys))
+            },
+        };
+        let _ = self.client.lock().unwrap().post(updated_structured_data.name(),
                                                  ::maidsafe_client::client::Data::StructuredData(updated_structured_data));
         Ok(())
     }
@@ -276,47 +315,67 @@ impl DirectoryHelper {
     }
 }
 
-/*
+
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
     fn create_dir_listing() {
-        let test_client = ::maidsafe_client::utility::test_utils::get_client().unwrap_or_else(|error| { println!("Error: {}", error); unimplemented!() });
+        let test_client = eval_result!(::maidsafe_client::utility::test_utils::get_client());
         let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
-        let mut dir_helper = DirectoryHelper::new(client.clone());
-
-        assert!(dir_helper.create("DirName".to_string(),
-                                  vec![7u8; 100]).is_ok());
+        let dir_helper = DirectoryHelper::new(client.clone());
+        // Create a Directory
+        let directory = eval_result!(dir_helper.create("DirName".to_string(),
+                                     ::VERSION_DIRECTORY_LISTING_TAG,
+                                     None,
+                                     true,
+                                     ::AccessLevel::Private,
+                                     None));
+        let fetched = eval_result!(dir_helper.get(directory.get_key(), directory.get_metadata().is_versioned(), directory.get_metadata().get_access_level()));
+        assert_eq!(directory, fetched);
+        // Create a Child directory and update the parent_directory
+        let child_directory = eval_result!(dir_helper.create("Child".to_string(),
+                                           ::VERSION_DIRECTORY_LISTING_TAG,
+                                           None,
+                                           true,
+                                           ::AccessLevel::Private,
+                                           Some(directory.get_info())));
+        // Assert whether parent is updated
+        let parent = eval_result!(dir_helper.get(directory.get_key(), directory.get_metadata().is_versioned(), directory.get_metadata().get_access_level()));
+        assert!(parent.find_sub_directory("Child".to_string()).is_some());
     }
 
     #[test]
-    fn get_dir_listing() {
-        let test_client = ::maidsafe_client::utility::test_utils::get_client().unwrap_or_else(|error| { println!("Error: {}", error); unimplemented!() });
+    fn user_root_configuration() {
+        let test_client = eval_result!(::maidsafe_client::utility::test_utils::get_client());
         let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
-        let mut dir_helper = DirectoryHelper::new(client.clone());
+        let dir_helper = DirectoryHelper::new(client.clone());
 
-        let created_dir_id: _;
-        {
-            let put_result = dir_helper.create("DirName".to_string(),
-                                               vec![7u8; 100]);
-
-            assert!(put_result.is_ok());
-            created_dir_id = put_result.ok().unwrap();
-        }
-
-        {
-            let get_result_should_pass = dir_helper.get(&created_dir_id);
-            assert!(get_result_should_pass.is_ok());
-        }
-        // TO FIX Krishna - get hangs if the data is not present in the network
-        // {
-        //     let get_result_wrong_dir_id_should_fail = dir_helper.get(&::routing::NameType::new([111u8; 64]));
-        //     assert!(get_result_wrong_dir_id_should_fail.is_err());
-        // }
+        let root_dir = eval_result!(dir_helper.get_user_root_directory_listing());
+        let created_dir = eval_result!(dir_helper.create("DirName".to_string(),
+                                       ::VERSION_DIRECTORY_LISTING_TAG,
+                                       None,
+                                       true,
+                                       ::AccessLevel::Private,
+                                       Some(root_dir.get_info())));
+        let root_dir = eval_result!(dir_helper.get_user_root_directory_listing());
+        assert!(root_dir.find_sub_directory("DirName".to_string()).is_some());
     }
 
+    #[test]
+    fn configuration_directory() {
+        let test_client = eval_result!(::maidsafe_client::utility::test_utils::get_client());
+        let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
+        let dir_helper = DirectoryHelper::new(client.clone());
+        let config_dir = eval_result!(dir_helper.get_configuration_directory_listing("DNS".to_string()));
+        assert_eq!(config_dir.get_info().get_name().clone(), "DNS".to_string());
+        let id = config_dir.get_info().get_key().0.clone();
+        let config_dir = eval_result!(dir_helper.get_configuration_directory_listing("DNS".to_string()));
+        assert_eq!(config_dir.get_info().get_key().0.clone(), id);
+    }
+
+/*
     #[test]
     fn update_and_versioning() {
         let test_client = ::maidsafe_client::utility::test_utils::get_client().unwrap_or_else(|error| { println!("Error: {}", error); unimplemented!() });
@@ -380,5 +439,5 @@ mod test {
             assert!(rxd_dir_listing != dir_listing);
             assert_eq!(*rxd_dir_listing.get_metadata().get_name(), "DirName2".to_string());
         }
-    }
-}*/
+    }*/
+}

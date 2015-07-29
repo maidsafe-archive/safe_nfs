@@ -148,3 +148,28 @@ impl ::std::fmt::Display for DirectoryMetadata {
         write!(f, "name: {}, versioned: {}", self.name, self.versioned)
     }
 }
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use cbor;
+
+    #[test]
+    fn serialise() {
+        // TODO Elaborate test cases
+        let obj_before = DirectoryMetadata::new("hello.txt".to_string(),
+                                                Some("{mime: \"application/json\"}".to_string().into_bytes()),
+                                                true,
+                                                ::AccessLevel::Private,
+                                                None);
+
+        let mut e = cbor::Encoder::from_memory();
+        e.encode(&[&obj_before]).unwrap();
+
+        let mut d = cbor::Decoder::from_bytes(e.as_bytes());
+        let obj_after: DirectoryMetadata = d.decode().next().unwrap().unwrap();
+
+        assert_eq!(obj_before, obj_after);
+    }
+}

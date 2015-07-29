@@ -71,6 +71,7 @@ impl ::std::fmt::Display for File {
     }
 }
 
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -79,8 +80,8 @@ mod test {
     #[test]
     fn serialise() {
         let obj_before = File::new(::metadata::Metadata::new("Home".to_string(),
-             "{mime:\"application/json\"}".to_string().into_bytes()),
-              ::self_encryption::datamap::DataMap::None);
+                                                             Some("{mime:\"application/json\"}".to_string().into_bytes())),
+                                                             ::self_encryption::datamap::DataMap::None);
 
         let mut e = cbor::Encoder::from_memory();
         e.encode(&[&obj_before]).unwrap();

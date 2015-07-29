@@ -60,27 +60,24 @@ impl ContainerInfo {
     }
 }
 
-/*
+
 #[cfg(test)]
 mod test {
     use super::*;
-    use metadata::Metadata;
-    use ::directory_info::DirectoryInfo;
 
     #[test]
     fn create() {
         let name = ::maidsafe_client::utility::generate_random_string(10).unwrap_or_else(|error| { println!("Error: {}", error); unimplemented!() });
-        let metadata = Metadata::new(name.clone(), Vec::new());
-        let container_info = ContainerInfo{ info: DirectoryInfo::new(metadata) };
-
+        let metadata = ::directory_metadata::DirectoryMetadata::new(name.clone(), None, true, ::AccessLevel::Public, None);
+        let container_info = ContainerInfo{ info: ::directory_listing::directory_info::DirectoryInfo::new(metadata, ::VERSION_DIRECTORY_LISTING_TAG) };
         assert_eq!(*container_info.get_name(), name);
     }
 
     #[test]
     fn convert_from() {
         let name = ::maidsafe_client::utility::generate_random_string(10).unwrap_or_else(|error| { println!("Error: {}", error); unimplemented!() });
-        let metadata = Metadata::new(name.clone(), Vec::new());
-        let directory_info = DirectoryInfo::new(metadata);
+        let metadata = ::directory_metadata::DirectoryMetadata::new(name.clone(), None, true, ::AccessLevel::Public, None);
+        let directory_info = ::directory_listing::directory_info::DirectoryInfo::new(metadata, ::VERSION_DIRECTORY_LISTING_TAG);
 
         assert_eq!(*directory_info.get_name(), name);
 
@@ -93,8 +90,8 @@ mod test {
     #[test]
     fn convert_to() {
         let name = ::maidsafe_client::utility::generate_random_string(10).unwrap_or_else(|error| { println!("Error: {}", error); unimplemented!() });
-        let metadata = Metadata::new(name.clone(), Vec::new());
-        let container_info = ContainerInfo{ info: DirectoryInfo::new(metadata) };
+        let metadata = ::directory_metadata::DirectoryMetadata::new(name.clone(), None, true, ::AccessLevel::Public, None);
+        let container_info = ContainerInfo{ info: ::directory_listing::directory_info::DirectoryInfo::new(metadata, ::VERSION_DIRECTORY_LISTING_TAG) };
 
         assert_eq!(*container_info.get_name(), name);
 
@@ -104,4 +101,3 @@ mod test {
         assert_eq!(directory_info.get_metadata().get_created_time(), container_info.get_created_time());
     }
 }
-*/

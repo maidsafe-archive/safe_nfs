@@ -144,9 +144,7 @@ mod test {
     fn serialise() {
         // TODO Elaborate test cases
         let obj_before = Metadata::new("hello.txt".to_string(),
-                                       Some("{mime: \"application/json\"}".to_string().into_bytes()),
-                                       None,
-                                       None);
+                                       Some("{mime: \"application/json\"}".to_string().into_bytes()));
 
         let mut e = cbor::Encoder::from_memory();
         e.encode(&[&obj_before]).unwrap();

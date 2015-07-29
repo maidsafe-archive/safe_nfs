@@ -48,6 +48,7 @@ extern crate cbor;
 extern crate routing;
 extern crate sodiumoxide;
 extern crate rustc_serialize;
+#[macro_use]
 extern crate maidsafe_client;
 
 pub mod file;

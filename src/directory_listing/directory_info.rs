@@ -71,7 +71,7 @@ impl ::std::fmt::Display for DirectoryInfo {
         write!(f, "metadata: {}, key: {}, {}", *self.get_metadata(), *self.get_key().0, self.get_key().1)
     }
 }
-/*
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -79,7 +79,8 @@ mod test {
 
     #[test]
     fn serialise() {
-        let obj_before = DirectoryInfo::new(::metadata::Metadata::new("hello.txt".to_string(), "{mime:\"application/json\"}".to_string().into_bytes()));
+        let metadata = ::directory_metadata::DirectoryMetadata::new("Hello.txt".to_string(), None, true, ::AccessLevel::Public, None);
+        let obj_before = DirectoryInfo::new(metadata, ::VERSION_DIRECTORY_LISTING_TAG);
 
         let mut e = cbor::Encoder::from_memory();
         e.encode(&[&obj_before]).unwrap();
@@ -90,4 +91,3 @@ mod test {
         assert_eq!(obj_before, obj_after);
     }
 }
-*/
