@@ -140,6 +140,11 @@ impl DirectoryListing {
         self.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == directory_name)
     }
 
+    pub fn get_file_index(&self,
+                              file_name: String) -> Option<usize> {
+        self.get_files().iter().position(|file| *file.get_name() == file_name)
+    }
+
     /// Generates a nonce based on the directory_id
     pub fn generate_nonce(directory_id: &::routing::NameType) -> ::sodiumoxide::crypto::box_::Nonce {
         let mut nonce = [0u8; ::sodiumoxide::crypto::box_::NONCEBYTES];

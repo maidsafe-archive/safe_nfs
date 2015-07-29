@@ -34,7 +34,7 @@ impl FileHelper {
     /// Helper function to create a file in a directory listing
     /// A writer object is returned, through which the data for the file can be written to the network
     /// The file is actually saved in the directory listing only after `writer.close()` is invoked
-    pub fn create(&mut self,
+    pub fn create(&self,
                   name: String,
                   user_metatdata: Option<Vec<u8>>) -> Result<::helper::writer::Writer, ::errors::NfsError> {
         match self.directory_listing.find_file(name.clone()) {
@@ -46,10 +46,22 @@ impl FileHelper {
         }
     }
 
+    /// Delete a file from the DirectoryListing
+    pub fn delete(&mut self, file_name: String) -> Result<(), ::errors::NfsError> {
+        match self.directory_listing.get_file_index(file_name) {
+            Some(index) => {
+                self.directory_listing.get_mut_files().remove(index);
+                let directory_helper  = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
+                directory_helper.update(&self.directory_listing)
+            },
+            None => Err(::errors::NfsError::NotFound),
+        }
+    }
+
     /// Helper function to Update content of a file in a directory listing
     /// A writer object is returned, through which the data for the file can be written to the network
     /// The file is actually saved in the directory listing only after `writer.close()` is invoked
-    pub fn update(&mut self,
+    pub fn update(&self,
                   file: ::file::File,
                   mode: ::helper::writer::Mode) -> Result<::helper::writer::Writer, ::errors::NfsError> {
         match self.directory_listing.find_file(file.get_name().clone()) {
@@ -74,7 +86,7 @@ impl FileHelper {
     }
 
     /// Return the versions of a directory containing modified versions of a file
-    pub fn get_versions(&mut self,
+    pub fn get_versions(&self,
                         file: &::file::File) -> Result<Vec<::routing::NameType>, String> {
         let mut versions = Vec::<::routing::NameType>::new();
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
@@ -103,6 +115,13 @@ impl FileHelper {
         }
 
         Ok(versions)
+    }
+
+    pub fn read(&self, file: ::file::File) -> Result<::helper::reader::Reader, ::errors::NfsError> {
+        match self.directory_listing.find_file(file.get_name().clone()) {
+            Some(_) => Ok(::helper::reader::Reader::new(self.client.clone(), file)),
+            None => Err(::errors::NfsError::NotFound),
+        }
     }
 
 }
