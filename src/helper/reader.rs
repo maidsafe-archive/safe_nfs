@@ -30,9 +30,9 @@ impl Reader {
     pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
                file  : ::file::File) -> Reader {
         Reader {
-            client        : client,
+            client        : client.clone(),
             self_encryptor: ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), file.get_datamap().clone()),
-            file          : file, // TODO why clone
+            file          : file,
         }
     }
 

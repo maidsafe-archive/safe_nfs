@@ -32,13 +32,13 @@ impl FileHelper {
     /// A writer object is returned, through which the data for the file can be written to the network
     /// The file is actually saved in the directory listing only after `writer.close()` is invoked
     pub fn create(&self,
-                  name          : String,
-                  user_metatdata: Vec<u8>,
-                  directory_listing: ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
-        match directory_listing.find_file(name.clone()) {
+                  name              : String,
+                  user_metatdata    : Vec<u8>,
+                  directory_listing : ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
+        match directory_listing.find_file(&name) {
             Some(_) => Err(::errors::NfsError::AlreadyExists),
             None => {
-                let file = ::file::File::new(::metadata::Metadata::new(name, user_metatdata), ::self_encryption::datamap::DataMap::None);
+                let file = ::file::File::new(::metadata::file_metadata::FileMetadata::new(name, user_metatdata), ::self_encryption::datamap::DataMap::None);
                 Ok(::helper::writer::Writer::new(self.client.clone(), ::helper::writer::Mode::Overwrite, directory_listing, file))
             },
         }
@@ -46,10 +46,11 @@ impl FileHelper {
 
     /// Delete a file from the DirectoryListing
     pub fn delete(&self, file_name: String, directory_listing: &mut ::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
-         let index = try!(directory_listing.get_file_index(file_name).ok_or(::errors::NfsError::FileNotFound));
+         let index = try!(directory_listing.get_file_index(&file_name).ok_or(::errors::NfsError::FileNotFound));
          directory_listing.get_mut_files().remove(index);
          let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-         directory_helper.update(&directory_listing)
+         try!(directory_helper.update(&directory_listing));
+         Ok(())
     }
 
     /// Helper function to Update content of a file in a directory listing
@@ -59,48 +60,47 @@ impl FileHelper {
                   file: ::file::File,
                   mode: ::helper::writer::Mode,
                   directory_listing: ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
-        let _ = try!(directory_listing.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
+        try!(directory_listing.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         Ok(::helper::writer::Writer::new(self.client.clone(), mode, directory_listing, file))
     }
 
     /// Updates the file metadata. Returns the updated DirectoryListing
-    // TODO return new parent_dir_listing
     pub fn update_metadata(&self,
                            mut file: ::file::File,
-                           user_metadata: <Vec<u8>>,
+                           user_metadata: Vec<u8>,
                            directory_listing: &mut ::directory_listing::DirectoryListing) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
-        let _ = try!(directory_listing.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
+        try!(directory_listing.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         file.get_mut_metadata().set_user_metadata(user_metadata);
-        directory_listing.upsert_file(file);
+        try!(directory_listing.upsert_file(file));
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         directory_helper.update(&directory_listing)
     }
 
-    // TODO return Vec<Files> not dir_ids
     /// Return the versions of a directory containing modified versions of a file
     pub fn get_versions(&self,
-                        file: &::file::File) -> Result<Vec<::file::File>, ::errors::NfsError> {
+                        file                : &::file::File,
+                        directory_listing   : &::directory_listing::DirectoryListing) -> Result<Vec<::file::File>, ::errors::NfsError> {
         let mut versions = Vec::<::file::File>::new();
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
 
-        let sdv_versions = try!(directory_helper.get_versions(self.directory_listing.get_key()));
+        let sdv_versions = try!(directory_helper.get_versions(directory_listing.get_key()));
         let mut modified_time = ::time::empty_tm();
         for version_id in sdv_versions {
-            let directory_listing = try!(directory_helper.get_by_version(self.directory_listing.get_key(),
-                                                                         self.directory_listing.get_metadata().get_access_level(),
+            let directory_listing = try!(directory_helper.get_by_version(directory_listing.get_key(),
+                                                                         directory_listing.get_metadata().get_access_level().clone(),
                                                                          version_id.clone()));
-            if let Some(file) == directory_listing.get_files().iter().find(|&entry| entry.get_name() == file.get_name()) {
-                if file.get_metadata().get_modified_time() != modified_time {
-                     modified_time = file.get_metadata().get_modified_time();
-                     versions.push(file);
+            if let Some(file) = directory_listing.get_files().iter().find(|&entry| entry.get_name() == file.get_name()) {
+                if *file.get_metadata().get_modified_time() != modified_time {
+                     modified_time = file.get_metadata().get_modified_time().clone();
+                     versions.push(file.clone());
                  }
             }
         }
         Ok(versions)
     }
 
-    pub fn read(&self, file: ::file::File) -> Result<::helper::reader::Reader, ::errors::NfsError> {
-        let _ = try!(directory_listing.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
+    pub fn read(&self, file: ::file::File, directory_listing: &::directory_listing::DirectoryListing) -> Result<::helper::reader::Reader, ::errors::NfsError> {
+        try!(directory_listing.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         Ok(::helper::reader::Reader::new(self.client.clone(), file))
     }
 }

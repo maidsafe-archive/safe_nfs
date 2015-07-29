@@ -56,7 +56,7 @@ pub mod file;
 // pub mod rest;
 /// Errors
 pub mod errors;
-// pub mod helper;
+pub mod helper;
 pub mod metadata;
 pub mod directory_listing;
 

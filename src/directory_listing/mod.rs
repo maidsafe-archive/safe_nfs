@@ -106,7 +106,7 @@ impl DirectoryListing {
     }
 
     /// Get the unique ID that represents this DirectoryListing in the network
-    pub fn get_key(&self) ->  (&::routing::NameType, u64) {
+    pub fn get_key(&self) ->  (::routing::NameType, u64) {
         self.info.get_key()
     }
 
@@ -136,7 +136,7 @@ impl DirectoryListing {
         se.write(&serialised_data, 0);
         let datamap = se.close();
         let serialised_data_map = try!(::maidsafe_client::utility::serialise(&datamap));
-        Ok(try!(client.lock().unwrap().hybrid_encrypt(&serialised_data_map, Some(&DirectoryListing::generate_nonce(self.get_key().0)))))
+        Ok(try!(client.lock().unwrap().hybrid_encrypt(&serialised_data_map, Some(&DirectoryListing::generate_nonce(&self.get_key().0)))))
     }
 
     /// Get DirectoryInfo of sub_directory within a DirectoryListing.
