@@ -26,24 +26,26 @@ pub enum Mode {
 /// Writer is used to write contents to a File and especially in chunks if the file happens to be
 /// too large
 pub struct Writer {
-    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-    file: ::file::File,
-    directory: ::directory_listing::DirectoryListing,
+    client        : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+    file          : ::file::File,
+    directory     : ::directory_listing::DirectoryListing, // TODO call it parent_directory
     self_encryptor: ::self_encryption::SelfEncryptor<::maidsafe_client::SelfEncryptionStorage>,
 }
 
 impl Writer {
     /// Create new instance of Writer
-    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-               mode: Mode,
-               directory: ::directory_listing::DirectoryListing,
-               file: ::file::File) -> Writer {
+    pub fn new(client   : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+               mode     : Mode,
+               directory: ::directory_listing::DirectoryListing, // TODO call it parent_directory
+               file     : ::file::File) -> Writer {
         let datamap = match mode {
+                Mode::Modify    => file.get_datamap().clone(),
                 Mode::Overwrite => ::self_encryption::datamap::DataMap::None,
-                Mode::Modify => file.get_datamap().clone(),
         };
+
+        // TODO Pls define in order in structure above, not randomly, difficult to verify in review
         Writer {
-            file: file.clone(),
+            file: file.clone(), // TODO Why
             directory: directory,
             self_encryptor: ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), datamap),
             client: client,
@@ -55,6 +57,7 @@ impl Writer {
         self.self_encryptor.write(data, position);
     }
 
+    // TODO return (updated and written to network) parent dir-listing
     /// close is invoked only after alll the data is completely written
     /// The file/blob is saved only when the close is invoked.
     pub fn close(mut self) -> Result<(), ::errors::NfsError> {

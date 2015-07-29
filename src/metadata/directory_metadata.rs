@@ -15,46 +15,44 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
-
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 /// Metadata about a File or a Directory
 pub struct DirectoryMetadata {
-    name: String,
-    created_time:  ::time::Tm,
+    name         : String,
+    created_time :  ::time::Tm,
     modified_time: ::time::Tm,
-    parent_dir: Option<(::routing::NameType, u64)>,
-    user_metadata: Option<Vec<u8>>,
-    versioned: bool,
-    access_level: ::AccessLevel,
+    user_metadata: Vec<u8>,
+    parent_dir   : Option<(::routing::NameType, u64)>,
+    versioned    : bool,
+    access_level : ::AccessLevel,
 }
 
 impl DirectoryMetadata {
     /// Create a new instance of Metadata
-    pub fn new(name: String,
-               user_metadata: Option<Vec<u8>>,
-               versioned: bool,
-               access_level: ::AccessLevel,
-               parent_dir: Option<(&::routing::NameType, u64)>) -> DirectoryMetadata {
+    pub fn new(name         : String,
+               user_metadata: Vec<u8>,
+               versioned    : bool,
+               access_level : ::AccessLevel,
+               parent_dir   : Option<(::routing::NameType, u64)>) -> DirectoryMetadata {
         DirectoryMetadata {
-            name: name,
-            created_time:  ::time::now_utc(),
+            name         : name,
+            created_time :  ::time::now_utc(),
             modified_time: ::time::now_utc(),
             user_metadata: user_metadata,
-            parent_dir: parent_dir.map(|key| { (key.0.clone(), key.1)}),
-            versioned: versioned,
-            access_level: access_level,
+            parent_dir   : parent_dir,
+            versioned    : versioned,
+            access_level : access_level,
         }
     }
 
     /// Get time of creation
-    pub fn get_created_time(&self) -> ::time::Tm {
-        self.created_time
+    pub fn get_created_time(&self) -> &::time::Tm {
+        &self.created_time
     }
 
     /// Get time of modification
-    pub fn get_modified_time(&self) -> ::time::Tm {
-        self.modified_time
+    pub fn get_modified_time(&self) -> &::time::Tm {
+        &self.modified_time
     }
 
     /// Get name associated with the structure (file or directory) that this metadata is a part
@@ -64,13 +62,13 @@ impl DirectoryMetadata {
     }
 
     /// Returns the AccessLevel
-    pub fn get_access_level(&self) -> ::AccessLevel {
-        self.access_level.clone()
+    pub fn get_access_level(&self) -> &::AccessLevel {
+        &self.access_level
     }
 
     /// Get user setteble custom metadata
-    pub fn get_user_metadata(&self) -> Option<Vec<u8>> {
-        self.user_metadata.clone()
+    pub fn get_user_metadata(&self) -> &Vec<u8> {
+        &self.user_metadata
     }
 
     /// Returns whther the DirectoryListing is versioned or not
@@ -94,57 +92,54 @@ impl DirectoryMetadata {
     pub fn set_user_metadata(&mut self, user_metadata: Option<Vec<u8>>) {
         self.user_metadata = user_metadata;
     }
-
 }
 
-impl Encodable for DirectoryMetadata {
-    fn encode<E: Encoder>(&self, e: &mut E)->Result<(), E::Error> {
+impl ::rustc_serialize::Encodable for DirectoryMetadata {
+    fn encode<E: ::rustc_serialize::Encoder>(&self, e: &mut E)->Result<(), E::Error> {
         let created_time = self.created_time.to_timespec();
         let modified_time = self.modified_time.to_timespec();
-        ::cbor::CborTagEncode::new(5483_000, &(self.name.clone(),
-                                               self.parent_dir.clone(),
-                                               self.user_metadata.clone(),
+        ::cbor::CborTagEncode::new(5483_000, &(&self.name,
+                                               &self.parent_dir,
+                                               &self.user_metadata,
                                                created_time.sec,
                                                created_time.nsec,
                                                modified_time.sec,
                                                modified_time.nsec,
                                                self.versioned,
-                                               self.access_level.clone())).encode(e)
+                                               &self.access_level)).encode(e)
     }
 }
 
-impl Decodable for DirectoryMetadata {
-    fn decode<D: Decoder>(d: &mut D)->Result<DirectoryMetadata, D::Error> {
-        try!(d.read_u64());
-        let (name, parent_dir, meta, created_sec, created_nsec, modified_sec,
-            modified_nsec, versioned, access_level) = try!(Decodable::decode(d));
+impl ::rustc_serialize::Decodable for DirectoryMetadata {
+    fn decode<D: ::rustc_serialize::Decoder>(d: &mut D) -> Result<DirectoryMetadata, D::Error> {
+        let _ = try!(d.read_u64());
+
+        let (name,
+             parent_dir,
+             meta_data,
+             created_sec,
+             created_nsec,
+             modified_sec,
+             modified_nsec,
+             versioned,
+             access_level) = try!(Decodable::decode(d));
 
         Ok(DirectoryMetadata {
-                name: name,
-                user_metadata: meta,
-                parent_dir: parent_dir,
-                created_time: ::time::at_utc(::time::Timespec {
-                        sec: created_sec,
-                        nsec: created_nsec
-                    }),
-                modified_time: ::time::at_utc(::time::Timespec {
-                        sec: modified_sec,
-                        nsec: modified_nsec
-                    }),
-                versioned: versioned,
-                access_level: access_level,
-            })
+            name: name,
+            user_metadata: meta,
+            parent_dir: parent_dir,
+            created_time: ::time::at_utc(::time::Timespec {
+                sec: created_sec,
+                nsec: created_nsec
+            }),
+            modified_time: ::time::at_utc(::time::Timespec {
+                sec: modified_sec,
+                nsec: modified_nsec
+            }),
+            versioned: versioned,
+            access_level: access_level,
+        })
     }
 }
 
-impl ::std::fmt::Debug for DirectoryMetadata {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "name: {}, versioned: {}", self.name, self.versioned)
-    }
-}
-
-impl ::std::fmt::Display for DirectoryMetadata {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "name: {}, versioned: {}", self.name, self.versioned)
-    }
-}
+// TODO test cases for serialisation

@@ -31,11 +31,11 @@ impl DirectoryHelper {
     /// Creates a Directory in the network.
     /// Returns the created DirectoryListing
     pub fn create(&self,
-                  directory_name: String,
-                  tag_type: u64,
-                  user_metadata: Option<Vec<u8>>,
-                  versioned: bool,
-                  access_level: ::AccessLevel,
+                  directory_name       : String,
+                  tag_type             : u64,
+                  user_metadata        : Option<Vec<u8>>,
+                  versioned            : bool,
+                  access_level         : ::AccessLevel,
                   parent_directory_info: Option<&::directory_listing::directory_info::DirectoryInfo>) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         let directory = ::directory_listing::DirectoryListing::new(directory_name,
                                                                    tag_type,
@@ -46,39 +46,47 @@ impl DirectoryHelper {
 
         let structured_data = try!(self.save_directory_listing(&directory));
 
-        let id = structured_data.get_identifier();
-        let _ = self.client.lock().unwrap().put(::maidsafe_client::client::StructuredData::compute_name(tag_type, id),
+        // TODO why let _ ?? if you use try!() the return type is void.. you don't need let _
+        let _ = self.client.lock().unwrap().put(structured_data.name(),
                                                 ::maidsafe_client::client::Data::StructuredData(structured_data.clone()));
-        match parent_directory_info {
-            Some(parent_directory_info) => {
-                let key = parent_directory_info.get_key();
-                let metadata = parent_directory_info.get_metadata();
-                let mut parent_directory = try!(self.get(key, metadata.is_versioned(), metadata.get_access_level()));
-                parent_directory.get_mut_sub_directories().push(directory.get_info().clone());
-                try!(self.update(&parent_directory));
-            },
-            None => (),
+
+        if let Some(parent_info) = parent_directory_info {
+            let key = parent_info.get_key();
+            let metadata = parent_info.get_metadata();
+            let mut parent_directory = try!(self.get(key, metadata.is_versioned(), metadata.get_access_level()));
+            parent_directory.get_mut_sub_directories().push(directory.get_info().clone());
+            try!(self.update(&parent_directory));
         };
+
         Ok(directory)
     }
 
     /// Deletes a sub directory
     pub fn delete(&self,
-                  directory: &mut ::directory_listing::DirectoryListing,
-                  directory_to_delete: String) -> Result<(), ::errors::NfsError> {
+                  // TODO what dir is this ? just naming it directory is very confusing to the user
+                  // name it parent_directory/child_directory etc
+                  // Infact parent dir info is present in child's metadata. Just get Parent using
+                  // that and update parent and return new parent.
+                  directory          : &mut ::directory_listing::DirectoryListing,
+                  directory_to_delete: &String) -> Result<(), ::errors::NfsError> {
         match directory.get_sub_directory_index(directory_to_delete) {
             Some(pos) => {
                 directory.get_mut_sub_directories().remove(pos);
                 try!(self.update(directory));
                 Ok(())
             },
-            None => Err(::errors::NfsError::NotFound),
+            None => Err(::errors::NfsError::NotFound), // TODO better naming, divide into - DirectoryNotFound, FileNotFound
         }
     }
 
+    // TODO should this update the parent ? Eg because you renamed the directory, the parent should
+    // get an update too. Rename of File and Dir operations. If it updates the parent then return
+    // the Parent dir. Logic: Update Parent if parent's dir_info for this dir != dir_info of this dir,
+    // except for modified_time
     /// Updates an existing DirectoryListing in the network.
     pub fn update(&self, directory: &::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
         let updated_structured_data = try!(self.save_directory_listing(directory));
+        // TODO why ?? use try!() then the return type is void
         let _ = self.client.lock().unwrap().post(directory.get_key().0.clone(),
                                                  ::maidsafe_client::client::Data::StructuredData(updated_structured_data));
         Ok(())
@@ -104,8 +112,8 @@ impl DirectoryHelper {
                directory_key: (&::routing::NameType, u64),
                versioned: bool,
                access_level: ::AccessLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
-        let structured_data = try!(self.get_structured_data(directory_key.0,
-                                                            directory_key.1));
+        let structured_data = try!(self.get_structured_data(directory_key.0, directory_key.1));
+        // TODO use if else
         match versioned {
             true => {
                let versions = try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data));
@@ -136,6 +144,8 @@ impl DirectoryHelper {
 
     /// Returns the Root Directory
     pub fn get_user_root_directory_listing(&self) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+        // TODO use let root_directory = match {..}
+        // TODO why using this variable anyway ??
         let root_directory;
         {
             root_directory = match self.client.lock().unwrap().get_user_root_directory_id() {
@@ -163,15 +173,13 @@ impl DirectoryHelper {
     /// Returns the Configuration DirectoryListing from the configuration root folder
     /// Creates the directory if the directory does not exists
     #[allow(dead_code)]
-    pub fn get_configuration_directory_listing(&self,
-                                               directory_name: String) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
-        let config_root_directory;
-        {
-            config_root_directory = match self.client.lock().unwrap().get_configuration_root_directory_id() {
-                Some(id) => Some(id.clone()),
-                None => None,
-            }
-        }
+    pub fn get_configuration_directory_listing(&self, directory_name: String) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+        // TODO why using this variable anyway ??
+        let config_root_directory = match self.client.lock().unwrap().get_configuration_root_directory_id() {
+            Some(id) => Some(id.clone()),
+            None => None,
+        };
+
         let config_directory_listing = match config_root_directory {
             Some(id) => try!(self.get((&id, ::UNVERSION_DIRECTORY_LISTING_TAG), false, ::AccessLevel::Private)),
             None => {
@@ -185,7 +193,7 @@ impl DirectoryHelper {
                 created_directory
             }
         };
-        match config_directory_listing.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == directory_name.clone()) {
+        match config_directory_listing.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == directory_name) {
             Some(index) => Ok(try!(self.get(config_directory_listing.get_sub_directories()[index].get_key(),
                                             false,
                                             ::AccessLevel::Private))),
@@ -204,6 +212,8 @@ impl DirectoryHelper {
             ::AccessLevel::Private => try!(directory.encrypt(self.client.clone())),
             ::AccessLevel::Public => try!(::maidsafe_client::utility::serialise(&directory)),
         };
+
+        // TODO If/else is better and standard for bool
         match versioned {
             true => {
                 let version = try!(self.save_as_immutable_data(encrypted_data,
@@ -242,12 +252,13 @@ impl DirectoryHelper {
 
     /// Saves the data as ImmutableData in the network and returns the name
     fn save_as_immutable_data(&self,
-                              data: Vec<u8>,
+                              data     : Vec<u8>,
                               data_type: ::maidsafe_client::client::ImmutableDataType) -> Result<::routing::NameType, ::errors::NfsError> {
         let immutable_data = ::maidsafe_client::client::ImmutableData::new(data_type, data);
         let name = immutable_data.name();
-        let _ = self.client.lock().unwrap().put(name.clone(),
-                                                ::maidsafe_client::client::Data::ImmutableData(immutable_data));
+        // TODO refer to others
+        let _ = self.client.lock().unwrap().put(name.clone(), ::maidsafe_client::client::Data::ImmutableData(immutable_data));
+
         Ok(name)
     }
 
@@ -255,7 +266,7 @@ impl DirectoryHelper {
                            id: &::routing::NameType,
                            type_tag: u64) -> Result<::maidsafe_client::client::StructuredData, ::errors::NfsError> {
         let mut response_getter = try!(self.client.lock().unwrap().get(::maidsafe_client::client::StructuredData::compute_name(type_tag, id),
-                                                                  ::maidsafe_client::client::DataRequest::StructuredData(type_tag)));
+                                                                       ::maidsafe_client::client::DataRequest::StructuredData(type_tag)));
         let data = try!(response_getter.get());
         match data {
             ::maidsafe_client::client::Data::StructuredData(structured_data) => Ok(structured_data),
@@ -265,7 +276,7 @@ impl DirectoryHelper {
 
     /// Get ImmutableData from the Network
     fn get_immutable_data(&self,
-                          id: ::routing::NameType,
+                          id       : ::routing::NameType,
                           data_type: ::maidsafe_client::client::ImmutableDataType) -> Result<::maidsafe_client::client::ImmutableData, ::errors::NfsError> {
         let mut response_getter = try!(self.client.lock().unwrap().get(id, ::maidsafe_client::client::DataRequest::ImmutableData(data_type)));
         let data = try!(response_getter.get());

@@ -15,38 +15,36 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
-
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
-/// Metadata about a File or a Directory
-pub struct Metadata {
-    name: String,
-    size: u64,
-    created_time:  ::time::Tm,
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+/// FileMetadata about a File or a Directory
+pub struct FileMetadata {
+    name         : String,
+    size         : u64,
+    created_time :  ::time::Tm,
     modified_time: ::time::Tm,
-    user_metadata: Option<Vec<u8>>,
+    user_metadata: Vec<u8>,
 }
 
-impl Metadata {
-    /// Create a new instance of Metadata
-    pub fn new(name: String, user_metadata: Option<Vec<u8>>) -> Metadata {
-        Metadata {
-            name: name,
-            size: 0,
-            created_time:  ::time::now_utc(),
+impl FileMetadata {
+    /// Create a new instance of FileMetadata
+    pub fn new(name: String, user_metadata: Vec<u8>) -> FileMetadata {
+        FileMetadata {
+            name         : name,
+            size         : 0,
+            created_time : ::time::now_utc(),
             modified_time: ::time::now_utc(),
             user_metadata: user_metadata,
         }
     }
 
     /// Get time of creation
-    pub fn get_created_time(&self) -> ::time::Tm {
-        self.created_time
+    pub fn get_created_time(&self) -> &::time::Tm {
+        &self.created_time
     }
 
     /// Get time of modification
-    pub fn get_modified_time(&self) -> ::time::Tm {
-        self.modified_time
+    pub fn get_modified_time(&self) -> &::time::Tm {
+        &self.modified_time
     }
 
     /// Get name associated with the structure (file or directory) that this metadata is a part
@@ -60,13 +58,9 @@ impl Metadata {
         self.size
     }
 
-    pub fn set_size(&mut self, size: u64){
-        self.size = size;
-    }
-
     /// Get user setteble custom metadata
-    pub fn get_user_metadata(&self) -> Option<Vec<u8>> {
-        self.user_metadata.clone()
+    pub fn get_user_metadata(&self) -> &Vec<u8> {
+        &self.user_metadata
     }
 
     #[allow(dead_code)]
@@ -76,25 +70,30 @@ impl Metadata {
         self.name = name;
     }
 
+    /// Set the size of file
+    pub fn set_size(&mut self, size: u64){
+        self.size = size;
+    }
+
     /// Set time of modification
     pub fn set_modified_time(&mut self, modified_time: ::time::Tm) {
         self.modified_time = modified_time
     }
 
     /// User setteble metadata for custom metadata
-    pub fn set_user_metadata(&mut self, user_metadata: Option<Vec<u8>>) {
+    pub fn set_user_metadata(&mut self, user_metadata: Vec<u8>) {
         self.user_metadata = user_metadata;
     }
 
 }
 
-impl Encodable for Metadata {
-    fn encode<E: Encoder>(&self, e: &mut E)->Result<(), E::Error> {
+impl ::rustc_serialize::Encodable for FileMetadata {
+    fn encode<E: ::rustc_serialize::Encoder>(&self, e: &mut E) -> Result<(), E::Error> {
         let created_time = self.created_time.to_timespec();
         let modified_time = self.modified_time.to_timespec();
-        ::cbor::CborTagEncode::new(5483_000, &(self.name.clone(),
-                                               self.size as usize,
-                                               self.user_metadata.clone(),
+        ::cbor::CborTagEncode::new(5483_000, &(&self.name,
+                                               self.size,
+                                               &self.user_metadata,
                                                created_time.sec,
                                                created_time.nsec,
                                                modified_time.sec,
@@ -102,36 +101,31 @@ impl Encodable for Metadata {
     }
 }
 
-impl Decodable for Metadata {
-    fn decode<D: Decoder>(d: &mut D)->Result<Metadata, D::Error> {
-        try!(d.read_u64());
-        let (name, size, meta, created_sec, created_nsec, modified_sec, modified_nsec) = try!(Decodable::decode(d));
+impl ::rustc_serialize::Decodable for FileMetadata {
+    fn ::rustc_serialize::decode<D: Decoder>(d: &mut D) -> Result<FileMetadata, D::Error> {
+        let _ = try!(d.read_u64());
 
-        Ok(Metadata {
-                name: name,
-                user_metadata: meta,
-                size: size,
-                created_time: ::time::at_utc(::time::Timespec {
-                        sec: created_sec,
-                        nsec: created_nsec
-                    }),
-                modified_time: ::time::at_utc(::time::Timespec {
-                        sec: modified_sec,
-                        nsec: modified_nsec
-                    }),
-            })
-    }
-}
+        let (name,
+             size,
+             meta_data,
+             created_sec,
+             created_nsec,
+             modified_sec,
+             modified_nsec) = try!(Decodable::decode(d));
 
-impl ::std::fmt::Debug for Metadata {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "name: {}, size: {}, user_metadata: {:?}", self.name, self.size, self.user_metadata)
-    }
-}
-
-impl ::std::fmt::Display for Metadata {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "name: {}, size: {}, user_metadata: {:?}", self.name, self.size, self.user_metadata)
+        Ok(FileMetadata {
+            name: name,
+            user_metadata: meta,
+            size: size,
+            created_time: ::time::at_utc(::time::Timespec {
+                sec: created_sec,
+                nsec: created_nsec
+            }),
+            modified_time: ::time::at_utc(::time::Timespec {
+                sec: modified_sec,
+                nsec: modified_nsec
+            }),
+        })
     }
 }
 
@@ -143,7 +137,7 @@ mod test {
     #[test]
     fn serialise() {
         // TODO Elaborate test cases
-        let obj_before = Metadata::new("hello.txt".to_string(),
+        let obj_before = FileMetadata::new("hello.txt".to_string(),
                                        Some("{mime: \"application/json\"}".to_string().into_bytes()),
                                        None,
                                        None);
@@ -152,7 +146,7 @@ mod test {
         e.encode(&[&obj_before]).unwrap();
 
         let mut d = cbor::Decoder::from_bytes(e.as_bytes());
-        let obj_after: Metadata = d.decode().next().unwrap().unwrap();
+        let obj_after: FileMetadata = d.decode().next().unwrap().unwrap();
 
         assert_eq!(obj_before, obj_after);
     }
