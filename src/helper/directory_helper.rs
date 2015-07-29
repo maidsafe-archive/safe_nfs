@@ -354,11 +354,11 @@ mod test {
 
         let root_dir = eval_result!(dir_helper.get_user_root_directory_listing());
         let created_dir = eval_result!(dir_helper.create("DirName".to_string(),
-                                       ::VERSION_DIRECTORY_LISTING_TAG,
-                                       None,
-                                       true,
-                                       ::AccessLevel::Private,
-                                       Some(root_dir.get_info())));
+                                                         ::VERSION_DIRECTORY_LISTING_TAG,
+                                                         None,
+                                                         true,
+                                                         ::AccessLevel::Private,
+                                                         Some(root_dir.get_info())));
         let root_dir = eval_result!(dir_helper.get_user_root_directory_listing());
         assert!(root_dir.find_sub_directory("DirName".to_string()).is_some());
     }
@@ -375,69 +375,34 @@ mod test {
         assert_eq!(config_dir.get_info().get_key().0.clone(), id);
     }
 
-/*
+
     #[test]
     fn update_and_versioning() {
-        let test_client = ::maidsafe_client::utility::test_utils::get_client().unwrap_or_else(|error| { println!("Error: {}", error); unimplemented!() });
+        let test_client = eval_result!(::maidsafe_client::utility::test_utils::get_client());
         let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
-        let mut dir_helper = DirectoryHelper::new(client.clone());
+        let dir_helper = DirectoryHelper::new(client.clone());
 
-        let created_dir_id: _;
-        {
-            let put_result = dir_helper.create("DirName2".to_string(),
-                                               vec![7u8; 100]);
+        let mut dir_listing = eval_result!(dir_helper.create("DirName2".to_string(),
+                                                             ::VERSION_DIRECTORY_LISTING_TAG,
+                                                             None,
+                                                             false,
+                                                             ::AccessLevel::Private,
+                                                             None));
 
-            assert!(put_result.is_ok());
-            created_dir_id = put_result.ok().unwrap();
-        }
-
-        let mut dir_listing: _;
-        {
-            let get_result = dir_helper.get(&created_dir_id);
-            assert!(get_result.is_ok());
-            dir_listing = get_result.ok().unwrap();
-        }
-
-        let mut versions: _;
-        {
-            let get_result = dir_helper.get_versions(&created_dir_id);
-            assert!(get_result.is_ok());
-            versions = get_result.ok().unwrap();
-        }
-
+        let mut versions = eval_result!(dir_helper.get_versions(dir_listing.get_key()));
         assert_eq!(versions.len(), 1);
 
-        {
-            dir_listing.get_mut_metadata().set_name("NewName".to_string());
-            let update_result = dir_helper.update(&dir_listing);
-            assert!(update_result.is_ok());
-        }
+        dir_listing.get_mut_metadata().set_name("NewName".to_string());
+        assert!(dir_helper.update(&dir_listing).is_ok());
 
-        {
-            let get_result = dir_helper.get_versions(&created_dir_id);
-            assert!(get_result.is_ok());
-            versions = get_result.ok().unwrap();
-        }
-
+        versions = eval_result!(dir_helper.get_versions(dir_listing.get_key()));
         assert_eq!(versions.len(), 2);
 
-        {
-            let get_result = dir_helper.get_by_version(&created_dir_id, &versions.last().unwrap().clone());
-            assert!(get_result.is_ok());
+        let rxd_dir_listing = eval_result!(dir_helper.get_by_version(dir_listing.get_key(), dir_listing.get_metadata().get_access_level(), versions[versions.len()].clone()));
+        assert_eq!(rxd_dir_listing, dir_listing);
 
-            let rxd_dir_listing = get_result.ok().unwrap();
+        let rxd_dir_listing = eval_result!(dir_helper.get_by_version(dir_listing.get_key(), dir_listing.get_metadata().get_access_level(), versions[0].clone()));
+        assert_eq!(*rxd_dir_listing.get_metadata().get_name(), "DirName2".to_string());
 
-            assert_eq!(rxd_dir_listing, dir_listing);
-        }
-
-        {
-            let get_result = dir_helper.get_by_version(&created_dir_id, &versions.first().unwrap().clone());
-            assert!(get_result.is_ok());
-
-            let rxd_dir_listing = get_result.ok().unwrap();
-
-            assert!(rxd_dir_listing != dir_listing);
-            assert_eq!(*rxd_dir_listing.get_metadata().get_name(), "DirName2".to_string());
-        }
-    }*/
+    }
 }
