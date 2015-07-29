@@ -53,7 +53,7 @@ extern crate self_encryption;
 // TODO arange in pyramid style
 pub mod file;
 /// Module for Restful interfaces for storage
-// pub mod rest;
+pub mod rest;
 /// Errors
 pub mod errors;
 pub mod helper;

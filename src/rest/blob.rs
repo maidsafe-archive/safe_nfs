@@ -28,25 +28,20 @@ impl Blob {
     }
 
     /// Get the user settable Metadata of the Blob
-    pub fn get_metadata(&self) -> Option<String> {
-        match self.file.get_metadata().get_user_metadata() {
-            Some(data) => {
-                match String::from_utf8(data.clone()) {
-                    Ok(metadata) => Some(metadata),
-                    Err(_) => None
-                }
-            },
-            None => None,
+    pub fn get_metadata(&self) -> String {
+        match String::from_utf8(self.file.get_metadata().get_user_metadata().clone()) {
+            Ok(data) => data,
+            Err(_) => "".to_string(),
         }
     }
 
     /// Get the creation time for Blob
-    pub fn get_created_time(&self) -> ::time::Tm {
+    pub fn get_created_time(&self) -> &::time::Tm {
         self.file.get_metadata().get_created_time()
     }
 
     /// Get the last modified time for the Blob
-    pub fn get_modified_time(&self) -> ::time::Tm {
+    pub fn get_modified_time(&self) -> &::time::Tm {
         self.file.get_metadata().get_modified_time()
     }
 

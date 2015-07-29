@@ -41,7 +41,7 @@ impl ContainerInfo {
     // }
 
     /// Get the creation time for this Container
-    pub fn get_created_time(&self) -> ::time::Tm {
+    pub fn get_created_time(&self) -> &::time::Tm {
         self.info.get_metadata().get_created_time()
     }
 
