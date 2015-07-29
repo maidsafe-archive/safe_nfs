@@ -24,6 +24,8 @@ pub enum NfsError {
     MetaDataMissingOrCorrupted,
     NotFound,
     AlreadyExists,
+    NameIsEmpty,
+    MetadataIsEmpty,
 }
 
 impl From<::maidsafe_client::errors::ClientError> for NfsError {
@@ -40,6 +42,8 @@ impl ::std::fmt::Debug for NfsError {
             NfsError::MetaDataMissingOrCorrupted    => ::std::fmt::Display::fmt("NfsError::MetaDataMissingOrCorrupted", f),
             NfsError::NotFound                      => ::std::fmt::Display::fmt("NfsError::NotFound", f),
             NfsError::AlreadyExists                 => ::std::fmt::Display::fmt("NfsError::AlreadyExists", f),
+            NfsError::NameIsEmpty                   => ::std::fmt::Display::fmt("NfsError::NameIsEmpty", f),
+            NfsError::MetadataIsEmpty               => ::std::fmt::Display::fmt("NfsError::MetadataIsEmpty", f),
         }
     }
 }

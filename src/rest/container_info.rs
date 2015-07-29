@@ -17,14 +17,14 @@
 
 /// Wrapper over DirectoryInfo to present Rest-friendly name to the Restful interface users
 pub struct ContainerInfo {
-    info: ::directory_info::DirectoryInfo,
+    info: ::directory_listing::directory_info::DirectoryInfo,
 }
 
 impl ContainerInfo {
     /// Get Container ID. This is the directory ID which is unique for every directory and is the
     /// only way to retrieve that directory (DirectoryListing) from the network
-    pub fn get_id(&self) -> [u8; 64] {
-        self.info.get_id().0
+    pub fn get_key(&self) -> ([u8; 64], u64) {
+        (self.info.get_key().0 .0, self.info.get_key().1)
     }
 
     /// Get the name of the Container
@@ -47,19 +47,20 @@ impl ContainerInfo {
 
     /// Convert the ContainerInfo to the format of DirectoryInfo that lower levels understand and
     /// operate on
-    pub fn convert_to_directory_info(&self) -> ::directory_info::DirectoryInfo {
+    pub fn convert_to_directory_info(&self) -> ::directory_listing::directory_info::DirectoryInfo {
         self.info.clone()
     }
 
     /// Convert from the format of DirectoryInfo that the lower levels understand to the rest
     /// friendly ContainerInfo
-    pub fn convert_from_directory_info(info: ::directory_info::DirectoryInfo) -> ContainerInfo {
+    pub fn convert_from_directory_info(info: ::directory_listing::directory_info::DirectoryInfo) -> ContainerInfo {
         ContainerInfo {
             info: info,
         }
     }
 }
 
+/*
 #[cfg(test)]
 mod test {
     use super::*;
@@ -103,3 +104,4 @@ mod test {
         assert_eq!(directory_info.get_metadata().get_created_time(), container_info.get_created_time());
     }
 }
+*/

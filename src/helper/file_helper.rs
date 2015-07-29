@@ -87,33 +87,26 @@ impl FileHelper {
 
     /// Return the versions of a directory containing modified versions of a file
     pub fn get_versions(&self,
-                        file: &::file::File) -> Result<Vec<::routing::NameType>, String> {
+                        file: &::file::File) -> Result<Vec<::routing::NameType>, ::errors::NfsError> {
         let mut versions = Vec::<::routing::NameType>::new();
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
 
-        match directory_helper.get_versions(self.directory_listing.get_key()) {
-            Ok(sdv_versions) => {
-                let mut modified_time = ::time::empty_tm();
-                for version_id in sdv_versions {
-                    match directory_helper.get_by_version(self.directory_listing.get_key(), self.directory_listing.get_metadata().get_access_level(), version_id.clone()) {
-                        Ok(directory_listing) => {
-                            match directory_listing.get_files().iter().find(|&entry| entry.get_name() == file.get_name()) {
-                                Some(file) => {
-                                   if file.get_metadata().get_modified_time() != modified_time {
-                                        modified_time = file.get_metadata().get_modified_time();
-                                        versions.push(version_id);
-                                    }
-                                },
-                                None => ()
-                            }
-                        },
-                        Err(_) => { () }
+        let sdv_versions = try!(directory_helper.get_versions(self.directory_listing.get_key()));
+        let mut modified_time = ::time::empty_tm();
+        for version_id in sdv_versions {
+            let directory_listing = try!(directory_helper.get_by_version(self.directory_listing.get_key(),
+                                                                         self.directory_listing.get_metadata().get_access_level(),
+                                                                         version_id.clone()));
+            match directory_listing.get_files().iter().find(|&entry| entry.get_name() == file.get_name()) {
+                Some(file) => {
+                   if file.get_metadata().get_modified_time() != modified_time {
+                        modified_time = file.get_metadata().get_modified_time();
+                        versions.push(version_id);
                     }
-                }
-            },
-            Err(_) => { () },
+                },
+                None => ()
+            }
         }
-
         Ok(versions)
     }
 
