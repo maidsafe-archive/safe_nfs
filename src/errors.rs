@@ -29,6 +29,7 @@ pub enum NfsError {
     DestinationAndSourceAreSame,
     FileExistsInDestination,
     FailedToUpdateFile,
+    FailedToUpdateDirectory,
     FileNotFound,
     DirectoryNotFound,
 }
@@ -52,6 +53,7 @@ impl ::std::fmt::Debug for NfsError {
             NfsError::DestinationAndSourceAreSame   => ::std::fmt::Display::fmt("NfsError::DestinationAndSourceAreSame", f),
             NfsError::FileExistsInDestination       => ::std::fmt::Display::fmt("NfsError::FileExistsInDestination", f),
             NfsError::FailedToUpdateFile            => ::std::fmt::Display::fmt("NfsError::FailedToUpdateFile", f),
+            NfsError::FailedToUpdateDirectory       => ::std::fmt::Display::fmt("NfsError::FailedToUpdateDirectory", f),
             NfsError::FileNotFound                  => ::std::fmt::Display::fmt("NfsError::FileNotFound", f),
             NfsError::DirectoryNotFound             => ::std::fmt::Display::fmt("NfsError::DirectoryNotFound", f),
         }

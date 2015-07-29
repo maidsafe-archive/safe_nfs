@@ -24,24 +24,24 @@ pub struct DirectoryMetadata {
     user_metadata: Vec<u8>,
     versioned    : bool,
     access_level : ::AccessLevel,
-    parent_dir   : Option<(::routing::NameType, u64)>,
+    parent_dir_key   : Option<(::routing::NameType, u64)>,
 }
 
 impl DirectoryMetadata {
     /// Create a new instance of Metadata
-    pub fn new(name         : String,
-               user_metadata: Vec<u8>,
-               versioned    : bool,
-               access_level : ::AccessLevel,
-               parent_dir   : Option<(::routing::NameType, u64)>) -> DirectoryMetadata {
+    pub fn new(name             : String,
+               user_metadata    : Vec<u8>,
+               versioned        : bool,
+               access_level     : ::AccessLevel,
+               parent_dir_key   : Option<(::routing::NameType, u64)>) -> DirectoryMetadata {
         DirectoryMetadata {
-            name         : name,
-            created_time : ::time::now_utc(),
-            modified_time: ::time::now_utc(),
-            user_metadata: user_metadata,
-            versioned    : versioned,
-            access_level : access_level,
-            parent_dir   : parent_dir,
+            name            : name,
+            created_time    : ::time::now_utc(),
+            modified_time   : ::time::now_utc(),
+            user_metadata   : user_metadata,
+            versioned       : versioned,
+            access_level    : access_level,
+            parent_dir_key  : parent_dir_key,
         }
     }
 
@@ -64,6 +64,11 @@ impl DirectoryMetadata {
     /// Returns the AccessLevel
     pub fn get_access_level(&self) -> &::AccessLevel {
         &self.access_level
+    }
+
+    /// Returns the Parent dir id
+    pub fn get_parent_dir_key(&self) -> Option<(::routing::NameType, u64)> {
+        self.parent_dir_key.clone()
     }
 
     /// Get user setteble custom metadata
@@ -99,7 +104,7 @@ impl ::rustc_serialize::Encodable for DirectoryMetadata {
         let created_time = self.created_time.to_timespec();
         let modified_time = self.modified_time.to_timespec();
         ::cbor::CborTagEncode::new(5483_000, &(&self.name,
-                                               &self.parent_dir,
+                                               &self.parent_dir_key,
                                                &self.user_metadata,
                                                created_time.sec,
                                                created_time.nsec,
@@ -115,7 +120,7 @@ impl ::rustc_serialize::Decodable for DirectoryMetadata {
         let _ = try!(d.read_u64());
 
         let (name,
-             parent_dir,
+             parent_dir_key,
              meta_data,
              created_sec,
              created_nsec,
@@ -127,7 +132,7 @@ impl ::rustc_serialize::Decodable for DirectoryMetadata {
         Ok(DirectoryMetadata {
             name: name,
             user_metadata: meta_data,
-            parent_dir: parent_dir,
+            parent_dir_key: parent_dir_key,
             created_time: ::time::at_utc(::time::Timespec {
                 sec: created_sec,
                 nsec: created_nsec

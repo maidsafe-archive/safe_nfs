@@ -67,8 +67,20 @@ impl DirectoryListing {
             Some(pos) => {
                 let mut_file = try!(self.files.get_mut(pos).ok_or(::errors::NfsError::FailedToUpdateFile));
                 *mut_file = file;
-            }, // TODO remove unwrap
+            },
             None => self.files.push(file),
+        };
+        Ok(())
+    }
+
+    /// If DirectoryInfo is present in the sub_directories of DirectoryListing then replace it else insert it
+    pub fn upsert_sub_directory(&mut self, dir_info: ::directory_listing::directory_info::DirectoryInfo) -> Result<(), ::errors::NfsError>{
+        match self.sub_directories.iter().position(|entry| entry.get_name() == dir_info.get_name()) {
+            Some(pos) => {
+                let mut_dir_info = try!(self.sub_directories.get_mut(pos).ok_or(::errors::NfsError::FailedToUpdateDirectory));
+                *mut_dir_info = dir_info;
+            },
+            None => self.sub_directories.push(dir_info),
         };
         Ok(())
     }
