@@ -61,10 +61,6 @@ impl DirectoryHelper {
 
     /// Deletes a sub directory
     pub fn delete(&self,
-                  // TODO what dir is this ? just naming it directory is very confusing to the user
-                  // name it parent_directory/child_directory etc
-                  // Infact parent dir info is present in child's metadata. Just get Parent using
-                  // that and update parent and return new parent.
                   parent_directory   : &mut ::directory_listing::DirectoryListing,
                   directory_to_delete: &String) -> Result<(), ::errors::NfsError> {
         match parent_directory.get_sub_directory_index(directory_to_delete) {
@@ -73,7 +69,7 @@ impl DirectoryHelper {
                 try!(self.update(parent_directory));
                 Ok(())
             },
-            None => Err(::errors::NfsError::NotFound), // TODO better naming, divide into - DirectoryNotFound, FileNotFound
+            None => Err(::errors::NfsError::DirectoryNotFound), // TODO better naming, divide into - DirectoryNotFound, FileNotFound
         }
     }
 
@@ -182,15 +178,8 @@ impl DirectoryHelper {
     /// Returns the Root Directory
     pub fn get_user_root_directory_listing(&self) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         // TODO use let root_directory = match {..}
-        // TODO why using this variable anyway ??
-        let root_directory;
-        {
-            root_directory = match self.client.lock().unwrap().get_user_root_directory_id() {
-                Some(id) => Some(id.clone()),
-                None => None,
-            }
-        }
-        match root_directory {
+        // TODO why using this variable anyway ??        
+        match self.client.lock().unwrap().get_user_root_directory_id() {
             Some(id) => {
                 self.get((&id, ::UNVERSION_DIRECTORY_LISTING_TAG), false, ::AccessLevel::Private)
             },

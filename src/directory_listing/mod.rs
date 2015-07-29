@@ -55,8 +55,8 @@ impl DirectoryListing {
         self.info.get_metadata()
     }
 
-    #[allow(dead_code)]
     /// Get Directory metadata in mutable format so that it can also be updated
+    #[allow(dead_code)]
     pub fn get_mut_metadata(&mut self) -> &mut ::metadata::directory_metadata::DirectoryMetadata {
         self.info.get_mut_metadata()
     }
@@ -104,7 +104,7 @@ impl DirectoryListing {
                    access_level: ::AccessLevel,
                    data        : Vec<u8>) -> Result<DirectoryListing, ::errors::NfsError> {
         let decrypted_data_map = match access_level {
-            ::AccessLevel::Private => try!(client.lock().unwrap().hybrid_decrypt(&data[..],
+            ::AccessLevel::Private => try!(client.lock().unwrap().hybrid_decrypt(&data,
                                                                                  Some(&DirectoryListing::generate_nonce(directory_id)))),
             ::AccessLevel::Public => data,
         };
@@ -154,7 +154,8 @@ impl DirectoryListing {
     /// Generates a nonce based on the directory_id
     pub fn generate_nonce(directory_id: &::routing::NameType) -> ::sodiumoxide::crypto::box_::Nonce {
         let mut nonce = [0u8; ::sodiumoxide::crypto::box_::NONCEBYTES];
-        for i in 0..nonce.len() {
+        let min_length = ::std::cmp::min(nonce.len(), directory_id.0.len());
+        for i in 0..min_length {
             nonce[i] = directory_id.0[i];
         }
         ::sodiumoxide::crypto::box_::Nonce(nonce)

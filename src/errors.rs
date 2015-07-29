@@ -30,6 +30,7 @@ pub enum NfsError {
     FileExistsInDestination,
     FailedToUpdateFile,
     FileNotFound,
+    DirectoryNotFound,
 }
 
 impl From<::maidsafe_client::errors::ClientError> for NfsError {
@@ -52,6 +53,7 @@ impl ::std::fmt::Debug for NfsError {
             NfsError::FileExistsInDestination       => ::std::fmt::Display::fmt("NfsError::FileExistsInDestination", f),
             NfsError::FailedToUpdateFile            => ::std::fmt::Display::fmt("NfsError::FailedToUpdateFile", f),
             NfsError::FileNotFound                  => ::std::fmt::Display::fmt("NfsError::FileNotFound", f),
+            NfsError::DirectoryNotFound             => ::std::fmt::Display::fmt("NfsError::DirectoryNotFound", f),
         }
     }
 }
