@@ -147,30 +147,27 @@ impl DirectoryHelper {
                access_level: ::AccessLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         let structured_data = try!(self.get_structured_data(directory_key.0, directory_key.1));
         // TODO use if else
-        match versioned {
-            true => {
-               let versions = try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data));
-               let latest_version = versions.last().unwrap();
-               self.get_by_version(directory_key, access_level, latest_version.clone())
-            },
-            false => {
-               let private_key = self.client.lock().unwrap().get_public_encryption_key().clone();
-               let secret_key = self.client.lock().unwrap().get_secret_encryption_key().clone();
-               let nonce = ::directory_listing::DirectoryListing::generate_nonce(directory_key.0);
-               let encryption_keys = match access_level {
-                   ::AccessLevel::Private => Some((&private_key,
-                                                   &secret_key,
-                                                   &nonce)),
-                   ::AccessLevel::Public => None,
-               };
-               let structured_data = try!(::maidsafe_client::structured_data_operations::unversioned::get_data(self.client.clone(),
-                                                                                                               &structured_data,
-                                                                                                               encryption_keys));
-               ::directory_listing::DirectoryListing::decrypt(self.client.clone(),
-                                                              directory_key.0,
-                                                              access_level,
-                                                              structured_data)
-            },
+        if versioned {
+           let versions = try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data));
+           let latest_version = versions.last().unwrap();
+           self.get_by_version(directory_key, access_level, latest_version.clone())
+        } else {
+            let private_key = self.client.lock().unwrap().get_public_encryption_key().clone();
+            let secret_key = self.client.lock().unwrap().get_secret_encryption_key().clone();
+            let nonce = ::directory_listing::DirectoryListing::generate_nonce(directory_key.0);
+            let encryption_keys = match access_level {
+                ::AccessLevel::Private => Some((&private_key,
+                                                &secret_key,
+                                                &nonce)),
+                ::AccessLevel::Public => None,
+            };
+            let structured_data = try!(::maidsafe_client::structured_data_operations::unversioned::get_data(self.client.clone(),
+                                                                                                            &structured_data,
+                                                                                                            encryption_keys));
+            ::directory_listing::DirectoryListing::decrypt(self.client.clone(),
+                                                           directory_key.0,
+                                                           access_level,
+                                                           structured_data)
         }
     }
 
@@ -178,7 +175,7 @@ impl DirectoryHelper {
     /// Returns the Root Directory
     pub fn get_user_root_directory_listing(&self) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         // TODO use let root_directory = match {..}
-        // TODO why using this variable anyway ??        
+        // TODO why using this variable anyway ??
         match self.client.lock().unwrap().get_user_root_directory_id() {
             Some(id) => {
                 self.get((&id, ::UNVERSION_DIRECTORY_LISTING_TAG), false, ::AccessLevel::Private)
@@ -201,12 +198,7 @@ impl DirectoryHelper {
     #[allow(dead_code)]
     pub fn get_configuration_directory_listing(&self, directory_name: String) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         // TODO why using this variable anyway ??
-        let config_root_directory = match self.client.lock().unwrap().get_configuration_root_directory_id() {
-            Some(id) => Some(id.clone()),
-            None => None,
-        };
-
-        let config_directory_listing = match config_root_directory {
+        let config_directory_listing = match self.client.lock().unwrap().get_configuration_root_directory_id() {
             Some(id) => try!(self.get((&id, ::UNVERSION_DIRECTORY_LISTING_TAG), false, ::AccessLevel::Private)),
             None => {
                 let created_directory = try!(self.create(::CONFIGURATION_DIRECTORY_NAME.to_string(),
@@ -240,39 +232,36 @@ impl DirectoryHelper {
         };
 
         // TODO If/else is better and standard for bool
-        match versioned {
-            true => {
-                let version = try!(self.save_as_immutable_data(encrypted_data,
-                                                               ::maidsafe_client::client::ImmutableDataType::Normal));
-                Ok(try!(::maidsafe_client::structured_data_operations::versioned::create(&mut *self.client.lock().unwrap(),
-                                                                                         version,
-                                                                                         ::VERSION_DIRECTORY_LISTING_TAG,
-                                                                                         directory.get_key().0.clone(),
-                                                                                         0,
-                                                                                         vec![owner_key.clone()],
-                                                                                         Vec::new(),
-                                                                                         &signing_key)))
-            },
-            false => {
-                let private_key = self.client.lock().unwrap().get_public_encryption_key().clone();
-                let secret_key = self.client.lock().unwrap().get_secret_encryption_key().clone();
-                let nonce = ::directory_listing::DirectoryListing::generate_nonce(directory.get_key().0);
-                let encryption_keys = match access_level {
-                    ::AccessLevel::Private => Some((&private_key,
-                                                    &secret_key,
-                                                    &nonce)),
-                    ::AccessLevel::Public => None,
-                };
-                Ok(try!(::maidsafe_client::structured_data_operations::unversioned::create(self.client.clone(),
-                                                                                           ::UNVERSION_DIRECTORY_LISTING_TAG,
-                                                                                           directory.get_key().0.clone(),
-                                                                                           0,
-                                                                                           encrypted_data,
-                                                                                           vec![owner_key.clone()],
-                                                                                           Vec::new(),
-                                                                                           &signing_key,
-                                                                                           encryption_keys)))
-            },
+        if versioned {
+            let version = try!(self.save_as_immutable_data(encrypted_data,
+                                                           ::maidsafe_client::client::ImmutableDataType::Normal));
+            Ok(try!(::maidsafe_client::structured_data_operations::versioned::create(&mut *self.client.lock().unwrap(),
+                                                                                     version,
+                                                                                     ::VERSION_DIRECTORY_LISTING_TAG,
+                                                                                     directory.get_key().0.clone(),
+                                                                                     0,
+                                                                                     vec![owner_key.clone()],
+                                                                                     Vec::new(),
+                                                                                     &signing_key)))
+        } else {
+            let private_key = self.client.lock().unwrap().get_public_encryption_key().clone();
+            let secret_key = self.client.lock().unwrap().get_secret_encryption_key().clone();
+            let nonce = ::directory_listing::DirectoryListing::generate_nonce(directory.get_key().0);
+            let encryption_keys = match access_level {
+                ::AccessLevel::Private => Some((&private_key,
+                                                &secret_key,
+                                                &nonce)),
+                ::AccessLevel::Public => None,
+            };
+            Ok(try!(::maidsafe_client::structured_data_operations::unversioned::create(self.client.clone(),
+                                                                                       ::UNVERSION_DIRECTORY_LISTING_TAG,
+                                                                                       directory.get_key().0.clone(),
+                                                                                       0,
+                                                                                       encrypted_data,
+                                                                                       vec![owner_key.clone()],
+                                                                                       Vec::new(),
+                                                                                       &signing_key,
+                                                                                       encryption_keys)))
         }
     }
 
@@ -283,8 +272,7 @@ impl DirectoryHelper {
         let immutable_data = ::maidsafe_client::client::ImmutableData::new(data_type, data);
         let name = immutable_data.name();
         // TODO refer to others
-        let _ = self.client.lock().unwrap().put(name.clone(), ::maidsafe_client::client::Data::ImmutableData(immutable_data));
-
+        try!(self.client.lock().unwrap().put(name.clone(), ::maidsafe_client::client::Data::ImmutableData(immutable_data)));
         Ok(name)
     }
 

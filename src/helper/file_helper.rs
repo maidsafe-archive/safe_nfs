@@ -46,7 +46,7 @@ impl FileHelper {
 
     /// Delete a file from the DirectoryListing
     pub fn delete(&self, file_name: String, directory_listing: &mut ::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
-         let index =  try!(directory_listing.get_file_index(file_name).ok_or(::errors::NfsError::FileNotFound));
+         let index = try!(directory_listing.get_file_index(file_name).ok_or(::errors::NfsError::FileNotFound));
          directory_listing.get_mut_files().remove(index);
          let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
          directory_helper.update(&directory_listing)
