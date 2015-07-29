@@ -17,21 +17,14 @@
 
 /// File provides helper functions to perform Operations on Files
 pub struct FileHelper {
-    client           : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-    // TODO remove - this will become stale once writer.close() is done. You will need new
-    // directory listing after that. So Dir-listing to be provided in create() function. In the
-    // rest of the operations, parent_dir_listing can be found in metadata and accordingly fetched
-    // and updated and returned by writer.close(),  update_metadata() etc
-    directory_listing: ::directory_listing::DirectoryListing,
+    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
 }
 
 impl FileHelper {
     /// Create a new FileHelper instance
-    pub fn new(client           : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-               directory_listing: ::directory_listing::DirectoryListing) -> FileHelper {
+    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> FileHelper {
         FileHelper {
             client: client,
-            directory_listing: directory_listing,
         }
     }
 
@@ -40,25 +33,26 @@ impl FileHelper {
     /// The file is actually saved in the directory listing only after `writer.close()` is invoked
     pub fn create(&self,
                   name          : String,
-                  user_metatdata: Vec<u8>) -> Result<::helper::writer::Writer, ::errors::NfsError> {
-        match self.directory_listing.find_file(name.clone()) {
+                  user_metatdata: Vec<u8>,
+                  directory_listing: ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
+        match directory_listing.find_file(name.clone()) {
             Some(_) => Err(::errors::NfsError::AlreadyExists),
             None => {
                 let file = ::file::File::new(::metadata::Metadata::new(name, user_metatdata), ::self_encryption::datamap::DataMap::None);
-                Ok(::helper::writer::Writer::new(self.client.clone(), ::helper::writer::Mode::Overwrite, self.directory_listing.clone(), file))
+                Ok(::helper::writer::Writer::new(self.client.clone(), ::helper::writer::Mode::Overwrite, directory_listing.clone(), file))
             },
         }
     }
 
     /// Delete a file from the DirectoryListing
-    pub fn delete(&mut self, file_name: String) -> Result<(), ::errors::NfsError> {
-        match self.directory_listing.get_file_index(file_name) {
+    pub fn delete(&self, file_name: String, directory_listing: &mut ::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
+        match directory_listing.get_file_index(file_name) {
             Some(index) => {
-                self.directory_listing.get_mut_files().remove(index);
+                directory_listing.get_mut_files().remove(index);
                 let directory_helper  = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-                directory_helper.update(&self.directory_listing)
+                directory_helper.update(&directory_listing)
             },
-            None => Err(::errors::NfsError::NotFound),
+            None => Err(::errors::NfsError::FileNotFound),
         }
     }
 
@@ -67,10 +61,11 @@ impl FileHelper {
     /// The file is actually saved in the directory listing only after `writer.close()` is invoked
     pub fn update(&self,
                   file: ::file::File,
-                  mode: ::helper::writer::Mode) -> Result<::helper::writer::Writer, ::errors::NfsError> {
-        match self.directory_listing.find_file(file.get_name().clone()) {
-            Some(_) => Ok(::helper::writer::Writer::new(self.client.clone(), mode, self.directory_listing.clone(), file)),
-            None => Err(::errors::NfsError::NotFound),
+                  mode: ::helper::writer::Mode,
+                  directory_listing: ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
+        match directory_listing.find_file(file.get_name().clone()) {
+            Some(_) => Ok(::helper::writer::Writer::new(self.client.clone(), mode, directory_listing, file)),
+            None => Err(::errors::NfsError::FileNotFound),
         }
     }
 
@@ -78,7 +73,7 @@ impl FileHelper {
     // TODO return new parent_dir_listing
     pub fn update_metadata(&mut self,
                            mut file: ::file::File,
-                           user_metadata: <Vec<u8>>) -> Result<(), ::errors::NfsError> {
+                           user_metadata: <Vec<u8>>) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         match self.directory_listing.find_file(file.get_name().clone()) {
             Some(_) => {
                 file.get_mut_metadata().set_user_metadata(user_metadata);
@@ -86,15 +81,15 @@ impl FileHelper {
                 let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
                 directory_helper.update(&self.directory_listing)
             },
-            None => Err(::errors::NfsError::NotFound),
+            None => Err(::errors::NfsError::FileNotFound),
         }
     }
 
     // TODO return Vec<Files> not dir_ids
     /// Return the versions of a directory containing modified versions of a file
     pub fn get_versions(&self,
-                        file: &::file::File) -> Result<Vec<::routing::NameType>, ::errors::NfsError> {
-        let mut versions = Vec::<::routing::NameType>::new();
+                        file: &::file::File) -> Result<Vec<::file::File>, ::errors::NfsError> {
+        let mut versions = Vec::<::file::File>::new();
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
 
         let sdv_versions = try!(directory_helper.get_versions(self.directory_listing.get_key()));
@@ -107,7 +102,7 @@ impl FileHelper {
                 Some(file) => {
                    if file.get_metadata().get_modified_time() != modified_time {
                         modified_time = file.get_metadata().get_modified_time();
-                        versions.push(version_id);
+                        versions.push(file);
                     }
                 },
                 None => ()
@@ -119,7 +114,7 @@ impl FileHelper {
     pub fn read(&self, file: ::file::File) -> Result<::helper::reader::Reader, ::errors::NfsError> {
         match self.directory_listing.find_file(file.get_name().clone()) {
             Some(_) => Ok(::helper::reader::Reader::new(self.client.clone(), file)),
-            None => Err(::errors::NfsError::NotFound), // TODO break into FileNotFound and DirectoryNotFound
+            None => Err(::errors::NfsError::FileNotFound), // TODO break into FileNotFound and DirectoryNotFound
         }
     }
 }

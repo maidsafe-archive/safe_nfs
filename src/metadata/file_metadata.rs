@@ -21,7 +21,7 @@
 pub struct FileMetadata {
     name         : String,
     size         : u64,
-    created_time :  ::time::Tm,
+    created_time : ::time::Tm,
     modified_time: ::time::Tm,
     user_metadata: Vec<u8>,
 }
@@ -72,7 +72,7 @@ impl FileMetadata {
     }
 
     /// Set the size of file
-    pub fn set_size(&mut self, size: u64){
+    pub fn set_size(&mut self, size: u64) {
         self.size = size;
     }
 

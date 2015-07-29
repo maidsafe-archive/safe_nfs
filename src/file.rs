@@ -35,7 +35,7 @@ impl File {
 
     /// Get the name of the File
     pub fn get_name(&self) -> &String {
-        self.get_metadata().get_name()
+        self.metadata.get_name()
     }
 
     /// Get metadata associated with the file

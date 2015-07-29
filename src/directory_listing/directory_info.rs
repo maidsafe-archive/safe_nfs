@@ -60,11 +60,6 @@ impl DirectoryInfo {
     // }
 }
 
-impl ::std::fmt::Display for DirectoryInfo {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "metadata: {}, key: {}, {}", *self.get_metadata(), *self.get_key().0, self.get_key().1)
-    }
-}
 
 #[cfg(test)]
 mod test {

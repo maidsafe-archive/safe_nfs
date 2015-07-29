@@ -15,11 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 /// Metadata about a File or a Directory
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct DirectoryMetadata {
     name         : String,
-    created_time :  ::time::Tm,
+    created_time : ::time::Tm,
     modified_time: ::time::Tm,
     user_metadata: Vec<u8>,
     versioned    : bool,
@@ -33,15 +33,15 @@ impl DirectoryMetadata {
                user_metadata: Vec<u8>,
                versioned    : bool,
                access_level : ::AccessLevel,
-               parent_dir   : Option<(&::routing::NameType, u64)>) -> DirectoryMetadata {
+               parent_dir   : Option<(::routing::NameType, u64)>) -> DirectoryMetadata {
         DirectoryMetadata {
             name         : name,
-            created_time :  ::time::now_utc(),
+            created_time : ::time::now_utc(),
             modified_time: ::time::now_utc(),
             user_metadata: user_metadata,
             versioned    : versioned,
             access_level : access_level,
-            parent_dir   : parent_dir.map(|key| (key.0.clone(), key.1)),
+            parent_dir   : parent_dir,
         }
     }
 
@@ -95,7 +95,7 @@ impl DirectoryMetadata {
 }
 
 impl ::rustc_serialize::Encodable for DirectoryMetadata {
-    fn encode<E: ::rustc_serialize::Encoder>(&self, e: &mut E)->Result<(), E::Error> {
+    fn encode<E: ::rustc_serialize::Encoder>(&self, e: &mut E) -> Result<(), E::Error> {
         let created_time = self.created_time.to_timespec();
         let modified_time = self.modified_time.to_timespec();
         ::cbor::CborTagEncode::new(5483_000, &(&self.name,
@@ -141,20 +141,6 @@ impl ::rustc_serialize::Decodable for DirectoryMetadata {
         })
     }
 }
-
-
-impl ::std::fmt::Display for DirectoryMetadata {
-    fn fmt(&self, fmt: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(fmt,
-               "DirectoryMetadata > name: {}, versioned: {}, created_time: {:?}, modified:time: {:?}, access_level: {:?}",
-               self.name,
-               self.versioned,
-               self.created_time,
-               self.modified_time,
-               self.access_level)
-    }
-}
-
 
 #[cfg(test)]
 mod test {

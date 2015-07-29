@@ -32,7 +32,7 @@ impl DirectoryListing {
                user_metadata: Vec<u8>,
                versioned    : bool,
                access_level : ::AccessLevel,
-               parent_dir   : Option<(&::routing::NameType, u64)>) -> DirectoryListing {
+               parent_dir   : Option<(::routing::NameType, u64)>) -> DirectoryListing {
         let meta_data = ::metadata::directory_metadata::DirectoryMetadata::new(name,
                                                                                user_metadata,
                                                                                versioned,
