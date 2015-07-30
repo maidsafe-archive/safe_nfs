@@ -44,7 +44,8 @@ impl ContainerInfo {
     pub fn get_created_time(&self) -> &::time::Tm {
         self.info.get_metadata().get_created_time()
     }
-
+    
+    // TODO Implement from trait for coversion
     /// Convert the ContainerInfo to the format of DirectoryInfo that lower levels understand and
     /// operate on
     pub fn convert_to_directory_info(&self) -> ::directory_listing::directory_info::DirectoryInfo {

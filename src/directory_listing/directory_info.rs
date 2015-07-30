@@ -54,10 +54,6 @@ impl DirectoryInfo {
     pub fn get_name(&self) -> &String {
         self.metadata.get_name()
     }
-
-    // pub fn get_parent_dir_id(&self) -> &::routing::NameType {
-    //     &self.parent_dir_id
-    // }
 }
 
 

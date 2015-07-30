@@ -56,6 +56,7 @@ impl Blob {
         &self.file
     }
 
+    // TODO Implement from trait for coversion
     /// Convert the Blob to the format acceptable to the lower level Api's
     /// This can also be modified on the fly as the return is a mutable value
     pub fn convert_to_mut_file(&mut self) -> &mut ::file::File {

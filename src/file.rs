@@ -29,7 +29,7 @@ impl File {
                datamap : ::self_encryption::datamap::DataMap) -> File {
         File {
             metadata: metadata,
-            datamap: datamap,
+            datamap : datamap,
         }
     }
 
