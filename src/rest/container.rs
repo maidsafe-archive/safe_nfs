@@ -330,7 +330,7 @@ mod test {
     fn delete_container() {
         let client = get_client();
         let dir_name = "Home".to_string();
-        let mut container = Container::authorise(client, None).ok().unwrap();
+        let mut container = eval_result!(Container::authorise(client, None));
         eval_result!(container.create(dir_name.clone(), true, ::AccessLevel::Private));
 
         assert_eq!(container.get_containers().len(), 1);
@@ -390,5 +390,4 @@ mod test {
         let _ = home_container.delete_blob("sample.txt".to_string());
         assert_eq!(home_container.get_blobs().len(), 0);
     }
-
 }
