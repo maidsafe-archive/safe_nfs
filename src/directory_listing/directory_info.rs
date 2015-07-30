@@ -34,8 +34,8 @@ impl DirectoryInfo {
     }
 
     /// Get the unique ID representing this directory in the network
-    pub fn get_key(&self) -> (::routing::NameType, u64) {
-        (self.id.clone(), self.type_tag)
+    pub fn get_key(&self) -> (&::routing::NameType, u64) {
+        (&self.id, self.type_tag)
     }
 
     /// Get the metadata of this directory

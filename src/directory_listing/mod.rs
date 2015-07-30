@@ -106,7 +106,7 @@ impl DirectoryListing {
     }
 
     /// Get the unique ID that represents this DirectoryListing in the network
-    pub fn get_key(&self) ->  (::routing::NameType, u64) {
+    pub fn get_key(&self) ->  (&::routing::NameType, u64) {
         self.info.get_key()
     }
 

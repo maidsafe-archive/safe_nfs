@@ -267,7 +267,7 @@ impl Container {
         }
     }
 
-    fn list_container_versions(&self, dir_key: (::routing::NameType, u64)) -> Result<Vec<[u8; 64]>, ::errors::NfsError> {
+    fn list_container_versions(&self, dir_key: (&::routing::NameType, u64)) -> Result<Vec<[u8; 64]>, ::errors::NfsError> {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         let versions = try!(directory_helper.get_versions(dir_key));
         Ok(versions.iter().map(|v| v.0).collect())
