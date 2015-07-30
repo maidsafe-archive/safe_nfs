@@ -15,6 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+// TODO rename dir_listing to parent_dir_listing wherever necessary
+
 /// File provides helper functions to perform Operations on Files
 pub struct FileHelper {
     client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
@@ -32,9 +34,9 @@ impl FileHelper {
     /// A writer object is returned, through which the data for the file can be written to the network
     /// The file is actually saved in the directory listing only after `writer.close()` is invoked
     pub fn create(&self,
-                  name              : String,
-                  user_metatdata    : Vec<u8>,
-                  directory_listing : ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
+                  name             : String,
+                  user_metatdata   : Vec<u8>,
+                  directory_listing: ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
         match directory_listing.find_file(&name) {
             Some(_) => Err(::errors::NfsError::AlreadyExists),
             None => {
@@ -57,22 +59,24 @@ impl FileHelper {
     /// A writer object is returned, through which the data for the file can be written to the network
     /// The file is actually saved in the directory listing only after `writer.close()` is invoked
     pub fn update(&self,
-                  file: ::file::File,
-                  mode: ::helper::writer::Mode,
-                  directory_listing: ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
-        try!(directory_listing.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
-        Ok(::helper::writer::Writer::new(self.client.clone(), mode, directory_listing, file))
+                  file              : ::file::File,
+                  mode              : ::helper::writer::Mode,
+                  parent_dir_listing: ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
+        // TODO improve by comparing file::metadata::parent_info with parent_dir_listing::info and
+        // return new error NotAValidParent
+        try!(parent_dir_listing.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
+        Ok(::helper::writer::Writer::new(self.client.clone(), mode, parent_dir_listing, file))
     }
 
     /// Updates the file metadata. Returns the updated DirectoryListing
     pub fn update_metadata(&self,
-                           mut file: ::file::File,
-                           user_metadata: Vec<u8>,
+                           mut file         : ::file::File,
+                           user_metadata    : Vec<u8>,
                            directory_listing: &::directory_listing::DirectoryListing) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         // TODO Should we remove the below validation?
         try!(directory_listing.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         file.get_mut_metadata().set_user_metadata(user_metadata);
-        let mut mutable_listing =  directory_listing.clone();
+        let mut mutable_listing =  directory_listing.clone(); // TODO Bad logic .. why not consume the dir_listing like in update() ???
         try!(mutable_listing.upsert_file(file));
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         directory_helper.update(&mutable_listing)
@@ -80,8 +84,8 @@ impl FileHelper {
 
     /// Return the versions of a directory containing modified versions of a file
     pub fn get_versions(&self,
-                        file                : &::file::File,
-                        directory_listing   : &::directory_listing::DirectoryListing) -> Result<Vec<::file::File>, ::errors::NfsError> {
+                        file             : &::file::File,
+                        directory_listing: &::directory_listing::DirectoryListing) -> Result<Vec<::file::File>, ::errors::NfsError> {
         let mut versions = Vec::<::file::File>::new();
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
 
@@ -101,9 +105,8 @@ impl FileHelper {
         Ok(versions)
     }
 
-    pub fn read(&self, file: ::file::File, directory_listing: &::directory_listing::DirectoryListing) -> Result<::helper::reader::Reader, ::errors::NfsError> {
-        try!(directory_listing.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
-        Ok(::helper::reader::Reader::new(self.client.clone(), file))
+    pub fn read<'a>(&self, file: &'a ::file::File) -> ::helper::reader::Reader<'a> {
+        ::helper::reader::Reader::new(self.client.clone(), file)
     }
 }
 
