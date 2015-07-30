@@ -113,9 +113,9 @@ impl DirectoryListing {
     /// Decrypts a directory listing
     pub fn decrypt(client      : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
                    directory_id: &::routing::NameType,
-                   access_level: ::AccessLevel,
+                   access_level: &::AccessLevel,
                    data        : Vec<u8>) -> Result<DirectoryListing, ::errors::NfsError> {
-        let decrypted_data_map = match access_level {
+        let decrypted_data_map = match *access_level {
             ::AccessLevel::Private => try!(client.lock().unwrap().hybrid_decrypt(&data,
                                                                                  Some(&DirectoryListing::generate_nonce(directory_id)))),
             ::AccessLevel::Public => data,

@@ -33,7 +33,7 @@ impl Container {
             Some(container_info) => {
                 let dir_info = container_info.convert_to_directory_info();
                 let metadata = dir_info.get_metadata();
-                try!(directory_helper.get(dir_info.get_key(), metadata.is_versioned(), metadata.get_access_level().clone()))
+                try!(directory_helper.get(dir_info.get_key(), metadata.is_versioned(), metadata.get_access_level()))
             },
             None => try!(directory_helper.get_user_root_directory_listing()),
         };
@@ -100,7 +100,7 @@ impl Container {
             Some(version_id) => {
                 let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
                 let directory_listing_version = try!(directory_helper.get_by_version(self.directory_listing.get_key(),
-                                                                                     self.directory_listing.get_metadata().get_access_level().clone(),
+                                                                                     self.directory_listing.get_metadata().get_access_level(),
                                                                                      ::routing::NameType(version_id)));
                 match directory_listing_version.find_file(&name) {
                     Some(file) => Ok(::rest::blob::Blob::convert_from_file(file.clone())),
@@ -154,11 +154,11 @@ impl Container {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         let dir_listing = match version {
             Some(version_id) => try!(directory_helper.get_by_version(self.directory_listing.get_key(),
-                                                                     self.directory_listing.get_metadata().get_access_level().clone(),
+                                                                     self.directory_listing.get_metadata().get_access_level(),
                                                                      ::routing::NameType(version_id))),
             None =>  try!(directory_helper.get(dir_info.get_key(),
                                                dir_info.get_metadata().is_versioned(),
-                                               dir_info.get_metadata().get_access_level().clone())),
+                                               dir_info.get_metadata().get_access_level())),
         };
         Ok(Container {
             client: self.client.clone(),
@@ -244,7 +244,7 @@ impl Container {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         let mut destination = try!(directory_helper.get(to_dir_info.get_key(),
                                                         to_dir_info.get_metadata().is_versioned(),
-                                                        to_dir_info.get_metadata().get_access_level().clone()));
+                                                        to_dir_info.get_metadata().get_access_level()));
         if destination.find_file(blob_name).is_some() {
            return Err(::errors::NfsError::FileExistsInDestination);
         }

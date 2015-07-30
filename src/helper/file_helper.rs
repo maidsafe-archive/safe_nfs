@@ -88,7 +88,7 @@ impl FileHelper {
         let mut modified_time = ::time::empty_tm();
         for version_id in sdv_versions {
             let directory_listing = try!(directory_helper.get_by_version(directory_listing.get_key(),
-                                                                         directory_listing.get_metadata().get_access_level().clone(),
+                                                                         directory_listing.get_metadata().get_access_level(),
                                                                          version_id.clone()));
             if let Some(file) = directory_listing.get_files().iter().find(|&entry| entry.get_name() == file.get_name()) {
                 if *file.get_metadata().get_modified_time() != modified_time {
