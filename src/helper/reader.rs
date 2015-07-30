@@ -42,6 +42,7 @@ impl<'a> Reader<'a> {
         self.self_encryptor.len()
     }
 
+    // TODO Should read be (&mut self)
     /// Read data from file/blob
     pub fn read(&mut self,  position: u64, length: u64) -> Result<Vec<u8>, ::errors::NfsError> {
         if (position + length) > self.size() {

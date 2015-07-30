@@ -224,7 +224,7 @@ impl Container {
         let user_metadata = try!(self.validate_metadata(metadata));
         let file = blob.convert_to_file();
         let file_helper = ::helper::file_helper::FileHelper::new(self.client.clone());
-        file_helper.update_metadata(file.clone(), user_metadata, &self.directory_listing)
+        file_helper.update_metadata(file.clone(), user_metadata, self.directory_listing.clone())
     }
 
     /// Delete blob from the container

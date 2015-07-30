@@ -323,11 +323,11 @@ mod test {
         let dir_helper = DirectoryHelper::new(client.clone());
         // Create a Directory
         let mut directory = eval_result!(dir_helper.create("DirName".to_string(),
-                                     ::VERSIONED_DIRECTORY_LISTING_TAG,
-                                     Vec::new(),
-                                     true,
-                                     ::AccessLevel::Private,
-                                     None));
+                                                           ::VERSIONED_DIRECTORY_LISTING_TAG,
+                                                           Vec::new(),
+                                                           true,
+                                                           ::AccessLevel::Private,
+                                                           None));
         let fetched = eval_result!(dir_helper.get(directory.get_key(),
                                                   directory.get_metadata().is_versioned(),
                                                   directory.get_metadata().get_access_level()));
