@@ -27,6 +27,7 @@ impl Blob {
         self.file.get_metadata().get_name()
     }
 
+    // TODO metadata is convering utf8 string - better to do no conversion and just send the vec<u8> to the caller
     /// Get the user settable Metadata of the Blob
     pub fn get_metadata(&self) -> String {
         match String::from_utf8(self.file.get_metadata().get_user_metadata().clone()) {
