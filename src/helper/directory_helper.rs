@@ -31,18 +31,18 @@ impl DirectoryHelper {
     /// Creates a Directory in the network.
     /// Returns the created DirectoryListing
     pub fn create(&self,
-                  directory_name      : String,
-                  tag_type            : u64,
-                  user_metadata       : Vec<u8>,
-                  versioned           : bool,
-                  access_level        : ::AccessLevel,
-                  mut parent_directory: Option<&mut ::directory_listing::DirectoryListing>) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+                  directory_name  : String,
+                  tag_type        : u64,
+                  user_metadata   : Vec<u8>,
+                  versioned       : bool,
+                  access_level    : ::AccessLevel,
+                  parent_directory: Option<&mut ::directory_listing::DirectoryListing>) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         let directory = ::directory_listing::DirectoryListing::new(directory_name,
                                                                    tag_type,
                                                                    user_metadata,
                                                                    versioned,
                                                                    access_level,
-                                                                   parent_directory.iter_mut().next().map(|directory| {
+                                                                   parent_directory.iter().next().map(|directory| {
                                                                        let key = directory.get_info().get_key();
                                                                        (key.0.clone(), key.1)
                                                                    }));
