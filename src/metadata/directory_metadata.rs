@@ -146,27 +146,20 @@ impl ::rustc_serialize::Decodable for DirectoryMetadata {
         })
     }
 }
-/*
+
 #[cfg(test)]
 mod test {
-    use super::*;
-    use cbor;
+    use super::*;    
 
     #[test]
     fn serialise() {
         let obj_before = DirectoryMetadata::new("hello.txt".to_string(),
-                                                Some("{mime: \"application/json\"}".to_string().into_bytes()),
+                                                "{mime: \"application/json\"}".to_string().into_bytes(),
                                                 true,
                                                 ::AccessLevel::Private,
-                                                Vec::new());
-
-        let mut e = cbor::Encoder::from_memory();
-        e.encode(&[&obj_before]).unwrap();
-
-        let mut d = cbor::Decoder::from_bytes(e.as_bytes());
-        let obj_after: DirectoryMetadata = d.decode().next().unwrap().unwrap();
-
+                                                None);
+        let serialised_data = eval_result!(::maidsafe_client::utility::serialise(&obj_before));
+        let obj_after = eval_result!(::maidsafe_client::utility::deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);
     }
 }
-*/

@@ -70,20 +70,16 @@ impl Blob {
         }
     }
 }
-/*
+
 #[cfg(test)]
 mod test {
     use super::*;
-    use ::file::File;
-    use std::thread::sleep_ms;
-    use metadata::Metadata;
-    use self_encryption::datamap::DataMap;
 
     #[test]
     fn create() {
-        let datamap = DataMap::None;
-        let metadata = Metadata::new("blob".to_string(), None);
-        let file = File::new(metadata.clone(), datamap.clone());
+        let datamap = ::self_encryption::datamap::DataMap::None;
+        let metadata = ::metadata::file_metadata::FileMetadata::new("blob".to_string(), Vec::new());
+        let file = ::file::File::new(metadata.clone(), datamap.clone());
 
         let blob = Blob{file: file.clone() };
 
@@ -91,7 +87,7 @@ mod test {
         assert_eq!(blob.get_created_time(), metadata.get_created_time());
         assert_eq!(blob.get_modified_time(), metadata.get_modified_time());
         assert_eq!(blob.get_size(), metadata.get_size());
-        assert!(blob.get_metadata().is_none());
+        assert!(blob.get_metadata().is_empty());
 
         let file = blob.convert_to_file();
 
@@ -105,9 +101,9 @@ mod test {
 
     #[test]
     fn create_from_file() {
-        let datamap = DataMap::None;
-        let metadata = Metadata::new("blob".to_string(), None);
-        let file = File::new(metadata.clone(), datamap.clone());
+        let datamap = ::self_encryption::datamap::DataMap::None;
+        let metadata = ::metadata::file_metadata::FileMetadata::new("blob".to_string(), Vec::new());
+        let file = ::file::File::new(metadata.clone(), datamap.clone());
 
         let blob = Blob::convert_from_file(file.clone());
 
@@ -115,14 +111,14 @@ mod test {
         assert_eq!(blob.get_created_time(), file.get_metadata().get_created_time());
         assert_eq!(blob.get_modified_time(), file.get_metadata().get_modified_time());
         assert_eq!(blob.get_size(), file.get_metadata().get_size());
-        assert!(blob.get_metadata().is_none());
+        assert!(blob.get_metadata().is_empty());
     }
 
     #[test]
     fn convert_to_file() {
-        let datamap = DataMap::None;
-        let metadata = Metadata::new("blob".to_string(), None);
-        let file = File::new(metadata.clone(), datamap.clone());
+        let datamap = ::self_encryption::datamap::DataMap::None;
+        let metadata = ::metadata::file_metadata::FileMetadata::new("blob".to_string(), Vec::new());
+        let file = ::file::File::new(metadata.clone(), datamap.clone());
 
         let blob = Blob{ file: file.clone() };
 
@@ -130,8 +126,8 @@ mod test {
         assert_eq!(blob.get_created_time(), file.get_metadata().get_created_time());
         assert_eq!(blob.get_modified_time(), file.get_metadata().get_modified_time());
         assert_eq!(blob.get_size(), file.get_metadata().get_size());
-        assert!(blob.get_metadata().is_none());
-        assert!(file.get_metadata().get_user_metadata().is_none());
+        assert!(blob.get_metadata().is_empty());
+        assert!(file.get_metadata().get_user_metadata().is_empty());
 
         let file = blob.convert_to_file();
 
@@ -139,24 +135,24 @@ mod test {
         assert_eq!(blob.get_created_time(), file.get_metadata().get_created_time());
         assert_eq!(blob.get_modified_time(), file.get_metadata().get_modified_time());
         assert_eq!(blob.get_size(), file.get_metadata().get_size());
-        assert!(file.get_metadata().get_user_metadata().is_none());
+        assert!(file.get_metadata().get_user_metadata().is_empty());
     }
 
     #[test]
     fn compare() {
-        let first_datamap = DataMap::None;
-        let first_metadata = Metadata::new("first_blob".to_string(), None);
-        let first_file = File::new(first_metadata.clone(), first_datamap.clone());
+        let first_datamap = ::self_encryption::datamap::DataMap::None;
+        let first_metadata = ::metadata::file_metadata::FileMetadata::new("first_blob".to_string(), Vec::new());
+        let first_file = ::file::File::new(first_metadata.clone(), first_datamap.clone());
 
         let first_blob = Blob::convert_from_file(first_file.clone());
         let second_blob = Blob{file: first_file.clone() };
 
         // allow 'times' to be sufficiently distinct
-        sleep_ms(1000u32);
+        ::std::thread::sleep_ms(1000u32);
 
-        let second_datamap = DataMap::None;
-        let second_metadata = Metadata::new("second_blob".to_string(), None);
-        let second_file = File::new(second_metadata, second_datamap.clone());
+        let second_datamap = ::self_encryption::datamap::DataMap::None;
+        let second_metadata = ::metadata::file_metadata::FileMetadata::new("second_blob".to_string(), Vec::new());
+        let second_file = ::file::File::new(second_metadata, second_datamap.clone());
 
         let third_blob = Blob::convert_from_file(second_file.clone());
 
@@ -169,4 +165,3 @@ mod test {
         assert!(first_blob.get_modified_time() != third_blob.get_modified_time());
     }
 }
-*/

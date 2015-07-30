@@ -174,23 +174,16 @@ impl DirectoryListing {
     }
 }
 
-/*
+
 #[cfg(test)]
 mod test {
     use super::*;
-    use cbor;
 
     #[test]
     fn serialise() {
-        let obj_before = DirectoryListing::new("Home".to_string(), Some("{mime:\"application/json\"}".to_string().into_bytes()), true, ::AccessLevel::Private);
-
-        let mut e = cbor::Encoder::from_memory();
-        e.encode(&[&obj_before]).unwrap();
-
-        let mut d = cbor::Decoder::from_bytes(e.as_bytes());
-        let obj_after: DirectoryListing = d.decode().next().unwrap().unwrap();
-
+        let obj_before = DirectoryListing::new("Home".to_string(), 10, "{mime:\"application/json\"}".to_string().into_bytes(), true, ::AccessLevel::Private, None);
+        let serialised_data = eval_result!(::maidsafe_client::utility::serialise(&obj_before));
+        let obj_after = eval_result!(::maidsafe_client::utility::deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);
     }
 }
-*/

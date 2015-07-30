@@ -60,24 +60,17 @@ impl DirectoryInfo {
     // }
 }
 
-/*
+
 #[cfg(test)]
 mod test {
     use super::*;
-    use cbor;
 
     #[test]
     fn serialise() {
-        let metadata = ::directory_metadata::DirectoryMetadata::new("Hello.txt".to_string(), None, true, ::AccessLevel::Public, None);
+        let metadata = ::metadata::directory_metadata::DirectoryMetadata::new("Hello.txt".to_string(), Vec::new(), true, ::AccessLevel::Public, None);
         let obj_before = DirectoryInfo::new(metadata, ::VERSION_DIRECTORY_LISTING_TAG);
-
-        let mut e = cbor::Encoder::from_memory();
-        e.encode(&[&obj_before]).unwrap();
-
-        let mut d = cbor::Decoder::from_bytes(e.as_bytes());
-        let obj_after: DirectoryInfo = d.decode().next().unwrap().unwrap();
-
+        let serialised_data = eval_result!(::maidsafe_client::utility::serialise(&obj_before));
+        let obj_after = eval_result!(::maidsafe_client::utility::deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);
     }
 }
-*/
