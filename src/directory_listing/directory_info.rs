@@ -69,7 +69,7 @@ mod test {
     #[test]
     fn serialise() {
         let metadata = ::directory_metadata::DirectoryMetadata::new("Hello.txt".to_string(), None, true, ::AccessLevel::Public, None);
-        let obj_before = DirectoryInfo::new(metadata, ::VERSION_DIRECTORY_LISTING_TAG);
+        let obj_before = DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG);
 
         let mut e = cbor::Encoder::from_memory();
         e.encode(&[&obj_before]).unwrap();

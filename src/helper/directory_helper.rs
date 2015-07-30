@@ -91,7 +91,7 @@ impl DirectoryHelper {
 
     /// Return the versions of the directory
     pub fn get_versions(&self, directory_key: (&::routing::NameType, u64)) -> Result<Vec<::routing::NameType>, ::errors::NfsError> {
-        let structured_data = try!(self.get_structured_data(directory_key.0, ::VERSION_DIRECTORY_LISTING_TAG));
+        let structured_data = try!(self.get_structured_data(directory_key.0, ::VERSIONED_DIRECTORY_LISTING_TAG));
         Ok(try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data)))
     }
 
@@ -139,11 +139,11 @@ impl DirectoryHelper {
     pub fn get_user_root_directory_listing(&self) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         match self.client.lock().unwrap().get_user_root_directory_id().clone() {
             Some(id) => {
-                self.get((id, ::UNVERSION_DIRECTORY_LISTING_TAG), false, ::AccessLevel::Private)
+                self.get((id, ::UNVERSIONED_DIRECTORY_LISTING_TAG), false, ::AccessLevel::Private)
             },
             None => {
                 let created_directory = try!(self.create(::ROOT_DIRECTORY_NAME.to_string(),
-                                                         ::UNVERSION_DIRECTORY_LISTING_TAG,
+                                                         ::UNVERSIONED_DIRECTORY_LISTING_TAG,
                                                          Vec::new(),
                                                          false,
                                                          ::AccessLevel::Private,
@@ -159,10 +159,10 @@ impl DirectoryHelper {
     #[allow(dead_code)]
     pub fn get_configuration_directory_listing(&self, directory_name: String) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         let mut config_directory_listing = match self.client.lock().unwrap().get_configuration_root_directory_id().clone() {
-            Some(id) => try!(self.get((id, ::UNVERSION_DIRECTORY_LISTING_TAG), false, ::AccessLevel::Private)),
+            Some(id) => try!(self.get((id, ::UNVERSIONED_DIRECTORY_LISTING_TAG), false, ::AccessLevel::Private)),
             None => {
                 let created_directory = try!(self.create(::CONFIGURATION_DIRECTORY_NAME.to_string(),
-                                                         ::UNVERSION_DIRECTORY_LISTING_TAG,
+                                                         ::UNVERSIONED_DIRECTORY_LISTING_TAG,
                                                          Vec::new(),
                                                          false,
                                                          ::AccessLevel::Private,
@@ -176,7 +176,7 @@ impl DirectoryHelper {
                                             false,
                                             ::AccessLevel::Private))),
             None => {
-                self.create(directory_name, ::UNVERSION_DIRECTORY_LISTING_TAG, Vec::new(), false, ::AccessLevel::Private, Some(&mut config_directory_listing))
+                self.create(directory_name, ::UNVERSIONED_DIRECTORY_LISTING_TAG, Vec::new(), false, ::AccessLevel::Private, Some(&mut config_directory_listing))
             },
         }
     }
@@ -195,7 +195,7 @@ impl DirectoryHelper {
                                                            ::maidsafe_client::client::ImmutableDataType::Normal));
             Ok(try!(::maidsafe_client::structured_data_operations::versioned::create(&mut *self.client.lock().unwrap(),
                                                                                      version,
-                                                                                     ::VERSION_DIRECTORY_LISTING_TAG,
+                                                                                     ::VERSIONED_DIRECTORY_LISTING_TAG,
                                                                                      directory.get_key().0.clone(),
                                                                                      0,
                                                                                      vec![owner_key],
@@ -212,7 +212,7 @@ impl DirectoryHelper {
                 ::AccessLevel::Public => None,
             };
             Ok(try!(::maidsafe_client::structured_data_operations::unversioned::create(self.client.clone(),
-                                                                                       ::UNVERSION_DIRECTORY_LISTING_TAG,
+                                                                                       ::UNVERSIONED_DIRECTORY_LISTING_TAG,
                                                                                        directory.get_key().0.clone(),
                                                                                        0,
                                                                                        encrypted_data,
@@ -253,7 +253,7 @@ impl DirectoryHelper {
                 ::AccessLevel::Public => None,
             };
             try!(::maidsafe_client::structured_data_operations::unversioned::create(self.client.clone(),
-                                                                                    ::UNVERSION_DIRECTORY_LISTING_TAG,
+                                                                                    ::UNVERSIONED_DIRECTORY_LISTING_TAG,
                                                                                     directory.get_key().0.clone(),
                                                                                     structured_data.get_version() + 1,
                                                                                     encrypted_data,
@@ -314,7 +314,7 @@ mod test {
         let dir_helper = DirectoryHelper::new(client.clone());
         // Create a Directory
         let directory = eval_result!(dir_helper.create("DirName".to_string(),
-                                     ::VERSION_DIRECTORY_LISTING_TAG,
+                                     ::VERSIONED_DIRECTORY_LISTING_TAG,
                                      None,
                                      true,
                                      ::AccessLevel::Private,
@@ -323,7 +323,7 @@ mod test {
         assert_eq!(directory, fetched);
         // Create a Child directory and update the parent_directory
         let child_directory = eval_result!(dir_helper.create("Child".to_string(),
-                                           ::VERSION_DIRECTORY_LISTING_TAG,
+                                           ::VERSIONED_DIRECTORY_LISTING_TAG,
                                            None,
                                            true,
                                            ::AccessLevel::Private,
@@ -341,7 +341,7 @@ mod test {
 
         let root_dir = eval_result!(dir_helper.get_user_root_directory_listing());
         let created_dir = eval_result!(dir_helper.create("DirName".to_string(),
-                                                         ::VERSION_DIRECTORY_LISTING_TAG,
+                                                         ::VERSIONED_DIRECTORY_LISTING_TAG,
                                                          None,
                                                          true,
                                                          ::AccessLevel::Private,
@@ -370,7 +370,7 @@ mod test {
         let dir_helper = DirectoryHelper::new(client.clone());
 
         let mut dir_listing = eval_result!(dir_helper.create("DirName2".to_string(),
-                                                             ::VERSION_DIRECTORY_LISTING_TAG,
+                                                             ::VERSIONED_DIRECTORY_LISTING_TAG,
                                                              None,
                                                              false,
                                                              ::AccessLevel::Private,

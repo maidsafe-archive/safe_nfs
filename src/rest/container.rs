@@ -52,9 +52,9 @@ impl Container {
         let metadata = None;
         let user_metadata = try!(self.validate_metadata(metadata));
         let tag_type = if versioned {
-            ::VERSION_DIRECTORY_LISTING_TAG
+            ::VERSIONED_DIRECTORY_LISTING_TAG
         } else {
-            ::UNVERSION_DIRECTORY_LISTING_TAG
+            ::UNVERSIONED_DIRECTORY_LISTING_TAG
         };
         match self.directory_listing.find_sub_directory(&name) {
             Some(_) => Err(::errors::NfsError::AlreadyExists),
