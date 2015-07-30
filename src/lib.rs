@@ -66,9 +66,9 @@ pub const ROOT_DIRECTORY_NAME: &'static str = "USER_ROOT";
 /// Configuration directory Name stored in the session packet
 pub const CONFIGURATION_DIRECTORY_NAME: &'static str = "CONFIGURATION_ROOT";
 /// Tag representing the Versioned Directory Listing
-pub const VERSION_DIRECTORY_LISTING_TAG: u64 = maidsafe_client::CLIENT_STRUCTURED_DATA_TAG + 100;
+pub const VERSIONED_DIRECTORY_LISTING_TAG: u64 = maidsafe_client::CLIENT_STRUCTURED_DATA_TAG + 100;
 /// Tag representing the Versioned Directory Listing
-pub const UNVERSION_DIRECTORY_LISTING_TAG: u64 = VERSION_DIRECTORY_LISTING_TAG + 1;
+pub const UNVERSIONED_DIRECTORY_LISTING_TAG: u64 = VERSIONED_DIRECTORY_LISTING_TAG + 1;
 
 /// ShareLebvel indicates whether the container is Private or Public shared
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]

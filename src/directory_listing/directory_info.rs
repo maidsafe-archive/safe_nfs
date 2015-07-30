@@ -34,8 +34,8 @@ impl DirectoryInfo {
     }
 
     /// Get the unique ID representing this directory in the network
-    pub fn get_key(&self) -> (::routing::NameType, u64) {
-        (self.id.clone(), self.type_tag)
+    pub fn get_key(&self) -> (&::routing::NameType, u64) {
+        (&self.id, self.type_tag)
     }
 
     /// Get the metadata of this directory
@@ -68,9 +68,10 @@ mod test {
     #[test]
     fn serialise() {
         let metadata = ::metadata::directory_metadata::DirectoryMetadata::new("Hello.txt".to_string(), Vec::new(), true, ::AccessLevel::Public, None);
-        let obj_before = DirectoryInfo::new(metadata, ::VERSION_DIRECTORY_LISTING_TAG);
+        let obj_before = DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG);
         let serialised_data = eval_result!(::maidsafe_client::utility::serialise(&obj_before));
         let obj_after = eval_result!(::maidsafe_client::utility::deserialise(&serialised_data));
+
         assert_eq!(obj_before, obj_after);
     }
 }

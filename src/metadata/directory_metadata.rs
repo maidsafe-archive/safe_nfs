@@ -29,19 +29,19 @@ pub struct DirectoryMetadata {
 
 impl DirectoryMetadata {
     /// Create a new instance of Metadata
-    pub fn new(name             : String,
-               user_metadata    : Vec<u8>,
-               versioned        : bool,
-               access_level     : ::AccessLevel,
-               parent_dir_key   : Option<(::routing::NameType, u64)>) -> DirectoryMetadata {
+    pub fn new(name          : String,
+               user_metadata : Vec<u8>,
+               versioned     : bool,
+               access_level  : ::AccessLevel,
+               parent_dir_key: Option<(::routing::NameType, u64)>) -> DirectoryMetadata {
         DirectoryMetadata {
-            name            : name,
-            created_time    : ::time::now_utc(),
-            modified_time   : ::time::now_utc(),
-            user_metadata   : user_metadata,
-            versioned       : versioned,
-            access_level    : access_level,
-            parent_dir_key  : parent_dir_key,
+            name          : name,
+            created_time  : ::time::now_utc(),
+            modified_time : ::time::now_utc(),
+            user_metadata : user_metadata,
+            versioned     : versioned,
+            access_level  : access_level,
+            parent_dir_key: parent_dir_key,
         }
     }
 
@@ -67,8 +67,8 @@ impl DirectoryMetadata {
     }
 
     /// Returns the Parent dir id
-    pub fn get_parent_dir_key(&self) -> Option<(::routing::NameType, u64)> {
-        self.parent_dir_key.clone()
+    pub fn get_parent_dir_key(& self) -> Option<(&::routing::NameType, u64)> {
+        if let Some((ref a, b)) = self.parent_dir_key { Some((a, b)) } else { None }
     }
 
     /// Get user setteble custom metadata
@@ -149,7 +149,7 @@ impl ::rustc_serialize::Decodable for DirectoryMetadata {
 
 #[cfg(test)]
 mod test {
-    use super::*;    
+    use super::*;
 
     #[test]
     fn serialise() {
