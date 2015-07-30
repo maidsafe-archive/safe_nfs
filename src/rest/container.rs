@@ -207,7 +207,7 @@ impl Container {
 
     /// Returns a reader for the blob
     /// Using a Reader helps in handling large file contents and also fetch data in a specific range
-    pub fn get_blob_reader(&self, blob: &::rest::blob::Blob) -> Result<::helper::reader::Reader, ::errors::NfsError> {
+    pub fn get_blob_reader<'a>(&self, blob: &'a ::rest::blob::Blob) -> Result<::helper::reader::Reader<'a>, ::errors::NfsError> {
         self.get_reader_for_blob(blob)
     }
 
@@ -258,12 +258,10 @@ impl Container {
         helper.update(blob.convert_to_file().clone(), mode, self.directory_listing.clone())
     }
 
-    fn get_reader_for_blob(&self, blob: &::rest::blob::Blob) -> Result<::helper::reader::Reader, ::errors::NfsError> {
+    fn get_reader_for_blob<'a>(&self, blob: &'a ::rest::blob::Blob) -> Result<::helper::reader::Reader<'a>, ::errors::NfsError> {
         match self.directory_listing.find_file(blob.get_name()) {
-            Some(_) => {
-                Ok(::helper::reader::Reader::new(self.client.clone(), blob.convert_to_file().clone()))
-            },
-            None => Err(::errors::NfsError::NotFound),
+            Some(_) => Ok(::helper::reader::Reader::new(self.client.clone(), blob.convert_to_file())),
+            None    => Err(::errors::NfsError::NotFound),
         }
     }
 

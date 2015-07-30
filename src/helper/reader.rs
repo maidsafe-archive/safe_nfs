@@ -18,20 +18,21 @@
 /// Reader is used to read contents of a File. It can read in chunks if the file happens to be very
 /// large
 #[allow(dead_code)]
-pub struct Reader {
+pub struct Reader<'a> {
     client        : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
     self_encryptor: ::self_encryption::SelfEncryptor<::maidsafe_client::SelfEncryptionStorage>,
-    file          : ::file::File,
+    file          : &'a ::file::File,
 }
 
-impl Reader {
+impl<'a> Reader<'a> {
     /// Create a new instance of Reader
     pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-               file  : ::file::File) -> Reader {
+               file  : &'a ::file::File) -> Reader<'a> {
+        let se_storage = ::maidsafe_client::SelfEncryptionStorage::new(client.clone());
+
         Reader {
             client        : client.clone(),
-            self_encryptor: ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()),
-                                                                  file.get_datamap().clone()),
+            self_encryptor: ::self_encryption::SelfEncryptor::new(se_storage, file.get_datamap().clone()),
             file          : file,
         }
     }
