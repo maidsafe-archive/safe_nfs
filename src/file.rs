@@ -29,7 +29,7 @@ impl File {
                datamap : ::self_encryption::datamap::DataMap) -> File {
         File {
             metadata: metadata,
-            datamap: datamap,
+            datamap : datamap,
         }
     }
 
@@ -60,32 +60,24 @@ impl File {
     }
 }
 
-// TODO Write as Struct File {..
 impl ::std::fmt::Debug for File {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "File > metadata: {:?}", self.metadata)
     }
 }
 
-/*
+
 #[cfg(test)]
 mod test {
     use super::*;
-    use cbor;
 
     #[test]
     fn serialise() {
-        let obj_before = File::new(::metadata::Metadata::new("Home".to_string(),
-                                                             Some("{mime:\"application/json\"}".to_string().into_bytes())),
-                                                             ::self_encryption::datamap::DataMap::None);
-
-        let mut e = cbor::Encoder::from_memory();
-        e.encode(&[&obj_before]).unwrap();
-
-        let mut d = cbor::Decoder::from_bytes(e.as_bytes());
-        let obj_after: File = d.decode().next().unwrap().unwrap();
-
+        let obj_before = File::new(::metadata::file_metadata::FileMetadata::new("Home".to_string(),
+                                                                                "{mime:\"application/json\"}".to_string().into_bytes()),
+                                                                                ::self_encryption::datamap::DataMap::None);
+        let serialised_data = eval_result!(::maidsafe_client::utility::serialise(&obj_before));
+        let obj_after = eval_result!(::maidsafe_client::utility::deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);
     }
 }
-*/

@@ -26,18 +26,18 @@ pub enum Mode {
 /// Writer is used to write contents to a File and especially in chunks if the file happens to be
 /// too large
 pub struct Writer {
-    client              : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-    file                : ::file::File,
-    parent_directory    : ::directory_listing::DirectoryListing,
-    self_encryptor      : ::self_encryption::SelfEncryptor<::maidsafe_client::SelfEncryptionStorage>,
+    client          : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+    file            : ::file::File,
+    parent_directory: ::directory_listing::DirectoryListing,
+    self_encryptor  : ::self_encryption::SelfEncryptor<::maidsafe_client::SelfEncryptionStorage>,
 }
 
 impl Writer {
     /// Create new instance of Writer
-    pub fn new(client           : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-               mode             : Mode,
-               parent_directory : ::directory_listing::DirectoryListing,
-               file             : ::file::File) -> Writer {
+    pub fn new(client          : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+               mode            : Mode,
+               parent_directory: ::directory_listing::DirectoryListing,
+               file            : ::file::File) -> Writer {
         let datamap = match mode {
                 Mode::Modify    => file.get_datamap().clone(),
                 Mode::Overwrite => ::self_encryption::datamap::DataMap::None,

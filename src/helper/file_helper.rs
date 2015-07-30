@@ -69,6 +69,7 @@ impl FileHelper {
                            mut file: ::file::File,
                            user_metadata: Vec<u8>,
                            directory_listing: &::directory_listing::DirectoryListing) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+        // TODO Should we remove the below validation?
         try!(directory_listing.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         file.get_mut_metadata().set_user_metadata(user_metadata);
         let mut mutable_listing =  directory_listing.clone();
