@@ -146,7 +146,7 @@ impl ::rustc_serialize::Decodable for DirectoryMetadata {
         })
     }
 }
-
+/*
 #[cfg(test)]
 mod test {
     use super::*;
@@ -169,5 +169,4 @@ mod test {
         assert_eq!(obj_before, obj_after);
     }
 }
-
-// TODO test cases for serialisation - implemented above
+*/

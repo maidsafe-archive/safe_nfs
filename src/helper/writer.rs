@@ -36,7 +36,7 @@ impl Writer {
     /// Create new instance of Writer
     pub fn new(client           : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
                mode             : Mode,
-               parent_directory : ::directory_listing::DirectoryListing, // TODO call it parent_directory
+               parent_directory : ::directory_listing::DirectoryListing,
                file             : ::file::File) -> Writer {
         let datamap = match mode {
                 Mode::Modify    => file.get_datamap().clone(),

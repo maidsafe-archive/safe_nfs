@@ -18,20 +18,19 @@
 
 /// NFS Errors
 pub enum NfsError {
-    /// ClientError
-    ClientError(::maidsafe_client::errors::ClientError),
-    InvalidRangeSpecified,
-    MetaDataMissingOrCorrupted,
-    NotFound,
     AlreadyExists,
-    NameIsEmpty,
-    MetadataIsEmpty,
+    ClientError(::maidsafe_client::errors::ClientError),
     DestinationAndSourceAreSame,
-    FileExistsInDestination,
-    FailedToUpdateFile,
-    FailedToUpdateDirectory,
-    FileNotFound,
     DirectoryNotFound,
+    FailedToUpdateDirectory,
+    FailedToUpdateFile,
+    FileExistsInDestination,
+    FileNotFound,
+    InvalidRangeSpecified,
+    MetadataIsEmpty,
+    MetaDataMissingOrCorrupted,
+    NameIsEmpty,
+    NotFound,
 }
 
 impl From<::maidsafe_client::errors::ClientError> for NfsError {
@@ -40,22 +39,23 @@ impl From<::maidsafe_client::errors::ClientError> for NfsError {
     }
 }
 
+// TODO refactor as in maidsafe_dns
 impl ::std::fmt::Debug for NfsError {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         match *self {
-            NfsError::ClientError(_)                => ::std::fmt::Display::fmt("NfsError::ClientError", f), // TODO Improve these containing nested stuff to print as well
-            NfsError::InvalidRangeSpecified         => ::std::fmt::Display::fmt("NfsError::InvalidRangeSpecified", f),
-            NfsError::MetaDataMissingOrCorrupted    => ::std::fmt::Display::fmt("NfsError::MetaDataMissingOrCorrupted", f),
-            NfsError::NotFound                      => ::std::fmt::Display::fmt("NfsError::NotFound", f),
             NfsError::AlreadyExists                 => ::std::fmt::Display::fmt("NfsError::AlreadyExists", f),
-            NfsError::NameIsEmpty                   => ::std::fmt::Display::fmt("NfsError::NameIsEmpty", f),
-            NfsError::MetadataIsEmpty               => ::std::fmt::Display::fmt("NfsError::MetadataIsEmpty", f),
+            NfsError::ClientError(_)                => ::std::fmt::Display::fmt("NfsError::ClientError", f), // TODO Improve these containing nested stuff to print as well
             NfsError::DestinationAndSourceAreSame   => ::std::fmt::Display::fmt("NfsError::DestinationAndSourceAreSame", f),
-            NfsError::FileExistsInDestination       => ::std::fmt::Display::fmt("NfsError::FileExistsInDestination", f),
-            NfsError::FailedToUpdateFile            => ::std::fmt::Display::fmt("NfsError::FailedToUpdateFile", f),
-            NfsError::FailedToUpdateDirectory       => ::std::fmt::Display::fmt("NfsError::FailedToUpdateDirectory", f),
-            NfsError::FileNotFound                  => ::std::fmt::Display::fmt("NfsError::FileNotFound", f),
             NfsError::DirectoryNotFound             => ::std::fmt::Display::fmt("NfsError::DirectoryNotFound", f),
+            NfsError::FailedToUpdateDirectory       => ::std::fmt::Display::fmt("NfsError::FailedToUpdateDirectory", f),
+            NfsError::FailedToUpdateFile            => ::std::fmt::Display::fmt("NfsError::FailedToUpdateFile", f),
+            NfsError::FileExistsInDestination       => ::std::fmt::Display::fmt("NfsError::FileExistsInDestination", f),
+            NfsError::FileNotFound                  => ::std::fmt::Display::fmt("NfsError::FileNotFound", f),
+            NfsError::InvalidRangeSpecified         => ::std::fmt::Display::fmt("NfsError::InvalidRangeSpecified", f),
+            NfsError::MetadataIsEmpty               => ::std::fmt::Display::fmt("NfsError::MetadataIsEmpty", f),
+            NfsError::MetaDataMissingOrCorrupted    => ::std::fmt::Display::fmt("NfsError::MetaDataMissingOrCorrupted", f),
+            NfsError::NameIsEmpty                   => ::std::fmt::Display::fmt("NfsError::NameIsEmpty", f),
+            NfsError::NotFound                      => ::std::fmt::Display::fmt("NfsError::NotFound", f),
         }
     }
 }

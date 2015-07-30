@@ -15,7 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-// TODO code after documentation: Point 8 in review checklist
 /// Reader is used to read contents of a File. It can read in chunks if the file happens to be very
 /// large
 #[allow(dead_code)]
@@ -31,7 +30,8 @@ impl Reader {
                file  : ::file::File) -> Reader {
         Reader {
             client        : client.clone(),
-            self_encryptor: ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), file.get_datamap().clone()),
+            self_encryptor: ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()),
+                                                                  file.get_datamap().clone()),
             file          : file,
         }
     }

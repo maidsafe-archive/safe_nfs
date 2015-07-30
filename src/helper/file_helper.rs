@@ -68,12 +68,13 @@ impl FileHelper {
     pub fn update_metadata(&self,
                            mut file: ::file::File,
                            user_metadata: Vec<u8>,
-                           directory_listing: &mut ::directory_listing::DirectoryListing) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+                           directory_listing: &::directory_listing::DirectoryListing) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         try!(directory_listing.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         file.get_mut_metadata().set_user_metadata(user_metadata);
-        try!(directory_listing.upsert_file(file));
+        let mut mutable_listing =  directory_listing.clone();
+        try!(mutable_listing.upsert_file(file));
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-        directory_helper.update(&directory_listing)
+        directory_helper.update(&mutable_listing)
     }
 
     /// Return the versions of a directory containing modified versions of a file

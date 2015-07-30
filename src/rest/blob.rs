@@ -69,7 +69,7 @@ impl Blob {
         }
     }
 }
-
+/*
 #[cfg(test)]
 mod test {
     use super::*;
@@ -168,3 +168,4 @@ mod test {
         assert!(first_blob.get_modified_time() != third_blob.get_modified_time());
     }
 }
+*/

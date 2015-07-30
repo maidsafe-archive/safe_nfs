@@ -129,7 +129,7 @@ impl ::rustc_serialize::Decodable for FileMetadata {
         })
     }
 }
-
+/*
 #[cfg(test)]
 mod test {
     use super::*;
@@ -150,3 +150,4 @@ mod test {
         assert_eq!(obj_before, obj_after);
     }
 }
+*/

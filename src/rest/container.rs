@@ -19,15 +19,15 @@
 /// Container Repersents a Directory.
 /// Container can have its own metadata, sub-containers and files
 pub struct Container {
-    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-    directory_listing: ::directory_listing::DirectoryListing,
+    client              : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+    directory_listing   : ::directory_listing::DirectoryListing,
 }
 
 impl Container {
     /// Authorises the directory access and returns the Container, if authorisation is successful.
     /// Operations can be performed only after the authorisation is successful.
-    pub fn authorise(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
-                     container_info: Option<::rest::ContainerInfo>) -> Result<Container, ::errors::NfsError> {
+    pub fn authorise(client         : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+                     container_info : Option<::rest::ContainerInfo>) -> Result<Container, ::errors::NfsError> {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(client.clone());
         let directory = match container_info {
             Some(container_info) => {
@@ -220,18 +220,17 @@ impl Container {
     }
 
     /// Update the metadata of the Blob in the container
-    pub fn update_blob_metadata(&mut self, name: &String, metadata: Option<String>) ->Result<(), ::errors::NfsError> {
+    pub fn update_blob_metadata(&mut self, blob: ::rest::blob::Blob, metadata: Option<String>) ->Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         let user_metadata = try!(self.validate_metadata(metadata));
-        let file = try!(self.directory_listing.get_mut_files().iter().find(|file| *file.get_name() == *name).ok_or(::errors::NfsError::FileNotFound));
-        let mut file_helper = ::helper::file_helper::FileHelper::new(self.client.clone());
-        try!(file_helper.update_metadata(file.clone(), user_metadata, &mut self.directory_listing));
-        Ok(())
+        let file = blob.convert_to_file();
+        let file_helper = ::helper::file_helper::FileHelper::new(self.client.clone());
+        file_helper.update_metadata(file.clone(), user_metadata, &self.directory_listing)
     }
 
     /// Delete blob from the container
     pub fn delete_blob(&mut self, name: String) -> Result<(), ::errors::NfsError> {
-        let mut file_helper = ::helper::file_helper::FileHelper::new(self.client.clone());
-        try!(file_helper.delete(name, &mut self.directory_listing.clone()));
+        let file_helper = ::helper::file_helper::FileHelper::new(self.client.clone());
+        try!(file_helper.delete(name, &mut self.directory_listing));
         Ok(())
     }
 
@@ -244,8 +243,8 @@ impl Container {
         let file = try!(self.directory_listing.find_file(blob_name).ok_or(::errors::NfsError::NotFound));
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         let mut destination = try!(directory_helper.get(to_dir_info.get_key(),
-                                                   to_dir_info.get_metadata().is_versioned(),
-                                                   to_dir_info.get_metadata().get_access_level().clone()));
+                                                        to_dir_info.get_metadata().is_versioned(),
+                                                        to_dir_info.get_metadata().get_access_level().clone()));
         if destination.find_file(blob_name).is_some() {
            return Err(::errors::NfsError::FileExistsInDestination);
         }
