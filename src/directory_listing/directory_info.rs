@@ -56,7 +56,6 @@ impl DirectoryInfo {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;

@@ -66,7 +66,6 @@ impl ::std::fmt::Debug for File {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;

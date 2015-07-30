@@ -15,8 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-// TODO rename dir_listing to parent_dir_listing wherever necessary
-
 /// File provides helper functions to perform Operations on Files
 pub struct FileHelper {
     client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
@@ -59,26 +57,26 @@ impl FileHelper {
     /// A writer object is returned, through which the data for the file can be written to the network
     /// The file is actually saved in the directory listing only after `writer.close()` is invoked
     pub fn update(&self,
-                  file              : ::file::File,
-                  mode              : ::helper::writer::Mode,
-                  parent_dir_listing: ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
+                  file            : ::file::File,
+                  mode            : ::helper::writer::Mode,
+                  parent_directory: ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
         // TODO improve by comparing file::metadata::parent_info with parent_dir_listing::info and
         // return new error NotAValidParent
-        try!(parent_dir_listing.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
-        Ok(::helper::writer::Writer::new(self.client.clone(), mode, parent_dir_listing, file))
+        try!(parent_directory.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
+        Ok(::helper::writer::Writer::new(self.client.clone(), mode, parent_directory, file))
     }
 
-    /// Updates the file metadata. Returns the updated DirectoryListing
+    /// Updates the file metadata. Returns the updated parent DirectoryListing
     pub fn update_metadata(&self,
-                           mut file         : ::file::File,
-                           user_metadata    : Vec<u8>,
-                           mut directory_listing: ::directory_listing::DirectoryListing) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+                           mut file            : ::file::File,
+                           user_metadata       : Vec<u8>,
+                           mut parent_directory: ::directory_listing::DirectoryListing) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         // TODO Should we remove the below validation?
-        try!(directory_listing.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
+        try!(parent_directory.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         file.get_mut_metadata().set_user_metadata(user_metadata);
-        try!(directory_listing.upsert_file(file));
+        try!(parent_directory.upsert_file(file));
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-        directory_helper.update(&directory_listing)
+        directory_helper.update(&parent_directory)
     }
 
     /// Return the versions of a directory containing modified versions of a file
@@ -115,8 +113,6 @@ mod test {
         let test_client = eval_result!(::maidsafe_client::utility::test_utils::get_client());
         ::std::sync::Arc::new(::std::sync::Mutex::new(test_client))
     }
-
-
 
     #[test]
     fn file_crud() {

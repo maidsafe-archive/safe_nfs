@@ -41,7 +41,6 @@ unused_qualifications, variant_size_differences)]
 //! #Maidsafe-Nfs Library
 //! [Project github page](https://github.com/maidsafe/maidsafe_nfs)
 
-
 extern crate time;
 extern crate cbor;
 extern crate routing;
@@ -50,7 +49,6 @@ extern crate rustc_serialize;
 extern crate self_encryption;
 #[macro_use] extern crate maidsafe_client;
 
-// TODO arange in pyramid style
 pub mod file;
 /// Module for Restful interfaces for storage
 pub mod rest;
@@ -59,7 +57,6 @@ pub mod errors;
 pub mod helper;
 pub mod metadata;
 pub mod directory_listing;
-
 
 /// Root directory name
 pub const ROOT_DIRECTORY_NAME: &'static str = "USER_ROOT";
@@ -70,7 +67,7 @@ pub const VERSIONED_DIRECTORY_LISTING_TAG: u64 = maidsafe_client::CLIENT_STRUCTU
 /// Tag representing the Versioned Directory Listing
 pub const UNVERSIONED_DIRECTORY_LISTING_TAG: u64 = VERSIONED_DIRECTORY_LISTING_TAG + 1;
 
-/// ShareLebvel indicates whether the container is Private or Public shared
+/// AccessLevel indicates whether the container is Private or Public shared
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub enum AccessLevel {
     Private,

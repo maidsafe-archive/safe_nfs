@@ -111,8 +111,8 @@ impl DirectoryHelper {
     /// Return the DirectoryListing for the latest version
     pub fn get(&self,
                directory_key: (&::routing::NameType, u64),
-               versioned: bool,
-               access_level: &::AccessLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+               versioned    : bool,
+               access_level : &::AccessLevel) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         let structured_data = try!(self.get_structured_data(directory_key.0, directory_key.1));
         if versioned {
            let versions = try!(::maidsafe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data));
@@ -142,7 +142,6 @@ impl DirectoryHelper {
         }
     }
 
-
     /// Returns the Root Directory
     pub fn get_user_root_directory_listing(&self) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         let root_directory_id = self.client.lock().unwrap().get_user_root_directory_id().map(|id| { id.clone() });
@@ -164,7 +163,7 @@ impl DirectoryHelper {
     }
 
     /// Returns the Configuration DirectoryListing from the configuration root folder
-    /// Creates the directory if the directory does not exists
+    /// Creates the directory or the root or both if it doesn't find one.
     #[allow(dead_code)]
     pub fn get_configuration_directory_listing(&self, directory_name: String) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         let config_dir_id = self.client.lock().unwrap().get_configuration_root_directory_id().map(|id| { id.clone() });

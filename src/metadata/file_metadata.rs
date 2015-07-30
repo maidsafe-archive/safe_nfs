@@ -15,7 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-
 /// FileMetadata about a File or a Directory
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct FileMetadata {
@@ -85,7 +84,6 @@ impl FileMetadata {
     pub fn set_user_metadata(&mut self, user_metadata: Vec<u8>) {
         self.user_metadata = user_metadata;
     }
-
 }
 
 impl ::rustc_serialize::Encodable for FileMetadata {
