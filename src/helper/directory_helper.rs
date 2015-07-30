@@ -101,7 +101,11 @@ impl DirectoryHelper {
                           access_level : &::AccessLevel,
                           version      : ::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
           let immutable_data = try!(self.get_immutable_data(version, ::maidsafe_client::client::ImmutableDataType::Normal));
-          ::directory_listing::DirectoryListing::decrypt(self.client.clone(), directory_key.0, access_level, immutable_data.value().clone())
+          match *access_level {
+              ::AccessLevel::Private => ::directory_listing::DirectoryListing::decrypt(self.client.clone(), directory_key.0, access_level, immutable_data.value().clone()),
+              ::AccessLevel::Public  => Ok(try!(::maidsafe_client::utility::deserialise(immutable_data.value()))),
+          }
+
     }
 
     /// Return the DirectoryListing for the latest version
@@ -124,13 +128,17 @@ impl DirectoryHelper {
                                                 &nonce)),
                 ::AccessLevel::Public => None,
             };
-            let structured_data = try!(::maidsafe_client::structured_data_operations::unversioned::get_data(self.client.clone(),
+            let value_of_structured_data = try!(::maidsafe_client::structured_data_operations::unversioned::get_data(self.client.clone(),
                                                                                                             &structured_data,
                                                                                                             encryption_keys));
-            ::directory_listing::DirectoryListing::decrypt(self.client.clone(),
-                                                           &directory_key.0,
-                                                           access_level,
-                                                           structured_data)
+            match *access_level {
+                ::AccessLevel::Private => ::directory_listing::DirectoryListing::decrypt(self.client.clone(),
+                                                                                         &directory_key.0,
+                                                                                         access_level,
+                                                                                         value_of_structured_data),
+                ::AccessLevel::Public  => Ok(try!(::maidsafe_client::utility::deserialise(&value_of_structured_data))),
+            }
+
         }
     }
 
@@ -265,7 +273,7 @@ impl DirectoryHelper {
                                                                                     encryption_keys))
         };
         try!(self.client.lock().unwrap().post(updated_structured_data.name(),
-                                                 ::maidsafe_client::client::Data::StructuredData(updated_structured_data)));
+                                              ::maidsafe_client::client::Data::StructuredData(updated_structured_data)));
         self.get(directory.get_key(), directory.get_metadata().is_versioned(), access_level)
     }
 
@@ -337,18 +345,54 @@ mod test {
                                                  directory.get_metadata().get_access_level()));
         assert!(parent.find_sub_directory(child_directory.get_info().get_name()).is_some());
     }
+
     #[test]
-    fn create_public_ddirectory() {
+    fn create_versioned_public_directory() {
+        let public_directory;
         {
             let test_client = eval_result!(::maidsafe_client::utility::test_utils::get_client());
             let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
             let dir_helper = DirectoryHelper::new(client.clone());
-            let public_directory = eval_result!(dir_helper.create("PublicDirectory".to_string(),
-                                                                 ::UNVERSIONED_DIRECTORY_LISTING_TAG,
-                                                                 Vec::new(),
-                                                                 false,
-                                                                 ::AccessLevel::Public,
-                                                                 None));
+            public_directory = eval_result!(dir_helper.create("PublicDirectory".to_string(),
+                                                              ::VERSIONED_DIRECTORY_LISTING_TAG,
+                                                              vec![2u8, 10],
+                                                              true,
+                                                              ::AccessLevel::Public,
+                                                              None));
+        }
+        {
+            let test_client = eval_result!(::maidsafe_client::utility::test_utils::get_client());
+            let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
+            let dir_helper = DirectoryHelper::new(client.clone());
+            let retrieved_public_directory = eval_result!(dir_helper.get(public_directory.get_key(),
+                                                                         true,
+                                                                         &::AccessLevel::Public));
+            assert_eq!(retrieved_public_directory, public_directory);
+        }
+    }
+
+    #[test]
+    fn create_unversioned_public_directory() {
+        let public_directory;
+        {
+            let test_client = eval_result!(::maidsafe_client::utility::test_utils::get_client());
+            let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
+            let dir_helper = DirectoryHelper::new(client.clone());
+            public_directory = eval_result!(dir_helper.create("PublicDirectory".to_string(),
+                                                              ::UNVERSIONED_DIRECTORY_LISTING_TAG,
+                                                              vec![2u8, 10],
+                                                              false,
+                                                              ::AccessLevel::Public,
+                                                              None));
+        }
+        {
+            let test_client = eval_result!(::maidsafe_client::utility::test_utils::get_client());
+            let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
+            let dir_helper = DirectoryHelper::new(client.clone());
+            let retrieved_public_directory = eval_result!(dir_helper.get(public_directory.get_key(),
+                                                                         false,
+                                                                         &::AccessLevel::Public));
+            assert_eq!(retrieved_public_directory, public_directory);
         }
     }
 
