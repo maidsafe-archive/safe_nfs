@@ -129,8 +129,8 @@ impl DirectoryHelper {
                 ::AccessLevel::Public => None,
             };
             let value_of_structured_data = try!(::maidsafe_client::structured_data_operations::unversioned::get_data(self.client.clone(),
-                                                                                                            &structured_data,
-                                                                                                            encryption_keys));
+                                                                                                                     &structured_data,
+                                                                                                                     encryption_keys));
             match *access_level {
                 ::AccessLevel::Private => ::directory_listing::DirectoryListing::decrypt(self.client.clone(),
                                                                                          &directory_key.0,
