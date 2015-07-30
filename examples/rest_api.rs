@@ -14,7 +14,7 @@
 //
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
-
+/*
 extern crate maidsafe_client;
 extern crate maidsafe_nfs;
 extern crate time;
@@ -363,4 +363,8 @@ fn main() {
             }
         }
     }
+}
+*/
+fn main() {
+    
 }

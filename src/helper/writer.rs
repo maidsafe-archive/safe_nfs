@@ -26,25 +26,28 @@ pub enum Mode {
 /// Writer is used to write contents to a File and especially in chunks if the file happens to be
 /// too large
 pub struct Writer {
-    file: ::file::File,
-    directory: ::directory_listing::DirectoryListing,
-    self_encryptor: ::self_encryption::SelfEncryptor<::maidsafe_client::SelfEncryptionStorage>,
-    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+    client              : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+    file                : ::file::File,
+    parent_directory    : ::directory_listing::DirectoryListing,
+    self_encryptor      : ::self_encryption::SelfEncryptor<::maidsafe_client::SelfEncryptionStorage>,
 }
 
 impl Writer {
     /// Create new instance of Writer
-    pub fn new(directory: ::directory_listing::DirectoryListing, file: ::file::File,
-              client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>, mode: Mode) -> Writer {
+    pub fn new(client           : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+               mode             : Mode,
+               parent_directory : ::directory_listing::DirectoryListing,
+               file             : ::file::File) -> Writer {
         let datamap = match mode {
+                Mode::Modify    => file.get_datamap().clone(),
                 Mode::Overwrite => ::self_encryption::datamap::DataMap::None,
-                Mode::Modify => file.get_datamap().clone(),
         };
+
         Writer {
-            file: file.clone(),
-            directory: directory,
+            client          : client.clone(),
+            file            : file,
+            parent_directory: parent_directory,
             self_encryptor: ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), datamap),
-            client: client,
         }
     }
 
@@ -55,9 +58,9 @@ impl Writer {
 
     /// close is invoked only after alll the data is completely written
     /// The file/blob is saved only when the close is invoked.
-    pub fn close(mut self) -> Result<(), String> {
+    pub fn close(mut self) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         let ref mut file = self.file;
-        let ref mut directory = self.directory;
+        let ref mut directory = self.parent_directory;
         let size = self.self_encryptor.len();
 
         file.set_datamap(self.self_encryptor.close());
@@ -65,12 +68,10 @@ impl Writer {
         file.get_mut_metadata().set_modified_time(::time::now_utc());
         file.get_mut_metadata().set_size(size);
 
-        directory.upsert_file(file.clone());
+        try!(directory.upsert_file(file.clone()));
 
-        let mut directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
-        match directory_helper.update(directory) {
-            Ok(_) => Ok(()),
-            Err(_) => Err("Failed to save".to_string()),
-        }
+        let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
+        try!(directory_helper.update(&directory));
+        Ok(directory.clone())
     }
 }

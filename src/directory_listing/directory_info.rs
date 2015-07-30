@@ -15,39 +15,39 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-#[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
 /// Contains Information pertaining to a Directory
+#[derive(Debug, RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct DirectoryInfo {
-    id: ::routing::NameType,
-    // parent_dir_id: ::routing::NameType,
-    metadata: ::metadata::Metadata,
+    id      : ::routing::NameType,
+    type_tag: u64,
+    metadata: ::metadata::directory_metadata::DirectoryMetadata,
 }
 
 impl DirectoryInfo {
     /// Create a new DirectoryInfo
-    pub fn new(metadata: ::metadata::Metadata) -> DirectoryInfo {
+    pub fn new(metadata: ::metadata::directory_metadata::DirectoryMetadata, type_tag: u64) -> DirectoryInfo {
         DirectoryInfo {
-            id: ::routing::test_utils::Random::generate_random(),
-            // parent_dir_id: parent_dir_id,
+            id      : ::routing::test_utils::Random::generate_random(),
+            type_tag: type_tag,
             metadata: metadata,
         }
     }
 
     /// Get the unique ID representing this directory in the network
-    pub fn get_id(&self) -> &::routing::NameType {
-        &self.id
-    }
-
-    #[allow(dead_code)]
-    /// Get the metadata of this directory. Since return value is mutable it can also be used to
-    /// update the metadata
-    pub fn get_mut_metadata(&mut self) -> &mut ::metadata::Metadata {
-        &mut self.metadata
+    pub fn get_key(&self) -> (&::routing::NameType, u64) {
+        (&self.id, self.type_tag)
     }
 
     /// Get the metadata of this directory
-    pub fn get_metadata(&self) -> &::metadata::Metadata {
+    pub fn get_metadata(&self) -> &::metadata::directory_metadata::DirectoryMetadata {
         &self.metadata
+    }
+
+    /// Get the metadata of this directory. Since return value is mutable it can also be used to
+    /// update the metadata
+    #[allow(dead_code)]
+    pub fn get_mut_metadata(&mut self) -> &mut ::metadata::directory_metadata::DirectoryMetadata {
+        &mut self.metadata
     }
 
     /// Get the name of this directory
@@ -60,18 +60,7 @@ impl DirectoryInfo {
     // }
 }
 
-impl ::std::fmt::Debug for DirectoryInfo {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "metadata: {}, id: {}", *self.get_metadata(), *self.get_id())
-    }
-}
-
-impl ::std::fmt::Display for DirectoryInfo {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "metadata: {}, id: {}", *self.get_metadata(), *self.get_id())
-    }
-}
-
+/*
 #[cfg(test)]
 mod test {
     use super::*;
@@ -79,7 +68,8 @@ mod test {
 
     #[test]
     fn serialise() {
-        let obj_before = DirectoryInfo::new(::metadata::Metadata::new("hello.txt".to_string(), "{mime:\"application/json\"}".to_string().into_bytes()));
+        let metadata = ::directory_metadata::DirectoryMetadata::new("Hello.txt".to_string(), None, true, ::AccessLevel::Public, None);
+        let obj_before = DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG);
 
         let mut e = cbor::Encoder::from_memory();
         e.encode(&[&obj_before]).unwrap();
@@ -90,3 +80,4 @@ mod test {
         assert_eq!(obj_before, obj_after);
     }
 }
+*/

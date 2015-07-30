@@ -31,99 +31,82 @@ impl FileHelper {
     /// Helper function to create a file in a directory listing
     /// A writer object is returned, through which the data for the file can be written to the network
     /// The file is actually saved in the directory listing only after `writer.close()` is invoked
-    pub fn create(&mut self,
-                  name: String,
-                  user_metatdata: Vec<u8>,
-                  directory: &::directory_listing::DirectoryListing) -> Result<::io::Writer, String> {
-        match self.file_exists(directory, &name) {
-            Some(_) => Err("File already exists".to_string()),
+    pub fn create(&self,
+                  name              : String,
+                  user_metatdata    : Vec<u8>,
+                  directory_listing : ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
+        match directory_listing.find_file(&name) {
+            Some(_) => Err(::errors::NfsError::AlreadyExists),
             None => {
-                let file = ::file::File::new(::metadata::Metadata::new(name, user_metatdata), ::self_encryption::datamap::DataMap::None);
-                Ok(::io::Writer::new(directory.clone(), file, self.client.clone(), ::io::writer::Mode::Overwrite))
+                let file = ::file::File::new(::metadata::file_metadata::FileMetadata::new(name, user_metatdata), ::self_encryption::datamap::DataMap::None);
+                Ok(::helper::writer::Writer::new(self.client.clone(), ::helper::writer::Mode::Overwrite, directory_listing, file))
             },
         }
+    }
+
+    /// Delete a file from the DirectoryListing
+    pub fn delete(&self, file_name: String, directory_listing: &mut ::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
+         let index = try!(directory_listing.get_file_index(&file_name).ok_or(::errors::NfsError::FileNotFound));
+         directory_listing.get_mut_files().remove(index);
+         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
+         try!(directory_helper.update(&directory_listing));
+         Ok(())
     }
 
     /// Helper function to Update content of a file in a directory listing
     /// A writer object is returned, through which the data for the file can be written to the network
     /// The file is actually saved in the directory listing only after `writer.close()` is invoked
-    pub fn update(&mut self,
-                  file: &::file::File,
-                  directory: &::directory_listing::DirectoryListing,
-                  mode: ::io::writer::Mode) -> Result<::io::Writer, String> {
-        match self.file_exists(directory, file.get_name()) {
-            Some(_) => Ok(::io::Writer::new(directory.clone(), file.clone(), self.client.clone(), mode)),
-            None => Err("File not present in the directory".to_string()),
-        }
+    pub fn update(&self,
+                  file: ::file::File,
+                  mode: ::helper::writer::Mode,
+                  directory_listing: ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
+        try!(directory_listing.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
+        Ok(::helper::writer::Writer::new(self.client.clone(), mode, directory_listing, file))
     }
 
     /// Updates the file metadata. Returns the updated DirectoryListing
-    pub fn update_metadata(&mut self,
-                           file: &mut ::file::File,
-                           directory: &mut ::directory_listing::DirectoryListing,
-                           user_metadata: &Vec<u8>) -> Result<(), String> {
-        match self.file_exists(directory, file.get_name()) {
-            Some(_) => {
-                file.get_mut_metadata().set_user_metadata(user_metadata.clone());
-                directory.upsert_file(file.clone());
-                let mut directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
-                match directory_helper.update(&directory) {
-                    Ok(_) => Ok(()),
-                    Err(_) => Err("Failed to update".to_string())
-                }
-            },
-            None => Err("File not present in the directory".to_string()),
-        }
+    pub fn update_metadata(&self,
+                           mut file: ::file::File,
+                           user_metadata: Vec<u8>,
+                           directory_listing: &::directory_listing::DirectoryListing) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+        try!(directory_listing.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
+        file.get_mut_metadata().set_user_metadata(user_metadata);
+        let mut mutable_listing =  directory_listing.clone();
+        try!(mutable_listing.upsert_file(file));
+        let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
+        directory_helper.update(&mutable_listing)
     }
 
     /// Return the versions of a directory containing modified versions of a file
-    pub fn get_versions(&mut self,
-                        directory_id: &::routing::NameType,
-                        file: &::file::File) -> Result<Vec<::routing::NameType>, String> {
-        let mut versions = Vec::<::routing::NameType>::new();
-        let mut directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
+    pub fn get_versions(&self,
+                        file                : &::file::File,
+                        directory_listing   : &::directory_listing::DirectoryListing) -> Result<Vec<::file::File>, ::errors::NfsError> {
+        let mut versions = Vec::<::file::File>::new();
+        let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
 
-        match directory_helper.get_versions(directory_id) {
-            Ok(sdv_versions) => {
-                let mut modified_time = ::time::empty_tm();
-                for version_id in sdv_versions {
-                    match directory_helper.get_by_version(directory_id, &version_id) {
-                        Ok(directory_listing) => {
-                            match directory_listing.get_files().iter().find(|&entry| entry.get_name() == file.get_name()) {
-                                Some(file) => {
-                                   if file.get_metadata().get_modified_time() != modified_time {
-                                        modified_time = file.get_metadata().get_modified_time();
-                                        versions.push(version_id);
-                                    }
-                                },
-                                None => ()
-                            }
-                        },
-                        Err(_) => { () }
-                    }
-                }
-            },
-            Err(_) => { () },
+        let sdv_versions = try!(directory_helper.get_versions(directory_listing.get_key()));
+        let mut modified_time = ::time::empty_tm();
+        for version_id in sdv_versions {
+            let directory_listing = try!(directory_helper.get_by_version(directory_listing.get_key(),
+                                                                         directory_listing.get_metadata().get_access_level(),
+                                                                         version_id.clone()));
+            if let Some(file) = directory_listing.get_files().iter().find(|&entry| entry.get_name() == file.get_name()) {
+                if *file.get_metadata().get_modified_time() != modified_time {
+                     modified_time = file.get_metadata().get_modified_time().clone();
+                     versions.push(file.clone());
+                 }
+            }
         }
-
         Ok(versions)
     }
 
-    fn file_exists(&self,
-                   directory: &::directory_listing::DirectoryListing,
-                   file_name: &String) -> Option<String> {
-        let result = directory.get_files().iter().find(|file| {
-                *file.get_name() == *file_name
-            });
-        match result {
-            Some(_) => Some(file_name.clone()),
-            None => None,
-        }
+    pub fn read(&self, file: ::file::File, directory_listing: &::directory_listing::DirectoryListing) -> Result<::helper::reader::Reader, ::errors::NfsError> {
+        try!(directory_listing.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
+        Ok(::helper::reader::Reader::new(self.client.clone(), file))
     }
-
 }
 
-
+/*
 #[cfg(test)]
 mod test {
     use super::*;
@@ -216,3 +199,4 @@ mod test {
         }
     }
 }
+*/

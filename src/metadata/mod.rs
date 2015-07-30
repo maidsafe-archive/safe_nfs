@@ -15,10 +15,5 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-/// Module for Writer
-pub mod writer;
-/// Module for Reader
-pub mod reader;
-
-pub use self::writer::Writer;
-pub use self::reader::*;
+pub mod file_metadata;
+pub mod directory_metadata;

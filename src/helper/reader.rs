@@ -15,23 +15,24 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-#[allow(dead_code)]
 /// Reader is used to read contents of a File. It can read in chunks if the file happens to be very
 /// large
+#[allow(dead_code)]
 pub struct Reader {
-    file: ::file::File,
+    client        : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
     self_encryptor: ::self_encryption::SelfEncryptor<::maidsafe_client::SelfEncryptionStorage>,
-    client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+    file          : ::file::File,
 }
 
 impl Reader {
     /// Create a new instance of Reader
-    pub fn new(file: ::file::File,
-               client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> Reader {
+    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+               file  : ::file::File) -> Reader {
         Reader {
-            file: file.clone(),
-            self_encryptor: ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), file.get_datamap().clone()),
-            client: client,
+            client        : client.clone(),
+            self_encryptor: ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()),
+                                                                  file.get_datamap().clone()),
+            file          : file,
         }
     }
 
@@ -41,10 +42,11 @@ impl Reader {
     }
 
     /// Read data from file/blob
-    pub fn read(&mut self,  position: u64, length: u64) -> Result<Vec<u8>, String> {
+    pub fn read(&mut self,  position: u64, length: u64) -> Result<Vec<u8>, ::errors::NfsError> {
         if (position + length) > self.size() {
-            return Err("Invalid range specified".to_string());
+            Err(::errors::NfsError::InvalidRangeSpecified)
+        } else {
+            Ok(self.self_encryptor.read(position, length))
         }
-        Ok(self.self_encryptor.read(position, length))
     }
 }

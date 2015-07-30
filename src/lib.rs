@@ -28,7 +28,7 @@
 #![forbid(bad_style, warnings)]
 
 #![deny(deprecated, improper_ctypes, missing_docs, non_shorthand_field_patterns,
-overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
+overflowing_literals, plugin_as_library, Private_no_mangle_fns, Private_no_mangle_statics,
 raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints, unsafe_code,
 unsigned_negation, unused, unused_allocation, unused_attributes, unused_comparisons,
 unused_features, unused_parens, while_true)]
@@ -43,25 +43,36 @@ unused_qualifications, variant_size_differences)]
 
 
 extern crate time;
-extern crate self_encryption;
 extern crate cbor;
 extern crate routing;
 extern crate sodiumoxide;
 extern crate rustc_serialize;
-extern crate maidsafe_client;
+extern crate self_encryption;
+#[macro_use] extern crate maidsafe_client;
 
+// TODO arange in pyramid style
 pub mod file;
+/// Module for Restful interfaces for storage
+pub mod rest;
+/// Errors
 pub mod errors;
 pub mod helper;
 pub mod metadata;
-pub mod directory_info;
 pub mod directory_listing;
 
-/// Module for input/output to network/file
-pub mod io;
-/// Module for Restful interfaces for storage
-pub mod rest;
-/// Utility functions
-pub mod utility;
+
+/// Root directory name
+pub const ROOT_DIRECTORY_NAME: &'static str = "USER_ROOT";
+/// Configuration directory Name stored in the session packet
+pub const CONFIGURATION_DIRECTORY_NAME: &'static str = "CONFIGURATION_ROOT";
 /// Tag representing the Versioned Directory Listing
-pub const VERSION_DIRECTORY_LISTING_TAG: u64 = ::maidsafe_client::MAIDSAFE_TAG + 1;
+pub const VERSIONED_DIRECTORY_LISTING_TAG: u64 = maidsafe_client::CLIENT_STRUCTURED_DATA_TAG + 100;
+/// Tag representing the Versioned Directory Listing
+pub const UNVERSIONED_DIRECTORY_LISTING_TAG: u64 = VERSIONED_DIRECTORY_LISTING_TAG + 1;
+
+/// ShareLebvel indicates whether the container is Private or Public shared
+#[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
+pub enum AccessLevel {
+    Private,
+    Public,
+}

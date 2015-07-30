@@ -15,17 +15,18 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-#[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
 /// Representation of a File to be put into the network. Could be text, music, video etc any kind
 /// of file
+#[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct File {
-    metadata: ::metadata::Metadata,
-    datamap: ::self_encryption::datamap::DataMap,
+    metadata: ::metadata::file_metadata::FileMetadata,
+    datamap : ::self_encryption::datamap::DataMap,
 }
 
 impl File {
     /// Create a new instance of File
-    pub fn new(metadata: ::metadata::Metadata, datamap: ::self_encryption::datamap::DataMap) -> File {
+    pub fn new(metadata: ::metadata::file_metadata::FileMetadata,
+               datamap : ::self_encryption::datamap::DataMap) -> File {
         File {
             metadata: metadata,
             datamap: datamap,
@@ -34,16 +35,16 @@ impl File {
 
     /// Get the name of the File
     pub fn get_name(&self) -> &String {
-        self.get_metadata().get_name()
+        self.metadata.get_name()
     }
 
     /// Get metadata associated with the file
-    pub fn get_metadata(&self) -> &::metadata::Metadata {
+    pub fn get_metadata(&self) -> &::metadata::file_metadata::FileMetadata {
         &self.metadata
     }
 
     /// Get metadata associated with the file, with mutability to allow updation
-    pub fn get_mut_metadata(&mut self) -> &mut ::metadata::Metadata {
+    pub fn get_mut_metadata(&mut self) -> &mut ::metadata::file_metadata::FileMetadata {
         &mut self.metadata
     }
 
@@ -59,18 +60,14 @@ impl File {
     }
 }
 
+// TODO Write as Struct File {..
 impl ::std::fmt::Debug for File {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "metadata: {}", self.get_metadata())
+        write!(f, "File > metadata: {:?}", self.metadata)
     }
 }
 
-impl ::std::fmt::Display for File {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "metadata: {}", self.get_metadata())
-    }
-}
-
+/*
 #[cfg(test)]
 mod test {
     use super::*;
@@ -79,8 +76,8 @@ mod test {
     #[test]
     fn serialise() {
         let obj_before = File::new(::metadata::Metadata::new("Home".to_string(),
-             "{mime:\"application/json\"}".to_string().into_bytes()),
-              ::self_encryption::datamap::DataMap::None);
+                                                             Some("{mime:\"application/json\"}".to_string().into_bytes())),
+                                                             ::self_encryption::datamap::DataMap::None);
 
         let mut e = cbor::Encoder::from_memory();
         e.encode(&[&obj_before]).unwrap();
@@ -91,3 +88,4 @@ mod test {
         assert_eq!(obj_before, obj_after);
     }
 }
+*/
