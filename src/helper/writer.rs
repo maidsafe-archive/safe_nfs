@@ -57,10 +57,11 @@ impl Writer {
     }
 
     /// close is invoked only after alll the data is completely written
-    /// The file/blob is saved only when the close is invoked.
+    /// The file/blob is saved only when the close is invoked. The update parent directory listing
+    /// is returned.
     pub fn close(mut self) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
-        let ref mut file = self.file;
-        let ref mut directory = self.parent_directory;
+        let mut file = self.file;
+        let mut directory = self.parent_directory;
         let size = self.self_encryptor.len();
 
         file.set_datamap(self.self_encryptor.close());
@@ -72,6 +73,7 @@ impl Writer {
 
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         try!(directory_helper.update(&directory));
-        Ok(directory.clone())
+
+        Ok(directory)
     }
 }

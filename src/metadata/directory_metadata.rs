@@ -18,13 +18,13 @@
 /// Metadata about a File or a Directory
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct DirectoryMetadata {
-    name         : String,
-    created_time : ::time::Tm,
-    modified_time: ::time::Tm,
-    user_metadata: Vec<u8>,
-    versioned    : bool,
-    access_level : ::AccessLevel,
-    parent_dir_key   : Option<(::routing::NameType, u64)>,
+    name          : String,
+    created_time  : ::time::Tm,
+    modified_time : ::time::Tm,
+    user_metadata : Vec<u8>,
+    versioned     : bool,
+    access_level  : ::AccessLevel,
+    parent_dir_key: Option<(::routing::NameType, u64)>,
 }
 
 impl DirectoryMetadata {
