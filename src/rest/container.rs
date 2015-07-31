@@ -343,14 +343,14 @@ mod test {
         writer.write(&data[..], 0);
         eval_result!(writer.close());
 
-        home_container = eval_result!(container.get_container(home_container.get_info(), None));
+        home_container = eval_result!(container.get_container(&home_container.get_info(), None));
         assert_eq!(eval_result!(home_container.get_blob_versions(&"sample.txt".to_string())).len(), 1);
         let blob = eval_result!(home_container.get_blob("sample.txt".to_string()));
         assert_eq!(eval_result!(home_container.get_blob_content(&blob)), data);
 
         let data_updated = "Hello World updated!".to_string().into_bytes();
         let _ = eval_result!(home_container.update_blob_content(&blob, &data_updated[..]));
-        home_container = eval_result!(container.get_container(home_container.get_info(), None));
+        home_container = eval_result!(container.get_container(&home_container.get_info(), None));
         let blob = eval_result!(home_container.get_blob("sample.txt".to_string()));
         assert_eq!(eval_result!(home_container.get_blob_content(&blob)), data_updated);
 
@@ -372,7 +372,7 @@ mod test {
         let mut docs_container = eval_result!(container.create("Docs".to_string(), true, ::AccessLevel::Private));
         assert_eq!(docs_container.get_blobs().len(), 0);
         let _ = home_container.copy_blob(&"sample.txt".to_string(), &docs_container.get_info());
-        docs_container = eval_result!(container.get_container(docs_container.get_info(), None));
+        docs_container = eval_result!(container.get_container(&docs_container.get_info(), None));
         assert_eq!(docs_container.get_blobs().len(), 1);
 
         let _ = home_container.delete_blob("sample.txt".to_string());
