@@ -97,22 +97,10 @@ impl Container {
     }
 
     /// Returns a Blob from the container
-    pub fn get_blob(&self, name: String, version: Option<[u8; 64]>) -> Result<::rest::blob::Blob, ::errors::NfsError> {
-        match version {
-            Some(version_id) => {
-                let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-                let directory_listing_version = try!(directory_helper.get_by_version(self.directory_listing.get_key(),
-                                                                                     self.directory_listing.get_metadata().get_access_level(),
-                                                                                     ::routing::NameType(version_id)));
-                match directory_listing_version.find_file(&name) {
-                    Some(file) => Ok(::rest::blob::Blob::convert_from_file(file.clone())),
-                    None => Err(::errors::NfsError::NotFound),
-                }
-            },
-            None => match self.directory_listing.find_file(&name) {
-                Some(file) => Ok(::rest::blob::Blob::convert_from_file(file.clone())),
-                None => Err(::errors::NfsError::NotFound),
-            },
+    pub fn get_blob(&self, name: String) -> Result<::rest::blob::Blob, ::errors::NfsError> {
+        match self.directory_listing.find_file(&name) {
+            Some(file) => Ok(::rest::blob::Blob::convert_from_file(file.clone())),
+            None => Err(::errors::NfsError::NotFound),
         }
     }
 
@@ -151,7 +139,7 @@ impl Container {
 
     /// Fetches the latest version of the child container.
     /// Can fetch a specific version of the Container by passing the corresponding VersionId.
-    pub fn get_container(&mut self, container_info: ::rest::container_info::ContainerInfo, version: Option<[u8; 64]>) -> Result<Container, ::errors::NfsError> {
+    pub fn get_container(&mut self, container_info: &::rest::container_info::ContainerInfo, version: Option<[u8; 64]>) -> Result<Container, ::errors::NfsError> {
         let dir_info = container_info.convert_to_directory_info();
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         let dir_listing = match version {
@@ -357,13 +345,13 @@ mod test {
 
         home_container = eval_result!(container.get_container(home_container.get_info(), None));
         assert_eq!(eval_result!(home_container.get_blob_versions(&"sample.txt".to_string())).len(), 1);
-        let blob = eval_result!(home_container.get_blob("sample.txt".to_string(), None));
+        let blob = eval_result!(home_container.get_blob("sample.txt".to_string()));
         assert_eq!(eval_result!(home_container.get_blob_content(&blob)), data);
 
         let data_updated = "Hello World updated!".to_string().into_bytes();
         let _ = eval_result!(home_container.update_blob_content(&blob, &data_updated[..]));
         home_container = eval_result!(container.get_container(home_container.get_info(), None));
-        let blob = eval_result!(home_container.get_blob("sample.txt".to_string(), None));
+        let blob = eval_result!(home_container.get_blob("sample.txt".to_string()));
         assert_eq!(eval_result!(home_container.get_blob_content(&blob)), data_updated);
 
         // Assert versions
@@ -378,7 +366,7 @@ mod test {
         }
         let metadata = "{\"purpose\": \"test\"}".to_string();
         home_container = eval_result!(home_container.update_blob_metadata(blob, Some(metadata.clone())));
-        let blob = eval_result!(home_container.get_blob("sample.txt".to_string(), None));
+        let blob = eval_result!(home_container.get_blob("sample.txt".to_string()));
         assert_eq!(blob.get_metadata(), metadata);
 
         let mut docs_container = eval_result!(container.create("Docs".to_string(), true, ::AccessLevel::Private));
