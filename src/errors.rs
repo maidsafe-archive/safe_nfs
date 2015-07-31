@@ -17,18 +17,34 @@
 
 /// NFS Errors
 pub enum NfsError {
+    /// Client Error
     ClientError(::maidsafe_client::errors::ClientError),
+    // TODO remove already exists
+    /// If Directory already exists
     AlreadyExists,
+    /// Destonation is Same as the Source
     DestinationAndSourceAreSame,
+    /// Directory not found
     DirectoryNotFound,
+    /// Failed to update directory
     FailedToUpdateDirectory,
+    /// Failed to update file
     FailedToUpdateFile,
+    /// File already present in the destonation specified
     FileExistsInDestination,
+    /// File not found
     FileNotFound,
+    /// Invalid byte range specified
     InvalidRangeSpecified,
+    // TODO remove MetadataIsEmpty
+    /// Metadata can not be empty
     MetadataIsEmpty,
+    /// Metadata for the directory is missing or may be corrupted
     MetaDataMissingOrCorrupted,
+    /// Name can not be empty
     NameIsEmpty,
+    // TODO remove not found
+    /// General
     NotFound,
 }
 

@@ -15,5 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+/// FileMetadata
 pub mod file_metadata;
+/// DirectoryMetadata
 pub mod directory_metadata;

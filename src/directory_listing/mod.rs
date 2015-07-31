@@ -15,6 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+/// DirectoryInfo holds teh metadata information about the directory
 pub mod directory_info;
 
 /// DirectoryListing is the representation of a deserialised Directory in the network
@@ -153,11 +154,15 @@ impl DirectoryListing {
         self.get_sub_directories().iter().find(|info| *info.get_name() == *directory_name)
     }
 
+    /// Returns the position of the sub-directory in the subdirectory list
+    /// None is returned if the sub-directory is not found
     pub fn get_sub_directory_index(&self,
                                    directory_name: &String) -> Option<usize> {
         self.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == *directory_name)
     }
 
+    /// Returns the position of the files in the file list
+    /// None is returned if the file is not found
     pub fn get_file_index(&self,
                           file_name: &String) -> Option<usize> {
         self.get_files().iter().position(|file| *file.get_name() == *file_name)

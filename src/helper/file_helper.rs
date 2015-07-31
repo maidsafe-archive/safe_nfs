@@ -102,6 +102,7 @@ impl FileHelper {
         Ok(versions)
     }
 
+    /// Returns a reader for reading the file contents
     pub fn read<'a>(&self, file: &'a ::file::File) -> ::helper::reader::Reader<'a> {
         ::helper::reader::Reader::new(self.client.clone(), file)
     }

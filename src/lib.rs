@@ -20,7 +20,7 @@
 #![doc(html_logo_url = "http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
               html_root_url = "http://dirvine.github.io/dirvine/maidsafe_nfs/")]
-/*
+
 ///////////////////////////////////////////////////
 //               LINT
 ///////////////////////////////////////////////////
@@ -37,7 +37,7 @@ unused_features, unused_parens, while_true)]
 unused_qualifications, variant_size_differences)]
 
 ///////////////////////////////////////////////////
-*/
+
 //! #Maidsafe-Nfs Library
 //! [Project github page](https://github.com/maidsafe/maidsafe_nfs)
 
@@ -49,13 +49,17 @@ extern crate rustc_serialize;
 extern crate self_encryption;
 #[macro_use] extern crate maidsafe_client;
 
+/// Module for File struct
 pub mod file;
 /// Module for Restful interfaces for storage
 pub mod rest;
 /// Errors
 pub mod errors;
+/// Helper for directory_listing and File for NFS Low level API
 pub mod helper;
+/// Directory and File Metadata
 pub mod metadata;
+/// Module for directory reltaed structs - DirectoryListin, DirectoryInfo
 pub mod directory_listing;
 
 /// Root directory name
@@ -70,6 +74,8 @@ pub const UNVERSIONED_DIRECTORY_LISTING_TAG: u64 = VERSIONED_DIRECTORY_LISTING_T
 /// AccessLevel indicates whether the container is Private or Public shared
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub enum AccessLevel {
+    /// Private Directory where the directory is encrypted with users private keys
     Private,
+    /// Public Directory where the directory is not encrypted and anyone can read the contents of it
     Public,
 }

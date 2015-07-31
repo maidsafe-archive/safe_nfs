@@ -15,7 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+/// DirectoryHelper provides functions for CRUD on DirectoryListing
 pub mod directory_helper;
+/// FileHelper provides functions for CRUD on file
 pub mod file_helper;
+/// Data for the file can be written using Wirter
 pub mod writer;
+/// Data from a file can be read using Reader
 pub mod reader;
