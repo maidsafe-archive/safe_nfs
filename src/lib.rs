@@ -20,7 +20,7 @@
 #![doc(html_logo_url = "http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
               html_root_url = "http://dirvine.github.io/dirvine/maidsafe_nfs/")]
-/*
+
 ///////////////////////////////////////////////////
 //               LINT
 ///////////////////////////////////////////////////
@@ -28,7 +28,7 @@
 #![forbid(bad_style, warnings)]
 
 #![deny(deprecated, improper_ctypes, missing_docs, non_shorthand_field_patterns,
-overflowing_literals, plugin_as_library, Private_no_mangle_fns, Private_no_mangle_statics,
+overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
 raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints, unsafe_code,
 unsigned_negation, unused, unused_allocation, unused_attributes, unused_comparisons,
 unused_features, unused_parens, while_true)]
@@ -37,10 +37,9 @@ unused_features, unused_parens, while_true)]
 unused_qualifications, variant_size_differences)]
 
 ///////////////////////////////////////////////////
-*/
+
 //! #Maidsafe-Nfs Library
 //! [Project github page](https://github.com/maidsafe/maidsafe_nfs)
-
 
 extern crate time;
 extern crate cbor;
@@ -50,16 +49,18 @@ extern crate rustc_serialize;
 extern crate self_encryption;
 #[macro_use] extern crate maidsafe_client;
 
-// TODO arange in pyramid style
+/// Module for File struct
 pub mod file;
 /// Module for Restful interfaces for storage
 pub mod rest;
 /// Errors
 pub mod errors;
+/// Helper for directory_listing and File for NFS Low level API
 pub mod helper;
+/// Directory and File Metadata
 pub mod metadata;
+/// Module for directory reltaed structs - DirectoryListin, DirectoryInfo
 pub mod directory_listing;
-
 
 /// Root directory name
 pub const ROOT_DIRECTORY_NAME: &'static str = "USER_ROOT";
@@ -70,9 +71,11 @@ pub const VERSIONED_DIRECTORY_LISTING_TAG: u64 = maidsafe_client::CLIENT_STRUCTU
 /// Tag representing the Versioned Directory Listing
 pub const UNVERSIONED_DIRECTORY_LISTING_TAG: u64 = VERSIONED_DIRECTORY_LISTING_TAG + 1;
 
-/// ShareLebvel indicates whether the container is Private or Public shared
+/// AccessLevel indicates whether the container is Private or Public shared
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub enum AccessLevel {
+    /// Private Directory where the directory is encrypted with users private keys
     Private,
+    /// Public Directory where the directory is not encrypted and anyone can read the contents of it
     Public,
 }

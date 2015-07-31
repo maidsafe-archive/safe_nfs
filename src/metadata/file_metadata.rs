@@ -15,7 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-
 /// FileMetadata about a File or a Directory
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct FileMetadata {
@@ -85,7 +84,6 @@ impl FileMetadata {
     pub fn set_user_metadata(&mut self, user_metadata: Vec<u8>) {
         self.user_metadata = user_metadata;
     }
-
 }
 
 impl ::rustc_serialize::Encodable for FileMetadata {
@@ -93,7 +91,7 @@ impl ::rustc_serialize::Encodable for FileMetadata {
         let created_time = self.created_time.to_timespec();
         let modified_time = self.modified_time.to_timespec();
         ::cbor::CborTagEncode::new(5483_000, &(&self.name,
-                                               self.size,
+                                               self.size as usize,
                                                &self.user_metadata,
                                                created_time.sec,
                                                created_time.nsec,
@@ -129,25 +127,17 @@ impl ::rustc_serialize::Decodable for FileMetadata {
         })
     }
 }
-/*
+
 #[cfg(test)]
 mod test {
     use super::*;
-    use cbor;
 
     #[test]
     fn serialise() {
-        // TODO Elaborate test cases
-        let obj_before = Metadata::new("hello.txt".to_string(),
-                                       Some("{mime: \"application/json\"}".to_string().into_bytes()));
-
-        let mut e = cbor::Encoder::from_memory();
-        e.encode(&[&obj_before]).unwrap();
-
-        let mut d = cbor::Decoder::from_bytes(e.as_bytes());
-        let obj_after: FileMetadata = d.decode().next().unwrap().unwrap();
-
+        let obj_before = FileMetadata::new("hello.txt".to_string(),
+                                           "{mime: \"application/json\"}".to_string().into_bytes());
+        let serialised_data = eval_result!(::maidsafe_client::utility::serialise(&obj_before));
+        let obj_after = eval_result!(::maidsafe_client::utility::deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);
     }
 }
-*/

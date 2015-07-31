@@ -18,13 +18,13 @@
 /// Metadata about a File or a Directory
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct DirectoryMetadata {
-    name         : String,
-    created_time : ::time::Tm,
-    modified_time: ::time::Tm,
-    user_metadata: Vec<u8>,
-    versioned    : bool,
-    access_level : ::AccessLevel,
-    parent_dir_key   : Option<(::routing::NameType, u64)>,
+    name          : String,
+    created_time  : ::time::Tm,
+    modified_time : ::time::Tm,
+    user_metadata : Vec<u8>,
+    versioned     : bool,
+    access_level  : ::AccessLevel,
+    parent_dir_key: Option<(::routing::NameType, u64)>,
 }
 
 impl DirectoryMetadata {
@@ -67,8 +67,8 @@ impl DirectoryMetadata {
     }
 
     /// Returns the Parent dir id
-    pub fn get_parent_dir_key(& self) -> Option<(&::routing::NameType, u64)> {
-        if let Some((ref a, b)) = self.parent_dir_key { Some((a, b)) } else { None }
+    pub fn get_parent_dir_key(&self) -> Option<(&::routing::NameType, u64)> {
+        self.parent_dir_key.iter().next().map(|a| (&a.0, a.1))
     }
 
     /// Get user setteble custom metadata
@@ -146,7 +146,7 @@ impl ::rustc_serialize::Decodable for DirectoryMetadata {
         })
     }
 }
-/*
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -163,4 +163,3 @@ mod test {
         assert_eq!(obj_before, obj_after);
     }
 }
-*/
