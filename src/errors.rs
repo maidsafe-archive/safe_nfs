@@ -18,7 +18,7 @@
 /// NFS Errors
 pub enum NfsError {
     /// Client Error
-    ClientError(::maidsafe_client::errors::ClientError),
+    ClientError(::safe_client::errors::ClientError),
     // TODO remove already exists
     /// If Directory already exists
     AlreadyExists,
@@ -48,8 +48,8 @@ pub enum NfsError {
     NotFound,
 }
 
-impl From<::maidsafe_client::errors::ClientError> for NfsError {
-    fn from(error: ::maidsafe_client::errors::ClientError) -> NfsError {
+impl From<::safe_client::errors::ClientError> for NfsError {
+    fn from(error: ::safe_client::errors::ClientError) -> NfsError {
         NfsError::ClientError(error)
     }
 }

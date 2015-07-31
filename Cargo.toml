@@ -1,10 +1,10 @@
 [package]
-name          = "maidsafe_nfs"
+name          = "safe_nfs"
 version       = "0.0.1"
 authors       = ["MaidSafe Developers <dev@maidsafe.net>"]
 description   = "This is Pre alpha, and not useful, no code worth looking at."
-documentation = "http://maidsafe.net/maidsafe_nfs/latest"
-repository    = "https://github.com/maidsafe/maidsafe_nfs"
+documentation = "http://maidsafe.net/safe_nfs/latest"
+repository    = "https://github.com/maidsafe/safe_nfs"
 readme        = "README.md"
 license       = "GPL-3.0"
 homepage      = "http://maidsafe.net"
@@ -13,7 +13,7 @@ homepage      = "http://maidsafe.net"
 # ---- Maidsafe ----
 routing         = "0.2.*"
 self_encryption = "0.2.*"
-#maidsafe_client = "*"
+#safe_client = "*"
 
 # ---- Others ----
 cbor            = "*"
@@ -21,8 +21,8 @@ time            = "*"
 sodiumoxide     = "*"
 rustc-serialize = "*"
 
-[dependencies.maidsafe_client]
-git = "https://github.com/maidsafe/maidsafe_client.git"
+[dependencies.safe_client]
+git = "https://github.com/maidsafe/safe_client.git"
 
 [features]
-USE_ACTUAL_ROUTING = ["maidsafe_client/USE_ACTUAL_ROUTING"]
+USE_ACTUAL_ROUTING = ["safe_client/USE_ACTUAL_ROUTING"]

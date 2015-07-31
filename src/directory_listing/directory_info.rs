@@ -64,8 +64,8 @@ mod test {
     fn serialise() {
         let metadata = ::metadata::directory_metadata::DirectoryMetadata::new("Hello.txt".to_string(), Vec::new(), true, ::AccessLevel::Public, None);
         let obj_before = DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG);
-        let serialised_data = eval_result!(::maidsafe_client::utility::serialise(&obj_before));
-        let obj_after = eval_result!(::maidsafe_client::utility::deserialise(&serialised_data));
+        let serialised_data = eval_result!(::safe_client::utility::serialise(&obj_before));
+        let obj_after = eval_result!(::safe_client::utility::deserialise(&serialised_data));
 
         assert_eq!(obj_before, obj_after);
     }

@@ -112,7 +112,7 @@ impl DirectoryListing {
     }
 
     /// Decrypts a directory listing
-    pub fn decrypt(client      : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+    pub fn decrypt(client      : ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>,
                    directory_id: &::routing::NameType,
                    access_level: &::AccessLevel,
                    data        : Vec<u8>) -> Result<DirectoryListing, ::errors::NfsError> {
@@ -122,21 +122,21 @@ impl DirectoryListing {
             ::AccessLevel::Public => data,
         };
 
-        let datamap: ::self_encryption::datamap::DataMap = try!(::maidsafe_client::utility::deserialise(&decrypted_data_map));
-        let mut se = ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), datamap);
+        let datamap: ::self_encryption::datamap::DataMap = try!(::safe_client::utility::deserialise(&decrypted_data_map));
+        let mut se = ::self_encryption::SelfEncryptor::new(::safe_client::SelfEncryptionStorage::new(client.clone()), datamap);
         let length = se.len();
         let serialised_directory_listing = se.read(0, length);
-        Ok(try!(::maidsafe_client::utility::deserialise(&serialised_directory_listing)))
+        Ok(try!(::safe_client::utility::deserialise(&serialised_directory_listing)))
     }
 
     /// Encrypts the directory listing
     pub fn encrypt(&self,
-                   client: ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>) -> Result<Vec<u8>, ::errors::NfsError> {
-        let serialised_data = try!(::maidsafe_client::utility::serialise(&self));
-        let mut se = ::self_encryption::SelfEncryptor::new(::maidsafe_client::SelfEncryptionStorage::new(client.clone()), ::self_encryption::datamap::DataMap::None);
+                   client: ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>) -> Result<Vec<u8>, ::errors::NfsError> {
+        let serialised_data = try!(::safe_client::utility::serialise(&self));
+        let mut se = ::self_encryption::SelfEncryptor::new(::safe_client::SelfEncryptionStorage::new(client.clone()), ::self_encryption::datamap::DataMap::None);
         se.write(&serialised_data, 0);
         let datamap = se.close();
-        let serialised_data_map = try!(::maidsafe_client::utility::serialise(&datamap));
+        let serialised_data_map = try!(::safe_client::utility::serialise(&datamap));
         Ok(try!(client.lock().unwrap().hybrid_encrypt(&serialised_data_map, Some(&DirectoryListing::generate_nonce(&self.get_key().0)))))
     }
 
@@ -186,8 +186,8 @@ mod test {
     #[test]
     fn serialise() {
         let obj_before = DirectoryListing::new("Home".to_string(), 10, "{mime:\"application/json\"}".to_string().into_bytes(), true, ::AccessLevel::Private, None);
-        let serialised_data = eval_result!(::maidsafe_client::utility::serialise(&obj_before));
-        let obj_after = eval_result!(::maidsafe_client::utility::deserialise(&serialised_data));
+        let serialised_data = eval_result!(::safe_client::utility::serialise(&obj_before));
+        let obj_after = eval_result!(::safe_client::utility::deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);
     }
 }
