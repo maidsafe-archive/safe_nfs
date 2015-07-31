@@ -45,7 +45,9 @@ impl FileHelper {
     }
 
     /// Delete a file from the DirectoryListing
-    pub fn delete(&self, file_name: String, parent_directory: &mut ::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
+    pub fn delete(&self,
+                  file_name       : String,
+                  parent_directory: &mut ::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
          let index = try!(parent_directory.get_file_index(&file_name).ok_or(::errors::NfsError::FileNotFound));
          parent_directory.get_mut_files().remove(index);
          let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
@@ -120,11 +122,11 @@ mod test {
         let client = get_client();
         let dir_helper = ::helper::directory_helper::DirectoryHelper::new(client.clone());
         let mut directory = eval_result!(dir_helper.create("DirName".to_string(),
-                                                         ::VERSIONED_DIRECTORY_LISTING_TAG,
-                                                         Vec::new(),
-                                                         true,
-                                                         ::AccessLevel::Private,
-                                                         None));
+                                                           ::VERSIONED_DIRECTORY_LISTING_TAG,
+                                                           Vec::new(),
+                                                           true,
+                                                           ::AccessLevel::Private,
+                                                           None));
         let file_helper = ::helper::file_helper::FileHelper::new(client.clone());
         let file_name = "hello.txt".to_string();
         { // create

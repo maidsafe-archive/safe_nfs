@@ -54,23 +54,22 @@ impl From<::maidsafe_client::errors::ClientError> for NfsError {
     }
 }
 
-// TODO refactor as in maidsafe_dns
 impl ::std::fmt::Debug for NfsError {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         match *self {
-            NfsError::AlreadyExists                 => ::std::fmt::Display::fmt("NfsError::AlreadyExists", f),
-            NfsError::ClientError(_)                => ::std::fmt::Display::fmt("NfsError::ClientError", f), // TODO Improve these containing nested stuff to print as well
-            NfsError::DestinationAndSourceAreSame   => ::std::fmt::Display::fmt("NfsError::DestinationAndSourceAreSame", f),
-            NfsError::DirectoryNotFound             => ::std::fmt::Display::fmt("NfsError::DirectoryNotFound", f),
-            NfsError::FailedToUpdateDirectory       => ::std::fmt::Display::fmt("NfsError::FailedToUpdateDirectory", f),
-            NfsError::FailedToUpdateFile            => ::std::fmt::Display::fmt("NfsError::FailedToUpdateFile", f),
-            NfsError::FileExistsInDestination       => ::std::fmt::Display::fmt("NfsError::FileExistsInDestination", f),
-            NfsError::FileNotFound                  => ::std::fmt::Display::fmt("NfsError::FileNotFound", f),
-            NfsError::InvalidRangeSpecified         => ::std::fmt::Display::fmt("NfsError::InvalidRangeSpecified", f),
-            NfsError::MetadataIsEmpty               => ::std::fmt::Display::fmt("NfsError::MetadataIsEmpty", f),
-            NfsError::MetaDataMissingOrCorrupted    => ::std::fmt::Display::fmt("NfsError::MetaDataMissingOrCorrupted", f),
-            NfsError::NameIsEmpty                   => ::std::fmt::Display::fmt("NfsError::NameIsEmpty", f),
-            NfsError::NotFound                      => ::std::fmt::Display::fmt("NfsError::NotFound", f),
+            NfsError::ClientError(ref error)        => write!(f, "NfsError::ClientError -> {:?}", error),
+            NfsError::AlreadyExists                 => write!(f, "NfsError::AlreadyExists"),
+            NfsError::DestinationAndSourceAreSame   => write!(f, "NfsError::DestinationAndSourceAreSame"),
+            NfsError::DirectoryNotFound             => write!(f, "NfsError::DirectoryNotFound"),
+            NfsError::FailedToUpdateDirectory       => write!(f, "NfsError::FailedToUpdateDirectory"),
+            NfsError::FailedToUpdateFile            => write!(f, "NfsError::FailedToUpdateFile"),
+            NfsError::FileExistsInDestination       => write!(f, "NfsError::FileExistsInDestination"),
+            NfsError::FileNotFound                  => write!(f, "NfsError::FileNotFound"),
+            NfsError::InvalidRangeSpecified         => write!(f, "NfsError::InvalidRangeSpecified"),
+            NfsError::MetadataIsEmpty               => write!(f, "NfsError::MetadataIsEmpty"),
+            NfsError::MetaDataMissingOrCorrupted    => write!(f, "NfsError::MetaDataMissingOrCorrupted"),
+            NfsError::NameIsEmpty                   => write!(f, "NfsError::NameIsEmpty"),
+            NfsError::NotFound                      => write!(f, "NfsError::NotFound"),
         }
     }
 }
