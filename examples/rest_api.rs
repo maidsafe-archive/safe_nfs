@@ -62,15 +62,14 @@ fn create_account() -> Result<maidsafe_client::client::Client, ::maidsafe_nfs::e
     Ok(client)
 }
 
-#[allow(unused_must_use)]
 fn get_user_string(placeholder: &str) -> String {
     let mut txt = String::new();
     println!("------Enter {}--------", placeholder);
-    std::io::stdin().read_line(&mut txt);
+    let _ = std::io::stdin().read_line(&mut txt);
     while txt.is_empty() {
         println!("{} can not be empty", placeholder);
         println!("------Enter Container name--------");
-        std::io::stdin().read_line(&mut txt);
+        let _ = std::io::stdin().read_line(&mut txt);
     }
     txt
 }
@@ -264,7 +263,6 @@ fn blob_operation(option: u32, container: &mut maidsafe_nfs::rest::Container) ->
     Ok(())
 }
 
-#[allow(unused_must_use)]
 fn main() {
     let test_client = eval_result!(create_account());
     let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
@@ -287,7 +285,7 @@ fn main() {
             println!("10. Delete blob");
             println!("11. Copy blob");
             println!("------ Enter a number --------------------");
-            std::io::stdin().read_line(&mut option);
+            let _ = std::io::stdin().read_line(&mut option);
             println!("\n");
             match option.trim().parse::<u32>() {
                 Ok(selection) => {
