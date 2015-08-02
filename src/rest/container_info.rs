@@ -68,7 +68,7 @@ mod test {
 
     #[test]
     fn create() {
-        let name = eval_result!(::maidsafe_client::utility::generate_random_string(10));
+        let name = eval_result!(::safe_client::utility::generate_random_string(10));
         let metadata = ::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), Vec::new(), true, ::AccessLevel::Public, None);
         let container_info = ContainerInfo{ info: ::directory_listing::directory_info::DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG) };
         assert_eq!(*container_info.get_name(), name);
@@ -76,7 +76,7 @@ mod test {
 
     #[test]
     fn convert_from() {
-        let name = eval_result!(::maidsafe_client::utility::generate_random_string(10));
+        let name = eval_result!(::safe_client::utility::generate_random_string(10));
         let metadata = ::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), Vec::new(), true, ::AccessLevel::Public, None);
         let directory_info = ::directory_listing::directory_info::DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG);
 
@@ -90,7 +90,7 @@ mod test {
 
     #[test]
     fn convert_to() {
-        let name = eval_result!(::maidsafe_client::utility::generate_random_string(10));
+        let name = eval_result!(::safe_client::utility::generate_random_string(10));
         let metadata = ::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), Vec::new(), true, ::AccessLevel::Public, None);
         let container_info = ContainerInfo{ info: ::directory_listing::directory_info::DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG) };
 
