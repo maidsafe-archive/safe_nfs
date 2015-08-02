@@ -15,11 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-#![crate_name = "maidsafe_nfs"]
+#![crate_name = "safe_nfs"]
 #![crate_type = "lib"]
 #![doc(html_logo_url = "http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
-              html_root_url = "http://dirvine.github.io/dirvine/maidsafe_nfs/")]
+              html_root_url = "http://dirvine.github.io/dirvine/safe_nfs/")]
 
 ///////////////////////////////////////////////////
 //               LINT
@@ -38,8 +38,8 @@ unused_qualifications, variant_size_differences)]
 
 ///////////////////////////////////////////////////
 
-//! #Maidsafe-Nfs Library
-//! [Project github page](https://github.com/maidsafe/maidsafe_nfs)
+//! #Safe-Nfs Library
+//! [Project github page](https://github.com/maidsafe/safe_nfs)
 
 extern crate time;
 extern crate cbor;
@@ -47,7 +47,7 @@ extern crate routing;
 extern crate sodiumoxide;
 extern crate rustc_serialize;
 extern crate self_encryption;
-#[macro_use] extern crate maidsafe_client;
+#[macro_use] extern crate safe_client;
 
 /// Module for File struct
 pub mod file;
@@ -67,7 +67,7 @@ pub const ROOT_DIRECTORY_NAME: &'static str = "USER_ROOT";
 /// Configuration directory Name stored in the session packet
 pub const CONFIGURATION_DIRECTORY_NAME: &'static str = "CONFIGURATION_ROOT";
 /// Tag representing the Versioned Directory Listing
-pub const VERSIONED_DIRECTORY_LISTING_TAG: u64 = maidsafe_client::CLIENT_STRUCTURED_DATA_TAG + 100;
+pub const VERSIONED_DIRECTORY_LISTING_TAG: u64 = safe_client::CLIENT_STRUCTURED_DATA_TAG + 100;
 /// Tag representing the Versioned Directory Listing
 pub const UNVERSIONED_DIRECTORY_LISTING_TAG: u64 = VERSIONED_DIRECTORY_LISTING_TAG + 1;
 

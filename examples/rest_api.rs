@@ -16,10 +16,10 @@
 // relating to use of the SAFE Network Software.
 
 extern crate time;
-extern crate maidsafe_nfs;
-#[macro_use] extern crate maidsafe_client;
+extern crate safe_nfs;
+#[macro_use] extern crate safe_client;
 
-fn create_account() -> Result<maidsafe_client::client::Client, ::maidsafe_nfs::errors::NfsError> {
+fn create_account() -> Result<safe_client::client::Client, ::safe_nfs::errors::NfsError> {
     let mut keyword = String::new();
     let mut password = String::new();
     let mut pin_str = String::new();
@@ -48,16 +48,14 @@ fn create_account() -> Result<maidsafe_client::client::Client, ::maidsafe_nfs::e
 
     // Account Creation
     println!("\nTrying to create an account ...");
-
-    try!(maidsafe_client::client::Client::create_account(&keyword, pin, &password));
+    try!(safe_client::client::Client::create_account(&keyword, pin, &password));
     println!("Account Created Successfully !!");
-
     println!("\n\n\tAuto Account Login");
     println!("\t==================");
 
     // Log into the created account
     println!("\nTrying to log into the created account using supplied credentials ...");
-    let client = try!(maidsafe_client::client::Client::log_in(&keyword, pin, &password));
+    let client = try!(safe_client::client::Client::log_in(&keyword, pin, &password));
     println!("Account Login Successful !!");
     Ok(client)
 }
@@ -86,16 +84,15 @@ fn format_version_id(version_id: &[u8; 64]) -> String {
     version
 }
 
-
-fn get_child_container(container: &mut maidsafe_nfs::rest::Container) -> Result<::maidsafe_nfs::rest::Container, ::maidsafe_nfs::errors::NfsError> {
+fn get_child_container(container: &mut safe_nfs::rest::Container) -> Result<::safe_nfs::rest::Container, ::safe_nfs::errors::NfsError> {
     let sub_containers = container.get_containers();
     let ref container_name = get_user_string("Container name");
     let info = sub_containers.iter().find(|info| *info.get_name() == *container_name);
-    let container_info = try!(info.ok_or(::maidsafe_nfs::errors::NfsError::DirectoryNotFound));
+    let container_info = try!(info.ok_or(::safe_nfs::errors::NfsError::DirectoryNotFound));
     container.get_container(container_info, None)
 }
 
-fn container_operation(option: u32, container: &mut maidsafe_nfs::rest::Container) -> Result<(), ::maidsafe_nfs::errors::NfsError> {
+fn container_operation(option: u32, container: &mut safe_nfs::rest::Container) -> Result<(), ::safe_nfs::errors::NfsError> {
     match option {
         1 => {// Create container
             println!("----------Select the Container type-----------");
@@ -116,9 +113,9 @@ fn container_operation(option: u32, container: &mut maidsafe_nfs::rest::Containe
                         _     => true,
                     };
                     let access_level = match index {
-                        1 | 3 => ::maidsafe_nfs::AccessLevel::Private,
-                        2 | 4 => ::maidsafe_nfs::AccessLevel::Public,
-                        _     => ::maidsafe_nfs::AccessLevel::Private,
+                        1 | 3 => ::safe_nfs::AccessLevel::Private,
+                        2 | 4 => ::safe_nfs::AccessLevel::Public,
+                        _     => ::safe_nfs::AccessLevel::Private,
                     };
                     try!(container.create(name.clone(), versioned, access_level));
                     println!("Created Container - {}", name);
@@ -162,11 +159,11 @@ fn container_operation(option: u32, container: &mut maidsafe_nfs::rest::Containe
     Ok(())
 }
 
-fn blob_operation(option: u32, container: &mut maidsafe_nfs::rest::Container) -> Result<(), ::maidsafe_nfs::errors::NfsError> {
+fn blob_operation(option: u32, container: &mut safe_nfs::rest::Container) -> Result<(), ::safe_nfs::errors::NfsError> {
     match option {
         5 => { // List blobs
             let container = try!(get_child_container(container));
-            let blobs: Vec<maidsafe_nfs::rest::Blob> = container.get_blobs();
+            let blobs: Vec<safe_nfs::rest::Blob> = container.get_blobs();
             if blobs.is_empty() {
                 println!("No Blobs found in Container - {}", container.get_name());
             } else {
@@ -259,7 +256,7 @@ fn blob_operation(option: u32, container: &mut maidsafe_nfs::rest::Container) ->
             }
         },
         _ => {}
-    };
+    }
     Ok(())
 }
 
@@ -267,7 +264,7 @@ fn main() {
     let test_client = eval_result!(create_account());
     let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
     println!("\n\t-- Preparing storage ----\n");
-    let mut root_container = eval_result!(maidsafe_nfs::rest::Container::authorise(client.clone(), None));
+    let mut root_container = eval_result!(safe_nfs::rest::Container::authorise(client.clone(), None));
     println!("\n\n------  (Tip) Start by creating a container and then store blob, modify blob within the container --------------------");
     loop {
         let mut option = String::new();

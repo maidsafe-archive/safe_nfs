@@ -19,14 +19,14 @@
 /// Container Repersents a Directory.
 /// Container can have its own metadata, sub-containers and files
 pub struct Container {
-    client              : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+    client              : ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>,
     directory_listing   : ::directory_listing::DirectoryListing,
 }
 
 impl Container {
     /// Authorises the directory access and returns the Container, if authorisation is successful.
     /// Operations can be performed only after the authorisation is successful.
-    pub fn authorise(client        : ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>>,
+    pub fn authorise(client        : ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>,
                      container_info: Option<::rest::ContainerInfo>) -> Result<Container, ::errors::NfsError> {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(client.clone());
         let directory = match container_info {
@@ -286,8 +286,8 @@ impl Container {
 mod test {
     use super::*;
 
-    fn get_client() -> ::std::sync::Arc<::std::sync::Mutex<::maidsafe_client::client::Client>> {
-        ::std::sync::Arc::new(::std::sync::Mutex::new(eval_result!(::maidsafe_client::utility::test_utils::get_client())))
+    fn get_client() -> ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>> {
+        ::std::sync::Arc::new(::std::sync::Mutex::new(eval_result!(::safe_client::utility::test_utils::get_client())))
     }
 
     #[test]

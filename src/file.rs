@@ -75,8 +75,8 @@ mod test {
         let obj_before = File::new(::metadata::file_metadata::FileMetadata::new("Home".to_string(),
                                                                                 "{mime:\"application/json\"}".to_string().into_bytes()),
                                                                                 ::self_encryption::datamap::DataMap::None);
-        let serialised_data = eval_result!(::maidsafe_client::utility::serialise(&obj_before));
-        let obj_after = eval_result!(::maidsafe_client::utility::deserialise(&serialised_data));
+        let serialised_data = eval_result!(::safe_client::utility::serialise(&obj_before));
+        let obj_after = eval_result!(::safe_client::utility::deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);
     }
 }

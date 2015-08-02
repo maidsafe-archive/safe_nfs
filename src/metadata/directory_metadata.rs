@@ -158,8 +158,8 @@ mod test {
                                                 true,
                                                 ::AccessLevel::Private,
                                                 None);
-        let serialised_data = eval_result!(::maidsafe_client::utility::serialise(&obj_before));
-        let obj_after = eval_result!(::maidsafe_client::utility::deserialise(&serialised_data));
+        let serialised_data = eval_result!(::safe_client::utility::serialise(&obj_before));
+        let obj_after = eval_result!(::safe_client::utility::deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);
     }
 }
