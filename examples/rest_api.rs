@@ -14,13 +14,12 @@
 //
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
-/*
-extern crate safe_client;
-extern crate safe_nfs;
-extern crate time;
 
-#[allow(unused_must_use)]
-fn create_account() -> Result<safe_client::client::Client, String> {
+extern crate time;
+extern crate safe_nfs;
+#[macro_use] extern crate safe_client;
+
+fn create_account() -> Result<safe_client::client::Client, ::safe_nfs::errors::NfsError> {
     let mut keyword = String::new();
     let mut password = String::new();
     let mut pin_str = String::new();
@@ -30,14 +29,14 @@ fn create_account() -> Result<safe_client::client::Client, String> {
     println!("\t================");
 
     println!("\n------------ Enter Keyword ---------------");
-    std::io::stdin().read_line(&mut keyword);
+    let _ = std::io::stdin().read_line(&mut keyword);
 
     println!("\n\n------------ Enter Password --------------");
-    std::io::stdin().read_line(&mut password);
+    let _ = std::io::stdin().read_line(&mut password);
 
     loop {
         println!("\n\n--------- Enter PIN (4 Digits) -----------");
-        std::io::stdin().read_line(&mut pin_str);
+        let _ = std::io::stdin().read_line(&mut pin_str);
         let result = pin_str.trim().parse::<u32>();
         if result.is_ok() && pin_str.trim().len() == 4 {
             pin = result.ok().unwrap();
@@ -49,37 +48,26 @@ fn create_account() -> Result<safe_client::client::Client, String> {
 
     // Account Creation
     println!("\nTrying to create an account ...");
-
-    match safe_client::client::Client::create_account(&keyword, pin, &password) {
-        Ok(_) => {
-            println!("Account Created Successfully !!");
-        },
-        Err(_) => panic!("Account Created failed"),
-    }
-
+    try!(safe_client::client::Client::create_account(&keyword, pin, &password));
+    println!("Account Created Successfully !!");
     println!("\n\n\tAuto Account Login");
     println!("\t==================");
 
     // Log into the created account
     println!("\nTrying to log into the created account using supplied credentials ...");
-    match safe_client::client::Client::log_in(&keyword, pin, &password) {
-        Ok(client) => {
-            println!("Account Login Successful !!");
-            Ok(client)
-        },
-        Err(_)  => Err("Account Login Failed !!".to_string()),
-    }
+    let client = try!(safe_client::client::Client::log_in(&keyword, pin, &password));
+    println!("Account Login Successful !!");
+    Ok(client)
 }
 
-#[allow(unused_must_use)]
 fn get_user_string(placeholder: &str) -> String {
     let mut txt = String::new();
     println!("------Enter {}--------", placeholder);
-    std::io::stdin().read_line(&mut txt);
+    let _ = std::io::stdin().read_line(&mut txt);
     while txt.is_empty() {
         println!("{} can not be empty", placeholder);
         println!("------Enter Container name--------");
-        std::io::stdin().read_line(&mut txt);
+        let _ = std::io::stdin().read_line(&mut txt);
     }
     txt
 }
@@ -96,14 +84,44 @@ fn format_version_id(version_id: &[u8; 64]) -> String {
     version
 }
 
-fn container_operation(option: u32, container: &mut safe_nfs::rest::Container) {
+fn get_child_container(container: &mut safe_nfs::rest::Container) -> Result<::safe_nfs::rest::Container, ::safe_nfs::errors::NfsError> {
+    let sub_containers = container.get_containers();
+    let ref container_name = get_user_string("Container name");
+    let info = sub_containers.iter().find(|info| *info.get_name() == *container_name);
+    let container_info = try!(info.ok_or(::safe_nfs::errors::NfsError::DirectoryNotFound));
+    container.get_container(container_info, None)
+}
+
+fn container_operation(option: u32, container: &mut safe_nfs::rest::Container) -> Result<(), ::safe_nfs::errors::NfsError> {
     match option {
         1 => {// Create container
-            let name = get_user_string("Container name");
-            match container.create(name.clone()) {
-                Ok(_) => println!("Created Container - {}", name),
-                Err(msg) => println!("Failed :: {}", msg)
-            }
+            println!("----------Select the Container type-----------");
+            println!("1. Versioned Private Container");
+            println!("2. Versioned Public Container");
+            println!("3. UnVersioned Private Container");
+            println!("4. UnVersioned Public Container");
+            match get_user_string("number corresponding to the type").trim().parse::<usize>() {
+                Ok(index) => {
+                    if index > 4 {
+                        println!("Invalid input");
+                        return Ok(());
+                    }
+                    let name = get_user_string("Container name");
+                    let versioned = match index {
+                        1 | 2 => true,
+                        3 | 4 => false,
+                        _     => true,
+                    };
+                    let access_level = match index {
+                        1 | 3 => ::safe_nfs::AccessLevel::Private,
+                        2 | 4 => ::safe_nfs::AccessLevel::Public,
+                        _     => ::safe_nfs::AccessLevel::Private,
+                    };
+                    try!(container.create(name.clone(), versioned, access_level));
+                    println!("Created Container - {}", name);
+                },
+                Err(_) => println!("Invalid input"),
+            };
         },
         2 => { // List containers
             let containers = container.get_containers();
@@ -117,221 +135,136 @@ fn container_operation(option: u32, container: &mut safe_nfs::rest::Container) {
                     println!("\t {:?} \t {}", time::strftime("%d-%m-%Y %H:%M UTC", &container_info.get_created_time()).unwrap(), container_info.get_name());
                 }
             }
-        }
+        },
         3 => { // List versions
-            match container.get_versions() {
-                Ok(versions) => {
-                    if versions.is_empty() {
-                        println!("No container versions found");
-                    } else {
-                        println!("List of container versions");
-                        println!("\t No. \t Version Id");
-                        println!("\t === \t ==========");
-                        for i in 0..versions.len() {
-                            println!("\t {} \t {:?}", i+1, format_version_id(&versions[i]));
-                        }
-                    }
-                },
-                Err(msg) => println!("Failed :: {}", msg)
+            let container = try!(get_child_container(container));
+            let versions = try!(container.get_versions());
+            if versions.is_empty() {
+                println!("No container versions found");
+            } else {
+                println!("List of container versions");
+                println!("\t No. \t Version Id");
+                println!("\t === \t ==========");
+                for i in 0..versions.len() {
+                    println!("\t {} \t {:?}", i+1, format_version_id(&versions[i]));
+                }
             }
         },
         4 => { // Delete container
-            match container.delete_container(get_user_string("Container name")) {
-                Ok(_) => {
-                    println!("Container deleted");
-                },
-                Err(msg) => println!("Failed :: {}", msg)
-            };
-        }
+            try!(container.delete_container(&get_user_string("Container name")));
+            println!("Container deleted");
+        },
         _ => {}
-    }
+    };
+    Ok(())
 }
 
-fn blob_operation(option: u32, container: &mut safe_nfs::rest::Container) {
+fn blob_operation(option: u32, container: &mut safe_nfs::rest::Container) -> Result<(), ::safe_nfs::errors::NfsError> {
     match option {
         5 => { // List blobs
-            match container.get_container(get_user_string("Container name"), None) {
-                Ok(container) => {
-                    let blobs: Vec<safe_nfs::rest::Blob> = container.get_blobs();
-                    if blobs.is_empty() {
-                        println!("No Blobs found in Container - {}", container.get_name());
-                    } else {
-                        println!("List of Blobs");
-                        println!("\t        Modified On                Name ");
-                        println!("\t =========================      ===========");
-                        for blob in blobs {
-                            println!("\t {:?} \t {}", time::strftime("%d-%m-%Y %H:%M UTC", &blob.get_modified_time()).unwrap(), blob.get_name());
-                        }
-                    }
-                },
-                Err(msg) => println!("Failed :: {}", msg)
+            let container = try!(get_child_container(container));
+            let blobs: Vec<safe_nfs::rest::Blob> = container.get_blobs();
+            if blobs.is_empty() {
+                println!("No Blobs found in Container - {}", container.get_name());
+            } else {
+                println!("List of Blobs");
+                println!("\t        Modified On                Name ");
+                println!("\t =========================      ===========");
+                for blob in blobs {
+                    println!("\t {:?} \t {}", time::strftime("%d-%m-%Y %H:%M UTC", &blob.get_modified_time()).unwrap(), blob.get_name());
+                }
             }
         },
         6 => { // Create blob
-            match container.get_container(get_user_string("Container name"), None) {
-                Ok(mut container) => {
-                    let data = get_user_string("text to be saved as a file").into_bytes();
-                    match container.create_blob(get_user_string("Blob name"), None) {
-                        Ok(mut writer) => {
-                            writer.write(&data[..], 0);
-                            match writer.close() {
-                                Ok(_) => {
-                                    println!("Blob created");
-                                },
-                                Err(msg) => println!("Failed :: {}", msg)
-                            }
-                        },
-                        Err(msg) => println!("Failed :: {}", msg)
-                    }
-                },
-                Err(msg) => println!("Failed :: {}", msg)
-            }
+            let mut container = try!(get_child_container(container));
+            let data = get_user_string("text to be saved as a file").into_bytes();
+            let mut writer = try!(container.create_blob(get_user_string("Blob name"), None));
+            writer.write(&data[..], 0);
+            try!(writer.close());
+            println!("Blob created");
         },
         7 => { // Update blob
-            match container.get_container(get_user_string("Container name"), None) {
-                Ok(mut container) => {
-                    match container.get_blob(get_user_string("Blob name"), None) {
-                        Ok(blob) => {
-                            let data = get_user_string("text to be saved as a file").into_bytes();
-                            match container.update_blob_content(&blob, &data[..]) {
-                                Ok(_) => {
-                                    println!("Blob Updated");
-                                },
-                                Err(msg) => println!("Failed :: {}", msg)
-                            }
-                        },
-                        Err(msg) => println!("Failed :: {}", msg)
-                    }
-                },
-                Err(msg) => println!("Failed :: {}", msg)
-            }
+            let mut container = try!(get_child_container(container));
+            let blob = try!(container.get_blob(get_user_string("Blob name")));
+            let data = get_user_string("text to be saved as a file").into_bytes();
+            try!(container.update_blob_content(&blob, &data[..]));
+            println!("Blob Updated");
         },
         8 => { // Read blob
-            match container.get_container(get_user_string("Container name"), None) {
-                Ok(mut container) => {
-                    match container.get_blob(get_user_string("Blob name"), None) {
-                        Ok(blob) => {
-                            match container.get_blob_reader(&blob) {
-                                Ok(mut reader) => {
-                                    match reader.read(0, blob.get_size()) {
-                                        Ok(data) => {
-                                            println!("Content Read: ");
-                                            println!("{}\n", String::from_utf8(data).unwrap());
-                                        },
-                                        Err(msg) => println!("Failed :: {}", msg)
-                                    }
-                                },
-                                Err(msg) => println!("Failed :: {}", msg)
-                            }
-                        },
-                        Err(msg) => println!("Failed :: {}", msg)
-                    }
+            let container = try!(get_child_container(container));
+            let blob = try!(container.get_blob(get_user_string("Blob name")));
+            let mut reader = try!(container.get_blob_reader(&blob));
+            let data_read = try!(reader.read(0, blob.get_size()));
+            match String::from_utf8(data_read) {
+                Ok(data) => {
+                    println!("Content Read: ");
+                    println!("{}\n", data);
                 },
-                Err(msg) => println!("Failed :: {}", msg)
+                Err(msg) => println!("Failed: {:?}", msg),
             }
         },
         9 => { // Read blob by version
-            match container.get_container(get_user_string("Container name"), None) {
-                Ok(mut container) => {
-                    let blob_name = get_user_string("Blob name");
-                    match container.get_blob_versions(blob_name.clone()) {
-                        Ok(versions) => {
-                            let version_id;
-                            if versions.len() == 1 {
-                                version_id = versions[0];
-                            } else{
-                                println!("Available Versions::");
-                                for i in 0..versions.len() {
-                                    println!("\t{} {:?}", i+1, format_version_id(&versions[i]))
-                                }
-                                match get_user_string("Number corresponding to the version").trim().parse::<usize>() {
-                                    Ok(index) => version_id = versions[index - 1],
-                                    Err(_) =>  {
-                                        println!("Invalid input : Fetching latest version");
-                                        version_id = versions[0];
-
-                                    }
-                                }
-                            }
-                            match container.get_blob(blob_name, Some(version_id)) {
-                                Ok(blob) => {
-                                    match container.get_blob_reader(&blob) {
-                                        Ok(mut reader) => {
-                                            match reader.read(0, blob.get_size()) {
-                                                Ok(data) => {
-                                                    println!("Content Read: ");
-                                                    println!("{}\n", String::from_utf8(data).unwrap());
-                                                },
-                                                Err(msg) => println!("Failed :: {}", msg)
-                                            }
-                                        },
-                                        Err(msg) => println!("Failed :: {}", msg)
-                                    }
-                                },
-                                Err(msg) => println!("Failed :: {}", msg)
-                            }
-                        },
-                        Err(msg) => println!("{}", msg)
+            let container = try!(get_child_container(container));
+            let blob_name = get_user_string("Blob name");
+            let versions = try!(container.get_blob_versions(&blob_name.clone()));
+            let ref blob_version;
+            if versions.len() == 1 {
+                blob_version = &versions[0];
+            } else{
+                println!("Available Versions::");
+                for i in 0..versions.len() {
+                    println!("\t{} Modified at {:?}", i+1, time::strftime("%d-%m-%Y %H:%M UTC", &versions[i].get_modified_time()).unwrap())
+                }
+                match get_user_string("Number corresponding to the version").trim().parse::<usize>() {
+                    Ok(index) => blob_version = &versions[index - 1],
+                    Err(_) =>  {
+                        println!("Invalid input : Fetching latest version");
+                        blob_version = &versions[0];
                     }
+                }
+            }
+            let mut reader = try!(container.get_blob_reader(&blob_version));
+            let data_read = try!(reader.read(0, blob_version.get_size()));
+            match String::from_utf8(data_read) {
+                Ok(data) => {
+                    println!("Content Read: ");
+                    println!("{}\n", data);
                 },
-                Err(msg) => println!("Failed :: {}", msg)
+                Err(msg) => println!("Failed: {:?}", msg),
             }
         },
         10 => { // Delete blob
-            match container.get_container(get_user_string("Container name"), None) {
-                Ok(mut container) => {
-                    match container.delete_blob(get_user_string("Blob name")) {
-                        Ok(_) => println!("Blob deleted"),
-                        Err(msg) => println!("Failed :: {}", msg)
-                    }
-                },
-                Err(msg) => println!("Failed :: {}", msg)
-            }
+            let mut container = try!(get_child_container(container));
+            try!(container.delete_blob(get_user_string("Blob name")));
+            println!("Blob deleted");
         },
         11 => { // Copy blob
-            match container.get_container(get_user_string("Container name to copy blob from (Source Container)"), None) {
-                Ok(mut from_container) => {
-                    let to_dir_name = get_user_string("Select the Container to copy blob to (Destination Container)");
-                    let containers = container.get_containers();
-                    if containers.is_empty() || containers.len() == 1 {
-                        println!("No containers found");
-                        return;
-                    } else {
-                        match containers.iter().find(|dir| *dir.get_name() == to_dir_name) {
-                            Some(info) => {
-                                match from_container.copy_blob(get_user_string("Blob name"), info.get_id()) {
-                                    Ok(_) => println!("Blob copied"),
-                                    Err(msg) => println!("Failed :: {}", msg)
-                                }
-                            },
-                            None => println!("Destination Container not found")
-                        }
-                    }
-                },
-                Err(msg) => println!("Failed :: {}", msg)
+            let mut from_container = try!(get_child_container(container));// "Container name to copy blob from (Source Container)"
+            let to_dir_name = get_user_string("Select the Container to copy blob to (Destination Container)");
+            let containers = container.get_containers();
+            if containers.is_empty() || containers.len() == 1 {
+                println!("No containers found");
+                return Ok(());
+            } else {
+                match containers.iter().find(|dir| *dir.get_name() == to_dir_name) {
+                    Some(info) => {
+                        try!(from_container.copy_blob(&get_user_string("Blob name"), info));
+                        println!("Blob copied");
+                    },
+                    None => println!("Destination Container not found")
+                }
             }
         },
         _ => {}
     }
+    Ok(())
 }
 
-fn get_root_container(client: &::std::sync::Arc<::std::sync::Mutex<safe_client::client::Client>>) -> safe_nfs::rest::Container {
-    let root_container;
-    match safe_nfs::rest::Container::authorise(client.clone(), None) {
-        Ok(container) => root_container = container,
-        Err(msg) => panic!(msg)
-    };
-    root_container
-}
-#[allow(unused_must_use)]
 fn main() {
-    let client;
-    match create_account() {
-        Ok(authorised_client) => client = ::std::sync::Arc::new(::std::sync::Mutex::new(authorised_client)),
-        Err(msg) => panic!(msg)
-    }
+    let test_client = eval_result!(create_account());
+    let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
     println!("\n\t-- Preparing storage ----\n");
-    let mut root_container = get_root_container(&client);
+    let mut root_container = eval_result!(safe_nfs::rest::Container::authorise(client.clone(), None));
     println!("\n\n------  (Tip) Start by creating a container and then store blob, modify blob within the container --------------------");
     loop {
         let mut option = String::new();
@@ -339,7 +272,7 @@ fn main() {
             println!("\n----------Choose an Operation----------------");
             println!("1. Create Container");
             println!("2. List Containers");
-            println!("3. Get Root Container Versions");
+            println!("3. List Container Versions");
             println!("4. Delete Container");
             println!("5. List Blobs from container");
             println!("6. Create Blob");
@@ -349,13 +282,19 @@ fn main() {
             println!("10. Delete blob");
             println!("11. Copy blob");
             println!("------ Enter a number --------------------");
-            std::io::stdin().read_line(&mut option);
+            let _ = std::io::stdin().read_line(&mut option);
             println!("\n");
             match option.trim().parse::<u32>() {
                 Ok(selection) => {
                     match selection {
-                        1...4 => container_operation(selection, &mut root_container),
-                        5...11 => blob_operation(selection, &mut root_container),
+                        1...4 => match container_operation(selection, &mut root_container) {
+                            Err(msg) => println!("Failed: {:?}", msg),
+                            Ok(_) => (),
+                        },
+                        5...11 => match blob_operation(selection, &mut root_container) {
+                            Err(msg) => println!("Failed: {:?}", msg),
+                            Ok(_) => (),
+                        },
                         _ => println!("Invalid option"),
                     }
                 },
@@ -363,8 +302,4 @@ fn main() {
             }
         }
     }
-}
-*/
-fn main() {
-    
 }

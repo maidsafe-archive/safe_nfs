@@ -129,8 +129,8 @@ impl DirectoryHelper {
                 ::AccessLevel::Public => None,
             };
             let value_of_structured_data = try!(::safe_client::structured_data_operations::unversioned::get_data(self.client.clone(),
-                                                                                                                     &structured_data,
-                                                                                                                     encryption_keys));
+                                                                                                                 &structured_data,
+                                                                                                                 encryption_keys));
             match *access_level {
                 ::AccessLevel::Private => ::directory_listing::DirectoryListing::decrypt(self.client.clone(),
                                                                                          &directory_key.0,
@@ -203,13 +203,13 @@ impl DirectoryHelper {
             let version = try!(self.save_as_immutable_data(encrypted_data,
                                                            ::safe_client::client::ImmutableDataType::Normal));
             Ok(try!(::safe_client::structured_data_operations::versioned::create(&mut *self.client.lock().unwrap(),
-                                                                                     version,
-                                                                                     directory.get_key().1,
-                                                                                     directory.get_key().0.clone(),
-                                                                                     0,
-                                                                                     vec![owner_key],
-                                                                                     Vec::new(),
-                                                                                     &signing_key)))
+                                                                                 version,
+                                                                                 directory.get_key().1,
+                                                                                 directory.get_key().0.clone(),
+                                                                                 0,
+                                                                                 vec![owner_key],
+                                                                                 Vec::new(),
+                                                                                 &signing_key)))
         } else {
             let private_key = self.client.lock().unwrap().get_public_encryption_key().clone();
             let secret_key = self.client.lock().unwrap().get_secret_encryption_key().clone();
@@ -221,14 +221,14 @@ impl DirectoryHelper {
                 ::AccessLevel::Public => None,
             };
             Ok(try!(::safe_client::structured_data_operations::unversioned::create(self.client.clone(),
-                                                                                       directory.get_key().1,
-                                                                                       directory.get_key().0.clone(),
-                                                                                       0,
-                                                                                       encrypted_data,
-                                                                                       vec![owner_key.clone()],
-                                                                                       Vec::new(),
-                                                                                       &signing_key,
-                                                                                       encryption_keys)))
+                                                                                   directory.get_key().1,
+                                                                                   directory.get_key().0.clone(),
+                                                                                   0,
+                                                                                   encrypted_data,
+                                                                                   vec![owner_key.clone()],
+                                                                                   Vec::new(),
+                                                                                   &signing_key,
+                                                                                   encryption_keys)))
         }
     }
 
@@ -248,9 +248,9 @@ impl DirectoryHelper {
             let version = try!(self.save_as_immutable_data(encrypted_data,
                                                            ::safe_client::client::ImmutableDataType::Normal));
             try!(::safe_client::structured_data_operations::versioned::append_version(&mut *self.client.lock().unwrap(),
-                                                                                          structured_data,
-                                                                                          version,
-                                                                                          &signing_key))
+                                                                                      structured_data,
+                                                                                      version,
+                                                                                      &signing_key))
         } else {
             let private_key = self.client.lock().unwrap().get_public_encryption_key().clone();
             let secret_key = self.client.lock().unwrap().get_secret_encryption_key().clone();
@@ -262,14 +262,14 @@ impl DirectoryHelper {
                 ::AccessLevel::Public => None,
             };
             try!(::safe_client::structured_data_operations::unversioned::create(self.client.clone(),
-                                                                                    directory.get_key().1,
-                                                                                    directory.get_key().0.clone(),
-                                                                                    structured_data.get_version() + 1,
-                                                                                    encrypted_data,
-                                                                                    vec![owner_key.clone()],
-                                                                                    Vec::new(),
-                                                                                    &signing_key,
-                                                                                    encryption_keys))
+                                                                                directory.get_key().1,
+                                                                                directory.get_key().0.clone(),
+                                                                                structured_data.get_version() + 1,
+                                                                                encrypted_data,
+                                                                                vec![owner_key.clone()],
+                                                                                Vec::new(),
+                                                                                &signing_key,
+                                                                                encryption_keys))
         };
         try!(self.client.lock().unwrap().post(updated_structured_data.name(),
                                               ::safe_client::client::Data::StructuredData(updated_structured_data)));
