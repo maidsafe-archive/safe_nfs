@@ -11,8 +11,8 @@ homepage      = "http://maidsafe.net"
 
 [dependencies]
 # ---- Maidsafe ----
-#safe_client     = "*"
 routing         = "0.2.*"
+#safe_client     = "*"
 self_encryption = "0.2.*"
 
 # ---- Others ----
