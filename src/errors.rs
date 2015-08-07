@@ -15,6 +15,10 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+/// Intended for converting NFS Errors into numeric codes for propagating some error information
+/// across FFI boundaries and specially to C.
+pub const NFS_ERROR_START_RANGE: i32 = ::safe_client::errors::CLIENT_ERROR_START_RANGE - 500;
+
 /// NFS Errors
 pub enum NfsError {
     /// Client Error
@@ -51,6 +55,26 @@ pub enum NfsError {
 impl From<::safe_client::errors::ClientError> for NfsError {
     fn from(error: ::safe_client::errors::ClientError) -> NfsError {
         NfsError::ClientError(error)
+    }
+}
+
+impl Into<i32> for NfsError {
+    fn into(self) -> i32 {
+        match self {
+            NfsError::ClientError(error)          => error.into(),
+            NfsError::AlreadyExists               => NFS_ERROR_START_RANGE - 1,
+            NfsError::DestinationAndSourceAreSame => NFS_ERROR_START_RANGE - 2,
+            NfsError::DirectoryNotFound           => NFS_ERROR_START_RANGE - 3,
+            NfsError::FailedToUpdateDirectory     => NFS_ERROR_START_RANGE - 4,
+            NfsError::FailedToUpdateFile          => NFS_ERROR_START_RANGE - 5,
+            NfsError::FileExistsInDestination     => NFS_ERROR_START_RANGE - 6,
+            NfsError::FileNotFound                => NFS_ERROR_START_RANGE - 7,
+            NfsError::InvalidRangeSpecified       => NFS_ERROR_START_RANGE - 8,
+            NfsError::MetadataIsEmpty             => NFS_ERROR_START_RANGE - 9,
+            NfsError::MetaDataMissingOrCorrupted  => NFS_ERROR_START_RANGE - 10,
+            NfsError::NameIsEmpty                 => NFS_ERROR_START_RANGE - 11,
+            NfsError::NotFound                    => NFS_ERROR_START_RANGE - 12,
+        }
     }
 }
 
