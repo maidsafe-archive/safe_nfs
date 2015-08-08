@@ -53,7 +53,7 @@ impl DirectoryHelper {
 
         if let Some(mut parent_directory) = parent_directory {
             try!(parent_directory.upsert_sub_directory(directory.get_info().clone()));
-            try!(self.update_directory_listing_and_parent(&parent_directory));
+            try!(self.update_directory_listing(&parent_directory));
         };
 
         Ok(directory)
@@ -65,11 +65,23 @@ impl DirectoryHelper {
                   directory_to_delete: &String) -> Result<(), ::errors::NfsError> {
             let pos = try!(parent_directory.get_sub_directory_index(directory_to_delete).ok_or(::errors::NfsError::DirectoryNotFound)); {
             parent_directory.get_mut_sub_directories().remove(pos);
+            // TODO why is it required to update the grand-parent ? Call update_directory_listing
+            // if no other issue.
+            // TODO Why is lint not working ? The return type is ignored which should have been
+            // caught by lint.
             try!(self.update_directory_listing_and_parent(parent_directory));
             Ok(())
         }
     }
 
+    // TODO This is WRONG:
+    // <1> This is already updated, no use returning the same thing
+    // <2> This should take in a parent if it has one. Otherwise updating the name of the directory
+    // etc will not reflect in the parent's sub-dir-list info.
+    // <3> This function is useful only if it appears as a complementary function to
+    // update_directory_listing_and_parent with the difference that Option<&mut parent> is supplied
+    // for efficiency and there should be a validation that this_dir.parent == given_parent. If not
+    // return a new Nfs error.
     /// Updates an existing DirectoryListing in the network.
     /// Returns the Updated DirectoryListing
     pub fn update(&self, directory: &::directory_listing::DirectoryListing) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
@@ -81,6 +93,9 @@ impl DirectoryHelper {
     pub fn update_directory_listing_and_parent(&self, directory: &::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
         try!(self.update_directory_listing(directory));
         if let Some(parent_dir_key) = directory.get_metadata().get_parent_dir_key() {
+            // TODO This is WRONG - Fetching parent_dir_key, but supplying rest of attributes of
+            // this child. To make it possible the child should store complete dir-info of parent,
+            // not just the directory key.
             let mut parent_directory = try!(self.get(parent_dir_key, directory.get_metadata().is_versioned(), directory.get_metadata().get_access_level()));
             try!(parent_directory.upsert_sub_directory(directory.get_info().clone()));
             Ok(Some(try!(self.update_directory_listing(&parent_directory))))
