@@ -6,9 +6,9 @@
 
 **Secondary Maintainer:**   Spandan Sharma (spandan.sharma@maidsafe.net)
 
-|Crate|Linux|Windows|OSX|Coverage|Issues|
+|Crate|Linux|Windows|Appveyor|Coverage|Issues|
 |:------:|:-------:|:-------:|:-------:|:-------:|:-------:|
-|[![](http://meritbadge.herokuapp.com/safe_nfs)](https://crates.io/crates/safe_nfs)|[![Build Status](https://travis-ci.org/maidsafe/safe_nfs.svg?branch=master)](https://travis-ci.org/maidsafe/safe_nfs)|[![Build Status](http://ci.maidsafe.net:8080/buildStatus/icon?job=safe_nfs_win64_status_badge)](http://ci.maidsafe.net:8080/job/safe_nfs_win64_status_badge/)|[![Build Status](http://ci.maidsafe.net:8080/buildStatus/icon?job=safe_nfs_osx_status_badge)](http://ci.maidsafe.net:8080/job/safe_nfs_osx_status_badge/)|[![Coverage Status](https://coveralls.io/repos/maidsafe/safe_nfs/badge.svg)](https://coveralls.io/r/maidsafe/safe_nfs)|[![Stories in Ready](https://badge.waffle.io/maidsafe/safe_nfs.png?label=ready&title=Ready)](https://waffle.io/maidsafe/safe_nfs)
+|[![](http://meritbadge.herokuapp.com/safe_nfs)](https://crates.io/crates/safe_nfs)|[![Build Status](https://travis-ci.org/maidsafe/safe_nfs.svg?branch=master)](https://travis-ci.org/maidsafe/safe_nfs)|[![Build Status](http://ci.maidsafe.net:8080/buildStatus/icon?job=safe_nfs_win64_status_badge)](http://ci.maidsafe.net:8080/job/safe_nfs_win64_status_badge/)|[![Build status](https://ci.appveyor.com/api/projects/status/tg0kg4bnkyh6lm48/branch/master?svg=true)](https://ci.appveyor.com/project/MaidSafe-QA/safe-nfs/branch/master)|[![Coverage Status](https://coveralls.io/repos/maidsafe/safe_nfs/badge.svg)](https://coveralls.io/r/maidsafe/safe_nfs)|[![Stories in Ready](https://badge.waffle.io/maidsafe/safe_nfs.png?label=ready&title=Ready)](https://waffle.io/maidsafe/safe_nfs)
 
 | [API Documentation - master branch](http://maidsafe.net/safe_nfs/master/) | [SAFE Network System Documention](http://systemdocs.maidsafe.net) | [MaidSafe website](http://maidsafe.net) | [Safe Community site](https://forum.safenetwork.io) |
 |:------:|:-------:|:-------:|:-------:|
