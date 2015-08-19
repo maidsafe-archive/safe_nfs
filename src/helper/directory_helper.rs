@@ -152,7 +152,6 @@ impl DirectoryHelper {
                                                                                          value_of_structured_data),
                 ::AccessLevel::Public  => Ok(try!(::safe_client::utility::deserialise(&value_of_structured_data))),
             }
-
         }
     }
 
