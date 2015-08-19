@@ -33,17 +33,17 @@ impl DirectoryListing {
                user_metadata: Vec<u8>,
                versioned    : bool,
                access_level : ::AccessLevel,
-               parent_dir   : Option<(::routing::NameType, u64)>) -> DirectoryListing {
+               parent_dir   : Option<(::routing::NameType, u64)>) -> Result<DirectoryListing, ::errors::NfsError> {
         let meta_data = ::metadata::directory_metadata::DirectoryMetadata::new(name,
                                                                                user_metadata,
                                                                                versioned,
                                                                                access_level,
                                                                                parent_dir);
-        DirectoryListing {
-            info           : directory_info::DirectoryInfo::new(meta_data, tag_type),
+        Ok(DirectoryListing {
+            info           : try!(directory_info::DirectoryInfo::new(meta_data, tag_type)),
             sub_directories: Vec::new(),
             files          : Vec::new(),
-        }
+        })
     }
 
     /// Get directory_info::DirectoryInfo
@@ -185,7 +185,12 @@ mod test {
 
     #[test]
     fn serialise() {
-        let obj_before = DirectoryListing::new("Home".to_string(), 10, "{mime:\"application/json\"}".to_string().into_bytes(), true, ::AccessLevel::Private, None);
+        let obj_before = eval_result!(DirectoryListing::new("Home".to_string(),
+                                                            10,
+                                                            "{mime:\"application/json\"}".to_string().into_bytes(),
+                                                            true,
+                                                            ::AccessLevel::Private, None));
+
         let serialised_data = eval_result!(::safe_client::utility::serialise(&obj_before));
         let obj_after = eval_result!(::safe_client::utility::deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);

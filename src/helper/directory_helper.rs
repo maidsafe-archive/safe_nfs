@@ -37,19 +37,18 @@ impl DirectoryHelper {
                   versioned       : bool,
                   access_level    : ::AccessLevel,
                   parent_directory: Option<&mut ::directory_listing::DirectoryListing>) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
-        let directory = ::directory_listing::DirectoryListing::new(directory_name,
-                                                                   tag_type,
-                                                                   user_metadata,
-                                                                   versioned,
-                                                                   access_level,
-                                                                   parent_directory.iter().next().map(|directory| {
-                                                                       let key = directory.get_info().get_key();
-                                                                       (key.0.clone(), key.1)
-                                                                   }));
+        let directory = try!(::directory_listing::DirectoryListing::new(directory_name,
+                                                                        tag_type,
+                                                                        user_metadata,
+                                                                        versioned,
+                                                                        access_level,
+                                                                        parent_directory.iter().next().map(|directory| {
+                                                                            let key = directory.get_info().get_key();
+                                                                            (key.0.clone(), key.1)
+                                                                        })));
 
         let structured_data = try!(self.save_directory_listing(&directory));
-        try!(self.client.lock().unwrap().put(structured_data.name(),
-                                             ::safe_client::client::Data::StructuredData(structured_data.clone())));
+        self.client.lock().unwrap().put(::routing::data::Data::StructuredData(structured_data), None);
 
         if let Some(mut parent_directory) = parent_directory {
             try!(parent_directory.upsert_sub_directory(directory.get_info().clone()));
@@ -115,7 +114,7 @@ impl DirectoryHelper {
                           directory_key: (&::routing::NameType, u64),
                           access_level : &::AccessLevel,
                           version      : ::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
-          let immutable_data = try!(self.get_immutable_data(version, ::safe_client::client::ImmutableDataType::Normal));
+          let immutable_data = try!(self.get_immutable_data(version, ::routing::immutable_data::ImmutableDataType::Normal));
           match *access_level {
               ::AccessLevel::Private => ::directory_listing::DirectoryListing::decrypt(self.client.clone(), directory_key.0, access_level, immutable_data.value().clone()),
               ::AccessLevel::Public  => Ok(try!(::safe_client::utility::deserialise(immutable_data.value()))),
@@ -134,8 +133,8 @@ impl DirectoryHelper {
            let latest_version = versions.last().unwrap();
            self.get_by_version(directory_key, access_level, latest_version.clone())
         } else {
-            let private_key = self.client.lock().unwrap().get_public_encryption_key().clone();
-            let secret_key = self.client.lock().unwrap().get_secret_encryption_key().clone();
+            let private_key = try!(self.client.lock().unwrap().get_public_encryption_key()).clone();
+            let secret_key = try!(self.client.lock().unwrap().get_secret_encryption_key()).clone();
             let nonce = ::directory_listing::DirectoryListing::generate_nonce(directory_key.0);
             let encryption_keys = match *access_level {
                 ::AccessLevel::Private => Some((&private_key,
@@ -205,9 +204,9 @@ impl DirectoryHelper {
         }
     }
 
-    fn save_directory_listing(&self, directory: &::directory_listing::DirectoryListing) -> Result<::safe_client::client::StructuredData, ::errors::NfsError> {
-        let signing_key = self.client.lock().unwrap().get_secret_signing_key().clone();
-        let owner_key = self.client.lock().unwrap().get_public_signing_key().clone();
+    fn save_directory_listing(&self, directory: &::directory_listing::DirectoryListing) -> Result<::routing::structured_data::StructuredData, ::errors::NfsError> {
+        let signing_key = try!(self.client.lock().unwrap().get_secret_signing_key()).clone();
+        let owner_key = try!(self.client.lock().unwrap().get_public_signing_key()).clone();
         let access_level = directory.get_metadata().get_access_level();
         let versioned = directory.get_metadata().is_versioned();
         let encrypted_data = match *access_level {
@@ -216,7 +215,7 @@ impl DirectoryHelper {
         };
         if versioned {
             let version = try!(self.save_as_immutable_data(encrypted_data,
-                                                           ::safe_client::client::ImmutableDataType::Normal));
+                                                           ::routing::immutable_data::ImmutableDataType::Normal));
             Ok(try!(::safe_client::structured_data_operations::versioned::create(&mut *self.client.lock().unwrap(),
                                                                                  version,
                                                                                  directory.get_key().1,
@@ -226,8 +225,8 @@ impl DirectoryHelper {
                                                                                  Vec::new(),
                                                                                  &signing_key)))
         } else {
-            let private_key = self.client.lock().unwrap().get_public_encryption_key().clone();
-            let secret_key = self.client.lock().unwrap().get_secret_encryption_key().clone();
+            let private_key = try!(self.client.lock().unwrap().get_public_encryption_key()).clone();
+            let secret_key = try!(self.client.lock().unwrap().get_secret_encryption_key()).clone();
             let nonce = ::directory_listing::DirectoryListing::generate_nonce(&directory.get_key().0);
             let encryption_keys = match *access_level {
                 ::AccessLevel::Private => Some((&private_key,
@@ -249,10 +248,10 @@ impl DirectoryHelper {
 
     fn update_directory_listing(&self, directory: &::directory_listing::DirectoryListing) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         let directory_key = directory.get_info().get_key();
-        let structured_data = try!(self.get_structured_data(&directory_key.0, directory_key.1));
+        let structured_data = try!(self.get_structured_data(directory_key.0, directory_key.1));
 
-        let signing_key = self.client.lock().unwrap().get_secret_signing_key().clone();
-        let owner_key = self.client.lock().unwrap().get_public_signing_key().clone();
+        let signing_key = try!(self.client.lock().unwrap().get_secret_signing_key()).clone();
+        let owner_key = try!(self.client.lock().unwrap().get_public_signing_key()).clone();
         let access_level = directory.get_metadata().get_access_level();
         let versioned = directory.get_metadata().is_versioned();
         let encrypted_data = match *access_level {
@@ -261,14 +260,14 @@ impl DirectoryHelper {
         };
         let updated_structured_data = if versioned {
             let version = try!(self.save_as_immutable_data(encrypted_data,
-                                                           ::safe_client::client::ImmutableDataType::Normal));
+                                                           ::routing::immutable_data::ImmutableDataType::Normal));
             try!(::safe_client::structured_data_operations::versioned::append_version(&mut *self.client.lock().unwrap(),
                                                                                       structured_data,
                                                                                       version,
                                                                                       &signing_key))
         } else {
-            let private_key = self.client.lock().unwrap().get_public_encryption_key().clone();
-            let secret_key = self.client.lock().unwrap().get_secret_encryption_key().clone();
+            let private_key = try!(self.client.lock().unwrap().get_public_encryption_key()).clone();
+            let secret_key = try!(self.client.lock().unwrap().get_secret_encryption_key()).clone();
             let nonce = ::directory_listing::DirectoryListing::generate_nonce(&directory.get_key().0);
             let encryption_keys = match *access_level {
                 ::AccessLevel::Private => Some((&private_key,
@@ -286,29 +285,27 @@ impl DirectoryHelper {
                                                                                 &signing_key,
                                                                                 encryption_keys))
         };
-        try!(self.client.lock().unwrap().post(updated_structured_data.name(),
-                                              ::safe_client::client::Data::StructuredData(updated_structured_data)));
+        self.client.lock().unwrap().post(::routing::data::Data::StructuredData(updated_structured_data), None);
         self.get(directory.get_key(), directory.get_metadata().is_versioned(), access_level)
     }
 
     /// Saves the data as ImmutableData in the network and returns the name
     fn save_as_immutable_data(&self,
                               data     : Vec<u8>,
-                              data_type: ::safe_client::client::ImmutableDataType) -> Result<::routing::NameType, ::errors::NfsError> {
-        let immutable_data = ::safe_client::client::ImmutableData::new(data_type, data);
+                              data_type: ::routing::immutable_data::ImmutableDataType) -> Result<::routing::NameType, ::errors::NfsError> {
+        let immutable_data = ::routing::immutable_data::ImmutableData::new(data_type, data);
         let name = immutable_data.name();
-        try!(self.client.lock().unwrap().put(name.clone(), ::safe_client::client::Data::ImmutableData(immutable_data)));
+        self.client.lock().unwrap().put(::routing::data::Data::ImmutableData(immutable_data), None);
         Ok(name)
     }
 
     fn get_structured_data(&self,
                            id      : &::routing::NameType,
-                           type_tag: u64) -> Result<::safe_client::client::StructuredData, ::errors::NfsError> {
-        let mut response_getter = try!(self.client.lock().unwrap().get(::safe_client::client::StructuredData::compute_name(type_tag, id),
-                                                                       ::safe_client::client::DataRequest::StructuredData(type_tag)));
-        let data = try!(response_getter.get());
-        match data {
-            ::safe_client::client::Data::StructuredData(structured_data) => Ok(structured_data),
+                           type_tag: u64) -> Result<::routing::structured_data::StructuredData, ::errors::NfsError> {
+        let request = ::routing::data::DataRequest::StructuredData(id.clone(), type_tag);
+        let response_getter = self.client.lock().unwrap().get(request, None);
+        match try!(response_getter.get()) {
+            ::routing::data::Data::StructuredData(structured_data) => Ok(structured_data),
             _ => Err(::errors::NfsError::from(::safe_client::errors::ClientError::ReceivedUnexpectedData)),
         }
     }
@@ -316,11 +313,11 @@ impl DirectoryHelper {
     /// Get ImmutableData from the Network
     fn get_immutable_data(&self,
                           id       : ::routing::NameType,
-                          data_type: ::safe_client::client::ImmutableDataType) -> Result<::safe_client::client::ImmutableData, ::errors::NfsError> {
-        let mut response_getter = try!(self.client.lock().unwrap().get(id, ::safe_client::client::DataRequest::ImmutableData(data_type)));
-        let data = try!(response_getter.get());
-        match data {
-            ::safe_client::client::Data::ImmutableData(immutable_data) => Ok(immutable_data),
+                          data_type: ::routing::immutable_data::ImmutableDataType) -> Result<::routing::immutable_data::ImmutableData, ::errors::NfsError> {
+        let request = ::routing::data::DataRequest::ImmutableData(id, data_type);
+        let response_getter = self.client.lock().unwrap().get(request, None);
+        match try!(response_getter.get()) {
+            ::routing::data::Data::ImmutableData(immutable_data) => Ok(immutable_data),
             _ => Err(::errors::NfsError::from(::safe_client::errors::ClientError::ReceivedUnexpectedData)),
         }
     }

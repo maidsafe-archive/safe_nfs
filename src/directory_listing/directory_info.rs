@@ -25,12 +25,12 @@ pub struct DirectoryInfo {
 
 impl DirectoryInfo {
     /// Create a new DirectoryInfo
-    pub fn new(metadata: ::metadata::directory_metadata::DirectoryMetadata, type_tag: u64) -> DirectoryInfo {
-        DirectoryInfo {
-            id      : ::routing::test_utils::Random::generate_random(),
+    pub fn new(metadata: ::metadata::directory_metadata::DirectoryMetadata, type_tag: u64) -> Result<DirectoryInfo, ::errors::NfsError> {
+        Ok(DirectoryInfo {
+            id      : ::routing::NameType::new(try!(::safe_client::utility::generate_random_array_u8_64())),
             type_tag: type_tag,
             metadata: metadata,
-        }
+        })
     }
 
     /// Get the unique ID representing this directory in the network
@@ -63,7 +63,7 @@ mod test {
     #[test]
     fn serialise() {
         let metadata = ::metadata::directory_metadata::DirectoryMetadata::new("Hello.txt".to_string(), Vec::new(), true, ::AccessLevel::Public, None);
-        let obj_before = DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG);
+        let obj_before = eval_result!(DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG));
         let serialised_data = eval_result!(::safe_client::utility::serialise(&obj_before));
         let obj_after = eval_result!(::safe_client::utility::deserialise(&serialised_data));
 

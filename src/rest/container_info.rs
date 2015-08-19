@@ -70,7 +70,10 @@ mod test {
     fn create() {
         let name = eval_result!(::safe_client::utility::generate_random_string(10));
         let metadata = ::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), Vec::new(), true, ::AccessLevel::Public, None);
-        let container_info = ContainerInfo{ info: ::directory_listing::directory_info::DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG) };
+        let container_info = ContainerInfo {
+            info: eval_result!(::directory_listing::directory_info::DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG)),
+        };
+
         assert_eq!(*container_info.get_name(), name);
     }
 
@@ -78,7 +81,7 @@ mod test {
     fn convert_from() {
         let name = eval_result!(::safe_client::utility::generate_random_string(10));
         let metadata = ::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), Vec::new(), true, ::AccessLevel::Public, None);
-        let directory_info = ::directory_listing::directory_info::DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG);
+        let directory_info = eval_result!(::directory_listing::directory_info::DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG));
 
         assert_eq!(*directory_info.get_name(), name);
 
@@ -92,7 +95,9 @@ mod test {
     fn convert_to() {
         let name = eval_result!(::safe_client::utility::generate_random_string(10));
         let metadata = ::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), Vec::new(), true, ::AccessLevel::Public, None);
-        let container_info = ContainerInfo{ info: ::directory_listing::directory_info::DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG) };
+        let container_info = ContainerInfo {
+            info: eval_result!(::directory_listing::directory_info::DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG)),
+        };
 
         assert_eq!(*container_info.get_name(), name);
 
