@@ -16,7 +16,6 @@ homepage      = "http://maidsafe.net"
 self_encryption = "0.2.*"
 
 # ---- Others ----
-cbor            = "*"
 time            = "*"
 sodiumoxide     = "*"
 rustc-serialize = "*"
