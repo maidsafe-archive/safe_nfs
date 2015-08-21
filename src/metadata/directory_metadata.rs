@@ -103,46 +103,41 @@ impl ::rustc_serialize::Encodable for DirectoryMetadata {
     fn encode<E: ::rustc_serialize::Encoder>(&self, e: &mut E) -> Result<(), E::Error> {
         let created_time = self.created_time.to_timespec();
         let modified_time = self.modified_time.to_timespec();
-        ::cbor::CborTagEncode::new(5483_000, &(&self.name,
-                                               &self.parent_dir_key,
-                                               &self.user_metadata,
-                                               created_time.sec,
-                                               created_time.nsec,
-                                               modified_time.sec,
-                                               modified_time.nsec,
-                                               self.versioned,
-                                               &self.access_level)).encode(e)
+
+        e.emit_struct("DirectoryMetadata", 9, |e| {
+            try!(e.emit_struct_field("name",               0, |e| self.name.encode(e)));
+            try!(e.emit_struct_field("created_time_sec",   1, |e| created_time.sec.encode(e)));
+            try!(e.emit_struct_field("created_time_nsec",  2, |e| created_time.nsec.encode(e)));
+            try!(e.emit_struct_field("modified_time_sec",  3, |e| modified_time.sec.encode(e)));
+            try!(e.emit_struct_field("modified_time_nsec", 4, |e| modified_time.nsec.encode(e)));
+            try!(e.emit_struct_field("user_metadata",      5, |e| self.user_metadata.encode(e)));
+            try!(e.emit_struct_field("versioned",          6, |e| self.versioned.encode(e)));
+            try!(e.emit_struct_field("access_level",       7, |e| self.access_level.encode(e)));
+            try!(e.emit_struct_field("parent_dir_key",     8, |e| self.parent_dir_key.encode(e)));
+
+            Ok(())
+        })
     }
 }
 
 impl ::rustc_serialize::Decodable for DirectoryMetadata {
     fn decode<D: ::rustc_serialize::Decoder>(d: &mut D) -> Result<DirectoryMetadata, D::Error> {
-        let _ = try!(d.read_u64());
-
-        let (name,
-             parent_dir_key,
-             meta_data,
-             created_sec,
-             created_nsec,
-             modified_sec,
-             modified_nsec,
-             versioned,
-             access_level) = try!(::rustc_serialize::Decodable::decode(d));
-
-        Ok(DirectoryMetadata {
-            name: name,
-            user_metadata: meta_data,
-            parent_dir_key: parent_dir_key,
-            created_time: ::time::at_utc(::time::Timespec {
-                sec: created_sec,
-                nsec: created_nsec
-            }),
-            modified_time: ::time::at_utc(::time::Timespec {
-                sec: modified_sec,
-                nsec: modified_nsec
-            }),
-            versioned: versioned,
-            access_level: access_level,
+        d.read_struct("DirectoryMetadata", 9, |d| {
+            Ok(DirectoryMetadata {
+                name          : try!(d.read_struct_field("name", 0, |d| ::rustc_serialize::Decodable::decode(d))),
+                created_time  : ::time::at_utc(::time::Timespec {
+                                                   sec : try!(d.read_struct_field("created_time_sec",  1, |d| ::rustc_serialize::Decodable::decode(d))),
+                                                   nsec: try!(d.read_struct_field("created_time_nsec", 2, |d| ::rustc_serialize::Decodable::decode(d))),
+                                               }),
+                modified_time : ::time::at_utc(::time::Timespec {
+                                                   sec : try!(d.read_struct_field("modified_time_sec",  3, |d| ::rustc_serialize::Decodable::decode(d))),
+                                                   nsec: try!(d.read_struct_field("modified_time_nsec", 4, |d| ::rustc_serialize::Decodable::decode(d))),
+                                               }),
+                user_metadata : try!(d.read_struct_field("user_metadata",  5, |d| ::rustc_serialize::Decodable::decode(d))),
+                versioned     : try!(d.read_struct_field("versioned",      6, |d| ::rustc_serialize::Decodable::decode(d))),
+                access_level  : try!(d.read_struct_field("access_level",   7, |d| ::rustc_serialize::Decodable::decode(d))),
+                parent_dir_key: try!(d.read_struct_field("parent_dir_key", 8, |d| ::rustc_serialize::Decodable::decode(d))),
+            })
         })
     }
 }

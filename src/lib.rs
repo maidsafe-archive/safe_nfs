@@ -42,7 +42,6 @@ unused_qualifications, variant_size_differences)]
 //! [Project github page](https://github.com/maidsafe/safe_nfs)
 
 extern crate time;
-extern crate cbor;
 extern crate routing;
 extern crate sodiumoxide;
 extern crate rustc_serialize;
