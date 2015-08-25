@@ -11,7 +11,7 @@ homepage      = "http://maidsafe.net"
 
 [dependencies]
 # ---- Maidsafe ----
-#routing         = "0.2.*"
+routing         = "0.3.4"
 #safe_client     = "*"
 self_encryption = "0.2.*"
 
@@ -22,9 +22,6 @@ rustc-serialize = "*"
 
 [dependencies.safe_client]
 git = "https://github.com/maidsafe/safe_client.git"
-
-[dependencies.routing]
-git = "https://github.com/maidsafe/routing.git"
 
 [features]
 USE_ACTUAL_ROUTING = ["safe_client/USE_ACTUAL_ROUTING"]
