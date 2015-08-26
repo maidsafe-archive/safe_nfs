@@ -24,4 +24,4 @@ rustc-serialize = "*"
 git = "https://github.com/maidsafe/safe_client.git"
 
 [features]
-USE_ACTUAL_ROUTING = ["safe_client/USE_ACTUAL_ROUTING"]
+use-mock-routing = ["safe_client/use-mock-routing"]
