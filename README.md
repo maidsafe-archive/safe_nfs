@@ -13,9 +13,31 @@
 | [API Documentation - master branch](http://maidsafe.net/safe_nfs/master/) | [SAFE Network System Documention](http://systemdocs.maidsafe.net) | [MaidSafe website](http://maidsafe.net) | [Safe Community site](https://forum.safenetwork.io) |
 |:------:|:-------:|:-------:|:-------:|
 
-##TODO (rust_3 sprint)
-### [0.0.2]
-- [X] [MAID-1209](https://maidsafe.atlassian.net/browse/MAID-1209) Move NFS API from safe_client
+###Pre-requisite:
+libsodium is a native dependency for [sodiumxoide](https://github.com/dnaq/sodiumoxide). Thus, install sodium by following the instructions [here](http://doc.libsodium.org/installation/index.html).
+
+For windows:
+
+- Download [prebuilt libsodium library](https://download.libsodium.org/libsodium/releases/libsodium-1.0.2-mingw.tar.gz)
+- Extract `libsodium.a` for x86/x64 from the corresponding folder in the archive to your local filesystem
+- Add this local path to `%PATH%`. (`PATH=%PATH%;<path to extracted libsodium.a dir>`)
+
+###Build Instructions:
+`safe_nfs` depends on `safe_client` which can interface conditionally against either the routing crate or a mock used for local testing.
+
+To use it with the Mock:
+```
+cargo build --features "use-mock-routing"
+cargo test --features "use-mock-routing"
+```
+
+To interface it with actual routing (default):
+```
+cargo build
+cargo test
+```
+
+## TODO
 
 ### [0.1.0]
 - [X] [MAID-1260](https://maidsafe.atlassian.net/browse/MAID-1260) Refactor to interface with safe_client (0.1.3)
