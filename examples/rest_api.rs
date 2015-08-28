@@ -20,10 +20,9 @@ extern crate safe_nfs;
 #[macro_use] extern crate safe_client;
 
 fn create_account() -> Result<safe_client::client::Client, ::safe_nfs::errors::NfsError> {
+    let mut pin = String::new();
     let mut keyword = String::new();
     let mut password = String::new();
-    let mut pin_str = String::new();
-    let pin: u32;
 
     println!("\n\tAccount Creation");
     println!("\t================");
@@ -36,26 +35,25 @@ fn create_account() -> Result<safe_client::client::Client, ::safe_nfs::errors::N
 
     loop {
         println!("\n\n--------- Enter PIN (4 Digits) -----------");
-        let _ = std::io::stdin().read_line(&mut pin_str);
-        let result = pin_str.trim().parse::<u32>();
-        if result.is_ok() && pin_str.trim().len() == 4 {
-            pin = result.ok().unwrap();
+        let _ = std::io::stdin().read_line(&mut pin);
+        pin = pin.trim().to_string();
+        if pin.parse::<u16>().is_ok() && pin.len() == 4 {
             break;
         }
         println!("ERROR: PIN is not 4 Digits !!");
-        pin_str.clear();
+        pin.clear();
     }
 
     // Account Creation
     println!("\nTrying to create an account ...");
-    try!(safe_client::client::Client::create_account(&keyword, pin, &password));
+    try!(safe_client::client::Client::create_account(keyword.clone(), pin.clone(), password.clone())); // TODO how is nfs crate allowing unused values to pass undetected .. Investigate
     println!("Account Created Successfully !!");
     println!("\n\n\tAuto Account Login");
     println!("\t==================");
 
     // Log into the created account
     println!("\nTrying to log into the created account using supplied credentials ...");
-    let client = try!(safe_client::client::Client::log_in(&keyword, pin, &password));
+    let client = try!(safe_client::client::Client::log_in(keyword, pin, password));
     println!("Account Login Successful !!");
     Ok(client)
 }
