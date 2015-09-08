@@ -72,7 +72,7 @@ impl FileHelper {
     pub fn update_metadata(&self,
                            mut file            : ::file::File,
                            user_metadata       : Vec<u8>,
-                           mut parent_directory: ::directory_listing::DirectoryListing) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+                           mut parent_directory: ::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
         // TODO Should we remove the below validation?
         try!(parent_directory.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         file.get_mut_metadata().set_user_metadata(user_metadata);
@@ -88,10 +88,13 @@ impl FileHelper {
         let mut versions = Vec::<::file::File>::new();
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
 
-        let sdv_versions = try!(directory_helper.get_versions(parent_directory.get_key()));
+        let parent_directory_key = parent_directory.get_key();
+        let sdv_versions = try!(directory_helper.get_versions(parent_directory_key.0, parent_directory_key.1));
         let mut modified_time = ::time::empty_tm();
         for version_id in sdv_versions {
-            let directory_listing = try!(directory_helper.get_by_version(parent_directory.get_key(),
+            let directory_key = parent_directory.get_key();
+            let directory_listing = try!(directory_helper.get_by_version(directory_key.0,
+                                                                         directory_key.1,
                                                                          parent_directory.get_metadata().get_access_level(),
                                                                          version_id.clone()));
             if let Some(file) = directory_listing.get_files().iter().find(|&entry| entry.get_name() == file.get_name()) {

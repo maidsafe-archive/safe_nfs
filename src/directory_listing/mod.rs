@@ -28,17 +28,22 @@ pub struct DirectoryListing {
 
 impl DirectoryListing {
     /// Create a new DirectoryListing
-    pub fn new(name         : String,
-               tag_type     : u64,
-               user_metadata: Vec<u8>,
-               versioned    : bool,
-               access_level : ::AccessLevel,
-               parent_dir   : Option<(::routing::NameType, u64)>) -> Result<DirectoryListing, ::errors::NfsError> {
+    pub fn new(name           : String,
+               tag_type       : u64,
+               user_metadata  : Vec<u8>,
+               versioned      : bool,
+               access_level   : ::AccessLevel,
+               parent_dir_info: Option<&directory_info::DirectoryInfo>) -> Result<DirectoryListing, ::errors::NfsError> {
         let meta_data = ::metadata::directory_metadata::DirectoryMetadata::new(name,
                                                                                user_metadata,
                                                                                versioned,
                                                                                access_level,
-                                                                               parent_dir);
+                                                                               parent_dir_info.iter().next().map(|info| {
+                                                                                   (info.get_id().clone(),
+                                                                                    info.get_type_tag(),
+                                                                                    info.get_metadata().is_versioned(),
+                                                                                    info.get_metadata().get_access_level().clone())
+                                                                               }));
         Ok(DirectoryListing {
             info           : try!(directory_info::DirectoryInfo::new(meta_data, tag_type)),
             sub_directories: Vec::new(),
@@ -63,7 +68,7 @@ impl DirectoryListing {
     }
 
     /// If file is present in the DirectoryListing then replace it else insert it
-    pub fn upsert_file(&mut self, file: ::file::File) -> Result<(), ::errors::NfsError>{
+    pub fn upsert_file(&mut self, file: ::file::File) -> Result<(), ::errors::NfsError> {
         match self.files.iter().position(|entry| entry.get_name() == file.get_name()) {
             Some(pos) => {
                 let mut_file = try!(self.files.get_mut(pos).ok_or(::errors::NfsError::FailedToUpdateFile));
@@ -75,8 +80,8 @@ impl DirectoryListing {
     }
 
     /// If DirectoryInfo is present in the sub_directories of DirectoryListing then replace it else insert it
-    pub fn upsert_sub_directory(&mut self, dir_info: ::directory_listing::directory_info::DirectoryInfo) -> Result<(), ::errors::NfsError>{
-        match self.sub_directories.iter().position(|entry| entry.get_name() == dir_info.get_name()) {
+    pub fn upsert_sub_directory(&mut self, dir_info: ::directory_listing::directory_info::DirectoryInfo) -> Result<(), ::errors::NfsError> {
+        match self.sub_directories.iter().position(|entry| entry.get_id() == dir_info.get_id()) {
             Some(pos) => {
                 let mut_dir_info = try!(self.sub_directories.get_mut(pos).ok_or(::errors::NfsError::FailedToUpdateDirectory));
                 *mut_dir_info = dir_info;
@@ -107,7 +112,7 @@ impl DirectoryListing {
     }
 
     /// Get the unique ID that represents this DirectoryListing in the network
-    pub fn get_key(&self) ->  (&::routing::NameType, u64) {
+    pub fn get_key(&self) ->  (&::routing::NameType, u64, bool, &::AccessLevel) {
         self.info.get_key()
     }
 

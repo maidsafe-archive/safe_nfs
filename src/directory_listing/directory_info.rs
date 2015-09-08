@@ -33,9 +33,19 @@ impl DirectoryInfo {
         })
     }
 
-    /// Get the unique ID representing this directory in the network
-    pub fn get_key(&self) -> (&::routing::NameType, u64) {
-        (&self.id, self.type_tag)
+    /// Returns the key representing the directory listing
+    pub fn get_key(&self) -> (&::routing::NameType, u64, bool, &::AccessLevel) {
+        (&self.id, self.type_tag, self.metadata.is_versioned(), self.metadata.get_access_level())
+    }
+
+    /// Returns the id of the DirectoryListing
+    pub fn get_id(&self) -> &::routing::NameType {
+        &self.id
+    }
+
+    /// Returns the id of the DirectoryListing
+    pub fn get_type_tag(&self) -> u64 {
+        self.type_tag
     }
 
     /// Get the metadata of this directory

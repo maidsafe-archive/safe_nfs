@@ -17,7 +17,7 @@
 
 /// Mode of the writter
 pub enum Mode {
-    /// Will create a new data
+    /// Will create new data
     Overwrite,
     /// Will modify the existing data
     Modify,
@@ -47,7 +47,7 @@ impl Writer {
             client          : client.clone(),
             file            : file,
             parent_directory: parent_directory,
-            self_encryptor: ::self_encryption::SelfEncryptor::new(::safe_client::SelfEncryptionStorage::new(client.clone()), datamap),
+            self_encryptor  : ::self_encryption::SelfEncryptor::new(::safe_client::SelfEncryptionStorage::new(client.clone()), datamap),
         }
     }
 
