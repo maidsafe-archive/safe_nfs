@@ -91,10 +91,8 @@ impl FileHelper {
         let parent_directory_key = parent_directory.get_key();
         let sdv_versions = try!(directory_helper.get_versions(parent_directory_key.0, parent_directory_key.1));
         let mut modified_time = ::time::empty_tm();
-        for version_id in sdv_versions {
-            let directory_key = parent_directory.get_key();
-            let directory_listing = try!(directory_helper.get_by_version(directory_key.0,
-                                                                         directory_key.1,
+        for version_id in sdv_versions {            
+            let directory_listing = try!(directory_helper.get_by_version(parent_directory.get_info().get_id(),
                                                                          parent_directory.get_metadata().get_access_level(),
                                                                          version_id.clone()));
             if let Some(file) = directory_listing.get_files().iter().find(|&entry| entry.get_name() == file.get_name()) {

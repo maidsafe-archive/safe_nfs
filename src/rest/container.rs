@@ -33,7 +33,7 @@ impl Container {
             Some(container_info) => {
                 let dir_info = container_info.convert_to_directory_info();
                 let metadata = dir_info.get_metadata();
-                try!(directory_helper.get(dir_info.get_key(), metadata.is_versioned(), metadata.get_access_level()))
+                try!(directory_helper.get(dir_info.get_id(), dir_info.get_type_tag(), metadata.is_versioned(), metadata.get_access_level()))
             },
             None => try!(directory_helper.get_user_root_directory_listing()),
         };
@@ -44,12 +44,10 @@ impl Container {
     }
 
     /// Creates a Container
-    pub fn create(&mut self, name: String, versioned: bool, access_level: ::AccessLevel) -> Result<::rest::Container, ::errors::NfsError> {
+    pub fn create(&mut self, name: String, versioned: bool, access_level: ::AccessLevel, metadata: Option<String>) -> Result<::rest::Container, ::errors::NfsError> {
         if name.is_empty() {
             return Err(::errors::NfsError::NameIsEmpty);
         }
-        // TODO add metadata support to containers
-        let metadata = None;
         let user_metadata = try!(self.validate_metadata(metadata));
         let tag_type = if versioned {
             ::VERSIONED_DIRECTORY_LISTING_TAG
@@ -111,30 +109,30 @@ impl Container {
             }).collect()
     }
 
-    // /// Updates the metadata of the container
-    // pub fn update_metadata(&mut self, metadata: Option<String>) -> Result<(), String>{
-    //     match self.validate_metadata(metadata) {
-    //         Ok(user_metadata) => {
-    //             self.directory_listing.get_mut_metadata().set_user_metadata(user_metadata);
-    //             let mut directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
-    //             match directory_helper.update(&self.directory_listing) {
-    //                 Ok(_) => Ok(()),
-    //                 Err(_) => Err("Error".to_string()),
-    //             }
-    //         },
-    //         Err(err) => Err(err),
-    //     }
-    // }
+    /// Updates the metadata of the container
+    pub fn update_metadata(&mut self, metadata: Option<String>) -> Result<Option<Container>, ::errors::NfsError>{
+        let user_metadata = try!(self.validate_metadata(metadata));
+        self.directory_listing.get_mut_metadata().set_user_metadata(user_metadata);
+        let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
+        if let Some(parent_directory) = try!(directory_helper.update(&self.directory_listing)) {
+            Ok(Some(Container {
+                client           : self.client.clone(),
+                directory_listing: parent_directory,
+            }))
+        } else {
+            Ok(None)
+        }
+    }
 
     /// Retrieves Versions for the container
     pub fn get_versions(&self) -> Result<Vec<[u8; 64]>, ::errors::NfsError> {
-        self.list_container_versions(self.directory_listing.get_key())
+        self.list_container_versions(self.directory_listing.get_info().get_id(), self.directory_listing.get_info().get_type_tag())
     }
 
     /// Retrieves Versions for the container being referred by the container_id
     pub fn get_container_versions(&self, container_info: &::rest::container_info::ContainerInfo) -> Result<Vec<[u8; 64]>, ::errors::NfsError> {
         let directory_info = container_info.convert_to_directory_info();
-        self.list_container_versions(directory_info.get_key())
+        self.list_container_versions(directory_info.get_id(), directory_info.get_type_tag())
     }
 
     /// Fetches the latest version of the child container.
@@ -143,10 +141,11 @@ impl Container {
         let dir_info = container_info.convert_to_directory_info();
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         let dir_listing = match version {
-            Some(version_id) => try!(directory_helper.get_by_version(self.directory_listing.get_key(),
+            Some(version_id) => try!(directory_helper.get_by_version(self.directory_listing.get_info().get_id(),
                                                                      self.directory_listing.get_metadata().get_access_level(),
                                                                      ::routing::NameType(version_id))),
-            None =>  try!(directory_helper.get(dir_info.get_key(),
+            None =>  try!(directory_helper.get(dir_info.get_id(),
+                                               dir_info.get_type_tag(),
                                                dir_info.get_metadata().is_versioned(),
                                                dir_info.get_metadata().get_access_level())),
         };
@@ -213,14 +212,19 @@ impl Container {
     }
 
     /// Update the metadata of the Blob in the container
-    pub fn update_blob_metadata(&mut self, blob: ::rest::blob::Blob, metadata: Option<String>) ->Result<Container, ::errors::NfsError> {
+    /// Returns Updated parent container, if the parent container exists.
+    pub fn update_blob_metadata(&mut self, blob: ::rest::blob::Blob, metadata: Option<String>) ->Result<Option<Container>, ::errors::NfsError> {
         let user_metadata = try!(self.validate_metadata(metadata));
         let file = blob.convert_to_file();
         let file_helper = ::helper::file_helper::FileHelper::new(self.client.clone());
-        Ok(Container {
-            client           : self.client.clone(),
-            directory_listing: try!(file_helper.update_metadata(file.clone(), user_metadata, self.directory_listing.clone())),
-        })
+        if let Some(parent_directory_listing) = try!(file_helper.update_metadata(file.clone(), user_metadata, self.directory_listing.clone())) {
+            Ok(Some(Container {
+                client           : self.client.clone(),
+                directory_listing: parent_directory_listing,
+            }))
+        } else {
+            Ok(None)
+        }
     }
 
     /// Delete blob from the container
@@ -238,7 +242,8 @@ impl Container {
         }
         let file = try!(self.directory_listing.find_file(blob_name).ok_or(::errors::NfsError::NotFound));
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-        let mut destination = try!(directory_helper.get(to_dir_info.get_key(),
+        let mut destination = try!(directory_helper.get(to_dir_info.get_id(),
+                                                        to_dir_info.get_type_tag(),
                                                         to_dir_info.get_metadata().is_versioned(),
                                                         to_dir_info.get_metadata().get_access_level()));
         if destination.find_file(blob_name).is_some() {
@@ -261,9 +266,9 @@ impl Container {
         }
     }
 
-    fn list_container_versions(&self, dir_key: (&::routing::NameType, u64)) -> Result<Vec<[u8; 64]>, ::errors::NfsError> {
+    fn list_container_versions(&self, dir_id: &::routing::NameType, type_tag: u64) -> Result<Vec<[u8; 64]>, ::errors::NfsError> {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-        let versions = try!(directory_helper.get_versions(dir_key));
+        let versions = try!(directory_helper.get_versions(dir_id, type_tag));
         Ok(versions.iter().map(|v| v.0).collect())
     }
 

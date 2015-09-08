@@ -63,6 +63,7 @@ impl DirectoryHelper {
                   directory_to_delete: &String) -> Result<(), ::errors::NfsError> {
             let pos = try!(parent_directory.get_sub_directory_index(directory_to_delete).ok_or(::errors::NfsError::DirectoryNotFound)); {
             parent_directory.get_mut_sub_directories().remove(pos);
+            parent_directory.get_mut_metadata().set_modified_time(::time::now_utc());
             try!(self.update_directory_listing(parent_directory));
             Ok(())
         }
@@ -92,7 +93,6 @@ impl DirectoryHelper {
     /// Return the DirectoryListing for the specified version
     pub fn get_by_version(&self,
                           directory_id: &::routing::NameType,
-                          type_tag    : u64,
                           access_level: &::AccessLevel,
                           version     : ::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
           let immutable_data = try!(self.get_immutable_data(version, ::routing::immutable_data::ImmutableDataType::Normal));
@@ -113,7 +113,7 @@ impl DirectoryHelper {
         if versioned {
            let versions = try!(::safe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data));
            let latest_version = versions.last().unwrap();
-           self.get_by_version(directory_id, type_tag, access_level, latest_version.clone())
+           self.get_by_version(directory_id, access_level, latest_version.clone())
         } else {
             let private_key = try!(self.client.lock().unwrap().get_public_encryption_key()).clone();
             let secret_key = try!(self.client.lock().unwrap().get_secret_encryption_key()).clone();

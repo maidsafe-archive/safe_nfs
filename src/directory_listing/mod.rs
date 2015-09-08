@@ -69,6 +69,7 @@ impl DirectoryListing {
 
     /// If file is present in the DirectoryListing then replace it else insert it
     pub fn upsert_file(&mut self, file: ::file::File) -> Result<(), ::errors::NfsError> {
+        let modified_time = file.get_metadata().get_modified_time().clone();
         match self.files.iter().position(|entry| entry.get_name() == file.get_name()) {
             Some(pos) => {
                 let mut_file = try!(self.files.get_mut(pos).ok_or(::errors::NfsError::FailedToUpdateFile));
@@ -76,11 +77,13 @@ impl DirectoryListing {
             },
             None => self.files.push(file),
         };
+        self.get_mut_metadata().set_modified_time(modified_time);
         Ok(())
     }
 
     /// If DirectoryInfo is present in the sub_directories of DirectoryListing then replace it else insert it
     pub fn upsert_sub_directory(&mut self, dir_info: ::directory_listing::directory_info::DirectoryInfo) -> Result<(), ::errors::NfsError> {
+        let modified_time = dir_info.get_metadata().get_modified_time().clone();
         match self.sub_directories.iter().position(|entry| entry.get_id() == dir_info.get_id()) {
             Some(pos) => {
                 let mut_dir_info = try!(self.sub_directories.get_mut(pos).ok_or(::errors::NfsError::FailedToUpdateDirectory));
@@ -88,6 +91,7 @@ impl DirectoryListing {
             },
             None => self.sub_directories.push(dir_info),
         };
+        self.get_mut_metadata().set_modified_time(modified_time);
         Ok(())
     }
 
