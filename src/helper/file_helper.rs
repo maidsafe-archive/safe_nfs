@@ -62,8 +62,6 @@ impl FileHelper {
                   file            : ::file::File,
                   mode            : ::helper::writer::Mode,
                   parent_directory: ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
-        // TODO improve by comparing file::metadata::parent_info with parent_dir_listing::info and
-        // return new error NotAValidParent
         try!(parent_directory.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         Ok(::helper::writer::Writer::new(self.client.clone(), mode, parent_directory, file))
     }
@@ -72,8 +70,7 @@ impl FileHelper {
     pub fn update_metadata(&self,
                            mut file            : ::file::File,
                            user_metadata       : Vec<u8>,
-                           mut parent_directory: ::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
-        // TODO Should we remove the below validation?
+                           mut parent_directory: ::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {        
         try!(parent_directory.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         file.get_mut_metadata().set_user_metadata(user_metadata);
         try!(parent_directory.upsert_file(file));
@@ -91,7 +88,7 @@ impl FileHelper {
         let parent_directory_key = parent_directory.get_key();
         let sdv_versions = try!(directory_helper.get_versions(parent_directory_key.0, parent_directory_key.1));
         let mut modified_time = ::time::empty_tm();
-        for version_id in sdv_versions {            
+        for version_id in sdv_versions {
             let directory_listing = try!(directory_helper.get_by_version(parent_directory.get_info().get_id(),
                                                                          parent_directory.get_metadata().get_access_level(),
                                                                          version_id.clone()));
