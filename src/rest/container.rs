@@ -110,18 +110,12 @@ impl Container {
     }
 
     /// Updates the metadata of the container
-    pub fn update_metadata(&mut self, metadata: Option<String>) -> Result<Option<Container>, ::errors::NfsError>{
+    pub fn update_metadata(&mut self, metadata: Option<String>) -> Result<(), ::errors::NfsError>{
         let user_metadata = try!(self.validate_metadata(metadata));
         self.directory_listing.get_mut_metadata().set_user_metadata(user_metadata);
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-        if let Some(parent_directory) = try!(directory_helper.update(&self.directory_listing)) {
-            Ok(Some(Container {
-                client           : self.client.clone(),
-                directory_listing: parent_directory,
-            }))
-        } else {
-            Ok(None)
-        }
+        try!(directory_helper.update(&self.directory_listing));
+        Ok(())
     }
 
     /// Retrieves Versions for the container
