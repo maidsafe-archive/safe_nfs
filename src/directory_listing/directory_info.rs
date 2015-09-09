@@ -34,8 +34,11 @@ impl DirectoryInfo {
     }
 
     /// Returns the key representing the directory listing
-    pub fn get_key(&self) -> (&::routing::NameType, u64, bool, &::AccessLevel) {
-        (&self.id, self.type_tag, self.metadata.is_versioned(), self.metadata.get_access_level())
+    pub fn get_key(&self) -> ::metadata::directory_key::DirectoryKey {
+        ::metadata::directory_key::DirectoryKey::new(self.id.clone(),
+                                                     self.type_tag,
+                                                     self.metadata.is_versioned(),
+                                                     self.metadata.get_access_level().clone())        
     }
 
     /// Returns the id of the DirectoryListing

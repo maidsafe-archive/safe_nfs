@@ -51,7 +51,7 @@ impl DirectoryHelper {
 
         if let Some(mut parent_directory) = parent_directory {
             try!(parent_directory.upsert_sub_directory(directory.get_info().clone()));
-            try!(self.update_directory_listing(&parent_directory));
+            let _ = try!(self.update_directory_listing(&parent_directory));
         };
 
         Ok(directory)
@@ -64,7 +64,7 @@ impl DirectoryHelper {
             let pos = try!(parent_directory.get_sub_directory_index(directory_to_delete).ok_or(::errors::NfsError::DirectoryNotFound)); {
             parent_directory.get_mut_sub_directories().remove(pos);
             parent_directory.get_mut_metadata().set_modified_time(::time::now_utc());
-            try!(self.update_directory_listing(parent_directory));
+            let _ = try!(self.update_directory_listing(parent_directory));
             Ok(())
         }
     }
@@ -75,9 +75,9 @@ impl DirectoryHelper {
     pub fn update(&self, directory: &::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
         try!(self.update_directory_listing(directory));
         if let Some(parent_dir_key) = directory.get_metadata().get_parent_dir_key() {
-            let mut parent_directory = try!(self.get(parent_dir_key.0, parent_dir_key.1, parent_dir_key.2, parent_dir_key.3));
+            let mut parent_directory = try!(self.get(parent_dir_key.get_id(), parent_dir_key.get_type_tag(), parent_dir_key.is_versioned(), parent_dir_key.get_access_level()));
             try!(parent_directory.upsert_sub_directory(directory.get_info().clone()));
-            try!(self.update_directory_listing(&parent_directory));
+            let _ = try!(self.update_directory_listing(&parent_directory));
             Ok(Some(parent_directory))
         } else {
             Ok(None)
@@ -171,17 +171,17 @@ impl DirectoryHelper {
                                                          false,
                                                          ::AccessLevel::Private,
                                                          None));
-                try!(self.client.lock().unwrap().set_configuration_root_directory_id(created_directory.get_key().0.clone()));
+                try!(self.client.lock().unwrap().set_configuration_root_directory_id(created_directory.get_key().get_id().clone()));
                 created_directory
             }
         };
         match config_directory_listing.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == directory_name) {
             Some(index) => {
                 let directory_key = config_directory_listing.get_sub_directories()[index].get_key();
-                Ok(try!(self.get(directory_key.0,
-                                 directory_key.1,
-                                 directory_key.2,
-                                 directory_key.3)))
+                Ok(try!(self.get(directory_key.get_id(),
+                                 directory_key.get_type_tag(),
+                                 directory_key.is_versioned(),
+                                 directory_key.get_access_level())))
             },
             None => {
                 self.create(directory_name, ::UNVERSIONED_DIRECTORY_LISTING_TAG, Vec::new(), false, ::AccessLevel::Private, Some(&mut config_directory_listing))

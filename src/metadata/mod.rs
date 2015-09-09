@@ -19,3 +19,5 @@
 pub mod file_metadata;
 /// DirectoryMetadata
 pub mod directory_metadata;
+/// DirectoryKey
+pub mod directory_key;

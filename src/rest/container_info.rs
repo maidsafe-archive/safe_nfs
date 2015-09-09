@@ -21,11 +21,6 @@ pub struct ContainerInfo {
 }
 
 impl ContainerInfo {
-    /// Get Container ID. This is the directory ID which is unique for every directory and is the
-    /// only way to retrieve that directory (DirectoryListing) from the network
-    pub fn get_key(&self) -> ([u8; 64], u64) {
-        (self.info.get_key().0 .0, self.info.get_key().1)
-    }
 
     /// Get the name of the Container
     pub fn get_name(&self) -> &String {
@@ -44,7 +39,7 @@ impl ContainerInfo {
     pub fn get_created_time(&self) -> &::time::Tm {
         self.info.get_metadata().get_created_time()
     }
-    
+
     // TODO Implement from trait for coversion
     /// Convert the ContainerInfo to the format of DirectoryInfo that lower levels understand and
     /// operate on

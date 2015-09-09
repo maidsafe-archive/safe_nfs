@@ -39,10 +39,10 @@ impl DirectoryListing {
                                                                                versioned,
                                                                                access_level,
                                                                                parent_dir_info.iter().next().map(|info| {
-                                                                                   (info.get_id().clone(),
-                                                                                    info.get_type_tag(),
-                                                                                    info.get_metadata().is_versioned(),
-                                                                                    info.get_metadata().get_access_level().clone())
+                                                                                   ::metadata::directory_key::DirectoryKey::new(info.get_id().clone(),
+                                                                                                                                info.get_type_tag(),
+                                                                                                                                info.get_metadata().is_versioned(),
+                                                                                                                                info.get_metadata().get_access_level().clone())
                                                                                }));
         Ok(DirectoryListing {
             info           : try!(directory_info::DirectoryInfo::new(meta_data, tag_type)),
@@ -116,7 +116,7 @@ impl DirectoryListing {
     }
 
     /// Get the unique ID that represents this DirectoryListing in the network
-    pub fn get_key(&self) ->  (&::routing::NameType, u64, bool, &::AccessLevel) {
+    pub fn get_key(&self) ->  ::metadata::directory_key::DirectoryKey {
         self.info.get_key()
     }
 
@@ -146,7 +146,7 @@ impl DirectoryListing {
         se.write(&serialised_data, 0);
         let datamap = se.close();
         let serialised_data_map = try!(::safe_client::utility::serialise(&datamap));
-        Ok(try!(client.lock().unwrap().hybrid_encrypt(&serialised_data_map, Some(&DirectoryListing::generate_nonce(&self.get_key().0)))))
+        Ok(try!(client.lock().unwrap().hybrid_encrypt(&serialised_data_map, Some(&DirectoryListing::generate_nonce(self.get_key().get_id())))))
     }
 
     /// Get DirectoryInfo of sub_directory within a DirectoryListing.

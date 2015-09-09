@@ -24,7 +24,7 @@ pub struct DirectoryMetadata {
     user_metadata : Vec<u8>,
     versioned     : bool,
     access_level  : ::AccessLevel,
-    parent_dir_key: Option<(::routing::NameType, u64, bool, ::AccessLevel)>,
+    parent_dir_key: Option<::metadata::directory_key::DirectoryKey>,
 }
 
 impl DirectoryMetadata {
@@ -33,7 +33,7 @@ impl DirectoryMetadata {
                user_metadata : Vec<u8>,
                versioned     : bool,
                access_level  : ::AccessLevel,
-               parent_dir_key: Option<(::routing::NameType, u64, bool, ::AccessLevel)>) -> DirectoryMetadata {
+               parent_dir_key: Option<::metadata::directory_key::DirectoryKey>) -> DirectoryMetadata {
         DirectoryMetadata {
             name          : name,
             created_time  : ::time::now_utc(),
@@ -67,8 +67,8 @@ impl DirectoryMetadata {
     }
 
     /// Returns the Parent dir id
-    pub fn get_parent_dir_key(&self) -> Option<(&::routing::NameType, u64, bool, &::AccessLevel)> {
-        self.parent_dir_key.iter().next().map(|a| (&a.0, a.1, a.2, &a.3))
+    pub fn get_parent_dir_key(&self) -> Option<&::metadata::directory_key::DirectoryKey> {
+        self.parent_dir_key.iter().next().map(|key| key)
     }
 
     /// Get user setteble custom metadata

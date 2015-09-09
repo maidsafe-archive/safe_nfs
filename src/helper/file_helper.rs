@@ -70,7 +70,7 @@ impl FileHelper {
     pub fn update_metadata(&self,
                            mut file            : ::file::File,
                            user_metadata       : Vec<u8>,
-                           mut parent_directory: ::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {        
+                           mut parent_directory: ::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
         try!(parent_directory.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         file.get_mut_metadata().set_user_metadata(user_metadata);
         try!(parent_directory.upsert_file(file));
@@ -86,7 +86,7 @@ impl FileHelper {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
 
         let parent_directory_key = parent_directory.get_key();
-        let sdv_versions = try!(directory_helper.get_versions(parent_directory_key.0, parent_directory_key.1));
+        let sdv_versions = try!(directory_helper.get_versions(parent_directory_key.get_id(), parent_directory_key.get_type_tag()));
         let mut modified_time = ::time::empty_tm();
         for version_id in sdv_versions {
             let directory_listing = try!(directory_helper.get_by_version(parent_directory.get_info().get_id(),
