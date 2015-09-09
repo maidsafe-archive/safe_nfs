@@ -224,7 +224,7 @@ impl Container {
     /// Delete blob from the container
     pub fn delete_blob(&mut self, name: String) -> Result<(), ::errors::NfsError> {
         let file_helper = ::helper::file_helper::FileHelper::new(self.client.clone());
-        try!(file_helper.delete(name, &mut self.directory_listing));
+        let _ = try!(file_helper.delete(name, &mut self.directory_listing));
         Ok(())
     }
 
@@ -244,7 +244,7 @@ impl Container {
            return Err(::errors::NfsError::FileExistsInDestination);
         }
         destination.get_mut_files().push(file.clone());
-        try!(directory_helper.update(&destination));
+        let _ = try!(directory_helper.update(&destination));
         Ok(())
     }
 
