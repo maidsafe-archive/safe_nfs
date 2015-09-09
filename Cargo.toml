@@ -12,13 +12,16 @@ homepage      = "http://maidsafe.net"
 [dependencies]
 # ---- Maidsafe ----
 routing         = "0.3.*"
-safe_client     = "0.1.*"
+#safe_client     = "0.1.*"
 self_encryption = "0.2.*"
 
 # ---- Others ----
 time            = "*"
 sodiumoxide     = "*"
 rustc-serialize = "*"
+
+[dependencies.safe_client]
+git = "https://github.com/maidsafe/safe_client"
 
 [features]
 use-mock-routing = ["safe_client/use-mock-routing"]
