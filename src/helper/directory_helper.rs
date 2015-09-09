@@ -151,7 +151,7 @@ impl DirectoryHelper {
                                                          false,
                                                          ::AccessLevel::Private,
                                                          None));
-                try!(self.client.lock().unwrap().set_user_root_directory_id(created_directory.get_key().0.clone()));
+                try!(self.client.lock().unwrap().set_user_root_directory_id(created_directory.get_info().get_id().clone()));
                 Ok(created_directory)
             }
         }
@@ -203,8 +203,8 @@ impl DirectoryHelper {
                                                            ::routing::immutable_data::ImmutableDataType::Normal));
             Ok(try!(::safe_client::structured_data_operations::versioned::create(&mut *self.client.lock().unwrap(),
                                                                                  version,
-                                                                                 directory.get_key().1,
-                                                                                 directory.get_key().0.clone(),
+                                                                                 directory.get_info().get_type_tag(),
+                                                                                 directory.get_info().get_id().clone(),
                                                                                  0,
                                                                                  vec![owner_key],
                                                                                  Vec::new(),
@@ -212,7 +212,7 @@ impl DirectoryHelper {
         } else {
             let private_key = try!(self.client.lock().unwrap().get_public_encryption_key()).clone();
             let secret_key = try!(self.client.lock().unwrap().get_secret_encryption_key()).clone();
-            let nonce = ::directory_listing::DirectoryListing::generate_nonce(&directory.get_key().0);
+            let nonce = ::directory_listing::DirectoryListing::generate_nonce(directory.get_info().get_id());
             let encryption_keys = match *access_level {
                 ::AccessLevel::Private => Some((&private_key,
                                                 &secret_key,
@@ -220,8 +220,8 @@ impl DirectoryHelper {
                 ::AccessLevel::Public => None,
             };
             Ok(try!(::safe_client::structured_data_operations::unversioned::create(self.client.clone(),
-                                                                                   directory.get_key().1,
-                                                                                   directory.get_key().0.clone(),
+                                                                                   directory.get_info().get_type_tag(),
+                                                                                   directory.get_info().get_id().clone(),
                                                                                    0,
                                                                                    encrypted_data,
                                                                                    vec![owner_key.clone()],
@@ -232,8 +232,7 @@ impl DirectoryHelper {
     }
 
     fn update_directory_listing(&self, directory: &::directory_listing::DirectoryListing) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
-        let directory_key = directory.get_info().get_key();
-        let structured_data = try!(self.get_structured_data(directory_key.0, directory_key.1));
+        let structured_data = try!(self.get_structured_data(directory.get_info().get_id(), directory.get_info().get_type_tag()));
 
         let signing_key = try!(self.client.lock().unwrap().get_secret_signing_key()).clone();
         let owner_key = try!(self.client.lock().unwrap().get_public_signing_key()).clone();
@@ -253,7 +252,7 @@ impl DirectoryHelper {
         } else {
             let private_key = try!(self.client.lock().unwrap().get_public_encryption_key()).clone();
             let secret_key = try!(self.client.lock().unwrap().get_secret_encryption_key()).clone();
-            let nonce = ::directory_listing::DirectoryListing::generate_nonce(&directory.get_key().0);
+            let nonce = ::directory_listing::DirectoryListing::generate_nonce(directory.get_info().get_id());
             let encryption_keys = match *access_level {
                 ::AccessLevel::Private => Some((&private_key,
                                                 &secret_key,
@@ -261,8 +260,8 @@ impl DirectoryHelper {
                 ::AccessLevel::Public => None,
             };
             try!(::safe_client::structured_data_operations::unversioned::create(self.client.clone(),
-                                                                                directory.get_key().1,
-                                                                                directory.get_key().0.clone(),
+                                                                                directory.get_info().get_type_tag(),
+                                                                                directory.get_info().get_id().clone(),
                                                                                 structured_data.get_version() + 1,
                                                                                 encrypted_data,
                                                                                 vec![owner_key.clone()],
@@ -271,8 +270,10 @@ impl DirectoryHelper {
                                                                                 encryption_keys))
         };
         self.client.lock().unwrap().post(::routing::data::Data::StructuredData(updated_structured_data), None);
-        let dir_key = directory.get_key();
-        self.get(dir_key.0, dir_key.1, dir_key.2, dir_key.3)
+        self.get(directory.get_info().get_id(),
+                 directory.get_info().get_type_tag(),
+                 directory.get_metadata().is_versioned(),
+                 directory.get_metadata().get_access_level())
     }
 
     /// Saves the data as ImmutableData in the network and returns the name
