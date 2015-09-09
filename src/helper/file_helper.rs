@@ -51,7 +51,7 @@ impl FileHelper {
          let index = try!(parent_directory.get_file_index(&file_name).ok_or(::errors::NfsError::FileNotFound));
          parent_directory.get_mut_files().remove(index);
          let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-         try!(directory_helper.update(&parent_directory));
+         let _ = try!(directory_helper.update(&parent_directory));
          Ok(())
     }
 
@@ -62,7 +62,7 @@ impl FileHelper {
                   file            : ::file::File,
                   mode            : ::helper::writer::Mode,
                   parent_directory: ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
-        try!(parent_directory.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
+        let _ = try!(parent_directory.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         Ok(::helper::writer::Writer::new(self.client.clone(), mode, parent_directory, file))
     }
 
@@ -71,7 +71,7 @@ impl FileHelper {
                            mut file            : ::file::File,
                            user_metadata       : Vec<u8>,
                            mut parent_directory: ::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
-        try!(parent_directory.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
+        let _ = try!(parent_directory.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         file.get_mut_metadata().set_user_metadata(user_metadata);
         try!(parent_directory.upsert_file(file));
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
