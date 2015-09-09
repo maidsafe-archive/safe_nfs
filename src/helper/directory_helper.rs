@@ -115,13 +115,20 @@ impl DirectoryHelper {
            let latest_version = versions.last().unwrap();
            self.get_by_version(directory_id, access_level, latest_version.clone())
         } else {
-            let private_key = try!(self.client.lock().unwrap().get_public_encryption_key()).clone();
-            let secret_key = try!(self.client.lock().unwrap().get_secret_encryption_key()).clone();
-            let nonce = ::directory_listing::DirectoryListing::generate_nonce(directory_id);
+            let private_key;
+            let secret_key;
+            let nonce;
+
             let encryption_keys = match *access_level {
-                ::AccessLevel::Private => Some((&private_key,
-                                                &secret_key,
-                                                &nonce)),
+                ::AccessLevel::Private => {
+                    private_key = try!(self.client.lock().unwrap().get_public_encryption_key()).clone();
+                    secret_key = try!(self.client.lock().unwrap().get_secret_encryption_key()).clone();
+                    nonce = ::directory_listing::DirectoryListing::generate_nonce(directory_id);
+
+                    Some((&private_key,
+                         &secret_key,
+                         &nonce))
+                },
                 ::AccessLevel::Public => None,
             };
             let value_of_structured_data = try!(::safe_client::structured_data_operations::unversioned::get_data(self.client.clone(),
@@ -210,13 +217,19 @@ impl DirectoryHelper {
                                                                                  Vec::new(),
                                                                                  &signing_key)))
         } else {
-            let private_key = try!(self.client.lock().unwrap().get_public_encryption_key()).clone();
-            let secret_key = try!(self.client.lock().unwrap().get_secret_encryption_key()).clone();
-            let nonce = ::directory_listing::DirectoryListing::generate_nonce(directory.get_info().get_id());
+            let private_key;
+            let secret_key;
+            let nonce;
+
             let encryption_keys = match *access_level {
-                ::AccessLevel::Private => Some((&private_key,
-                                                &secret_key,
-                                                &nonce)),
+                ::AccessLevel::Private => {
+                    private_key = try!(self.client.lock().unwrap().get_public_encryption_key()).clone();
+                    secret_key = try!(self.client.lock().unwrap().get_secret_encryption_key()).clone();
+                    nonce = ::directory_listing::DirectoryListing::generate_nonce(directory.get_info().get_id());
+                    Some((&private_key,
+                          &secret_key,
+                          &nonce))
+                },
                 ::AccessLevel::Public => None,
             };
             Ok(try!(::safe_client::structured_data_operations::unversioned::create(self.client.clone(),
@@ -250,13 +263,19 @@ impl DirectoryHelper {
                                                                                       version,
                                                                                       &signing_key))
         } else {
-            let private_key = try!(self.client.lock().unwrap().get_public_encryption_key()).clone();
-            let secret_key = try!(self.client.lock().unwrap().get_secret_encryption_key()).clone();
-            let nonce = ::directory_listing::DirectoryListing::generate_nonce(directory.get_info().get_id());
+            let private_key;
+            let secret_key;
+            let nonce;
+
             let encryption_keys = match *access_level {
-                ::AccessLevel::Private => Some((&private_key,
-                                                &secret_key,
-                                                &nonce)),
+                ::AccessLevel::Private => {
+                    private_key = try!(self.client.lock().unwrap().get_public_encryption_key()).clone();
+                    secret_key = try!(self.client.lock().unwrap().get_secret_encryption_key()).clone();
+                    nonce = ::directory_listing::DirectoryListing::generate_nonce(directory.get_info().get_id());
+                    Some((&private_key,
+                          &secret_key,
+                          &nonce))
+                },
                 ::AccessLevel::Public => None,
             };
             try!(::safe_client::structured_data_operations::unversioned::create(self.client.clone(),
