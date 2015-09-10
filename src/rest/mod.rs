@@ -15,10 +15,10 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-mod container;
+//mod container;
 mod blob;
 mod container_info;
 
-pub use self::container::*;
+//pub use self::container::*;
 pub use self::blob::*;
 pub use self::container_info::*;

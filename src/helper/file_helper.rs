@@ -147,7 +147,7 @@ mod test {
             let mut reader = file_helper.read(file);
             let size = reader.size();
             assert_eq!(eval_result!(reader.read(0, size)), vec![1u8; 50]);
-        }/*
+        }
         {// update - partial rewrite
             let file = eval_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
             let mut writer = eval_result!(file_helper.update(file, ::helper::writer::Mode::Modify, directory));
@@ -174,6 +174,6 @@ mod test {
         {// Delete
             eval_result!(file_helper.delete(file_name.clone(), &mut directory));
             assert!(directory.find_file(&file_name).is_none());
-        }*/
+        }
     }
 }

@@ -17,41 +17,53 @@
 
 /// Wrapper over DirectoryInfo to present Rest-friendly name to the Restful interface users
 pub struct ContainerInfo {
-    info: ::directory_listing::directory_info::DirectoryInfo,
+    metadata: ::metadata::directory_metadata::DirectoryMetadata,
 }
 
 impl ContainerInfo {
 
     /// Get the name of the Container
     pub fn get_name(&self) -> &String {
-        self.info.get_metadata().get_name()
+        self.metadata.get_name()
     }
-
-    // pub fn get_metadata(&self) -> Option<String> {
-    //     let metadata = self.info.get_metadata().get_user_metadata();
-    //     match metadata {
-    //         Some(data) => Some(String::from_utf8(data.clone()).unwrap()),
-    //         None => None
-    //     }
-    // }
 
     /// Get the creation time for this Container
     pub fn get_created_time(&self) -> &::time::Tm {
-        self.info.get_metadata().get_created_time()
+        self.metadata.get_created_time()
+    }
+
+    /// Get the creation time for this Container
+    pub fn get_modified_time(&self) -> &::time::Tm {
+        self.metadata.get_modified_time()
+    }
+
+    /// Returns AccessLevel of the Container
+    pub fn get_access_level(&self) -> &::AccessLevel {
+        self.metadata.get_access_level()
+    }
+
+    /// Returns type_tag of the Container
+    pub fn get_type_tag(&self) -> u64 {
+        self.metadata.get_type_tag()
+    }
+
+    /// Returns true if the Container is versioned, else false is returned
+    pub fn is_versioned(&self) -> bool {
+        self.metadata.is_versioned()
     }
 
     // TODO Implement from trait for coversion
     /// Convert the ContainerInfo to the format of DirectoryInfo that lower levels understand and
     /// operate on
-    pub fn convert_to_directory_info(&self) -> ::directory_listing::directory_info::DirectoryInfo {
-        self.info.clone()
+    pub fn convert_to_directory_metadata(&self) -> ::metadata::directory_metadata::DirectoryMetadata {
+        self.metadata.clone()
     }
 
     /// Convert from the format of DirectoryInfo that the lower levels understand to the rest
     /// friendly ContainerInfo
-    pub fn convert_from_directory_info(info: ::directory_listing::directory_info::DirectoryInfo) -> ContainerInfo {
+    pub fn convert_from_directory_metadata(metadata: ::metadata::directory_metadata::DirectoryMetadata) -> ContainerInfo {
         ContainerInfo {
-            info: info,
+            metadata: metadata,
         }
     }
 }
@@ -64,41 +76,37 @@ mod test {
     #[test]
     fn create() {
         let name = eval_result!(::safe_client::utility::generate_random_string(10));
-        let metadata = ::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), Vec::new(), true, ::AccessLevel::Public, None);
         let container_info = ContainerInfo {
-            info: eval_result!(::directory_listing::directory_info::DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG)),
+            metadata: eval_result!(::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None)),
         };
-
         assert_eq!(*container_info.get_name(), name);
     }
 
     #[test]
     fn convert_from() {
         let name = eval_result!(::safe_client::utility::generate_random_string(10));
-        let metadata = ::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), Vec::new(), true, ::AccessLevel::Public, None);
-        let directory_info = eval_result!(::directory_listing::directory_info::DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG));
+        let directory_metadata = eval_result!(::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None));
 
-        assert_eq!(*directory_info.get_name(), name);
+        assert_eq!(*directory_metadata.get_name(), name);
 
-        let container_info = ContainerInfo::convert_from_directory_info(directory_info.clone());
+        let container_info = ContainerInfo::convert_from_directory_metadata(directory_metadata.clone());
 
-        assert_eq!(container_info.get_name(), directory_info.get_name());
-        assert_eq!(container_info.get_created_time(), directory_info.get_metadata().get_created_time());
+        assert_eq!(container_info.get_name(), directory_metadata.get_name());
+        assert_eq!(container_info.get_created_time(), directory_metadata.get_created_time());
     }
 
     #[test]
     fn convert_to() {
         let name = eval_result!(::safe_client::utility::generate_random_string(10));
-        let metadata = ::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), Vec::new(), true, ::AccessLevel::Public, None);
         let container_info = ContainerInfo {
-            info: eval_result!(::directory_listing::directory_info::DirectoryInfo::new(metadata, ::VERSIONED_DIRECTORY_LISTING_TAG)),
+            metadata: eval_result!(::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None)),
         };
 
         assert_eq!(*container_info.get_name(), name);
 
-        let directory_info = container_info.convert_to_directory_info();
+        let directory_metadata = container_info.convert_to_directory_metadata();
 
-        assert_eq!(directory_info.get_name(), container_info.get_name());
-        assert_eq!(directory_info.get_metadata().get_created_time(), container_info.get_created_time());
+        assert_eq!(directory_metadata.get_name(), container_info.get_name());
+        assert_eq!(directory_metadata.get_created_time(), container_info.get_created_time());
     }
 }
