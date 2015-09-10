@@ -130,7 +130,7 @@ impl DirectoryHelper {
         let structured_data = try!(self.get_structured_data(directory_key.0, directory_key.1));
         if versioned {
            let versions = try!(::safe_client::structured_data_operations::versioned::get_all_versions(&mut *eval_result!(self.client.lock()), &structured_data));
-           let latest_version = try!(versions.last().ok_or(::errors::NfsError::VersionNotFound));
+           let latest_version = eval_option!(versions.last(), "Programming Error - Please report this as a Bug.");
            self.get_by_version(directory_key, access_level, latest_version.clone())
         } else {
             let private_key;
