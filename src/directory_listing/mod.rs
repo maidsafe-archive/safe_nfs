@@ -62,7 +62,8 @@ impl DirectoryListing {
     /// If file is present in the DirectoryListing then replace it else insert it
     pub fn upsert_file(&mut self, file: ::file::File) {
         let modified_time = file.get_metadata().get_modified_time().clone();
-        if let Some(mut existing) = self.files.clone().iter_mut().find(|entry| entry.get_name() == file.get_name()) {
+        if let Some(index) = self.files.iter().position(|entry| *entry.get_name() == *file.get_name()) {
+            let mut existing = eval_option!(self.files.get_mut(index), "unexpected error");
             *existing = file;
         } else {
             self.files.push(file);
@@ -73,7 +74,8 @@ impl DirectoryListing {
     /// If DirectoryMetadata is present in the sub_directories of DirectoryListing then replace it else insert it
     pub fn upsert_sub_directory(&mut self, directory_metadata: ::metadata::directory_metadata::DirectoryMetadata) {
         let modified_time = directory_metadata.get_modified_time().clone();
-        if let Some(mut existing) = self.sub_directories.clone().iter_mut().find(|entry| *entry.get_key().get_id() == *directory_metadata.get_key().get_id()) {
+        if let Some(index) = self.sub_directories.iter().position(|entry| *entry.get_key().get_id() == *directory_metadata.get_key().get_id()) {
+            let mut existing = eval_option!(self.sub_directories.get_mut(index), "unexpected error");
             *existing = directory_metadata;
         } else {
             self.sub_directories.push(directory_metadata);

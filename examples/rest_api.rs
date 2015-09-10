@@ -14,7 +14,7 @@
 //
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
-
+/*
 extern crate time;
 extern crate safe_nfs;
 #[macro_use] extern crate safe_client;
@@ -301,3 +301,5 @@ fn main() {
         }
     }
 }
+*/
+fn main() {}
