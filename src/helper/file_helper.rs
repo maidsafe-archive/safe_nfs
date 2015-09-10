@@ -48,8 +48,7 @@ impl FileHelper {
     pub fn delete(&self,
                   file_name       : String,
                   parent_directory: &mut ::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
-         let index = try!(parent_directory.get_file_index(&file_name).ok_or(::errors::NfsError::FileNotFound));
-         parent_directory.get_mut_files().remove(index);
+         try!(parent_directory.remove_file(&file_name));
          let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
          let _ = try!(directory_helper.update(&parent_directory));
          Ok(())
@@ -75,7 +74,7 @@ impl FileHelper {
                            parent_directory: &mut ::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
         let _ = try!(parent_directory.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         file.get_mut_metadata().set_user_metadata(user_metadata);
-        try!(parent_directory.upsert_file(file));
+        parent_directory.upsert_file(file);
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         directory_helper.update(&parent_directory)
     }

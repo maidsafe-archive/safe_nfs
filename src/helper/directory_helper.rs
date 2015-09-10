@@ -50,7 +50,7 @@ impl DirectoryHelper {
         self.client.lock().unwrap().put(::routing::data::Data::StructuredData(structured_data), None);
 
         if let Some(mut parent_directory) = parent_directory {
-            try!(parent_directory.upsert_sub_directory(directory.get_metadata().clone()));
+            parent_directory.upsert_sub_directory(directory.get_metadata().clone());
             try!(self.update_directory_listing(parent_directory));
         };
 
@@ -61,12 +61,10 @@ impl DirectoryHelper {
     /// Returns the updated directory which is one level above the parent_directory passed as parameter, if the parent directory exists else None is returned.
     pub fn delete(&self,
                   parent_directory   : &mut ::directory_listing::DirectoryListing,
-                  directory_to_delete: &String) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
-            let pos = try!(parent_directory.get_sub_directory_index(directory_to_delete).ok_or(::errors::NfsError::DirectoryNotFound)); {
-            parent_directory.get_mut_sub_directories().remove(pos);
-            parent_directory.get_mut_metadata().set_modified_time(::time::now_utc());
-            self.update(parent_directory)
-        }
+                  directory_to_delete: &String) -> Result<(), ::errors::NfsError> {
+        try!(parent_directory.remove_sub_directory(directory_to_delete));
+        parent_directory.get_mut_metadata().set_modified_time(::time::now_utc());
+        self.update_directory_listing(&parent_directory)        
     }
 
     /// Updates an existing DirectoryListing in the network.
@@ -75,7 +73,7 @@ impl DirectoryHelper {
         try!(self.update_directory_listing(directory));
         if let Some(parent_dir_key) = directory.get_metadata().get_parent_dir_key() {
             let mut parent_directory = try!(self.get(&parent_dir_key));
-            try!(parent_directory.upsert_sub_directory(directory.get_metadata().clone()));
+            parent_directory.upsert_sub_directory(directory.get_metadata().clone());
             try!(self.update_directory_listing(&parent_directory));
             Ok(Some(parent_directory))
         } else {
@@ -112,7 +110,7 @@ impl DirectoryHelper {
         if versioned {
            let versions = try!(::safe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data));
            let latest_version = versions.last().unwrap();
-           self.get_by_version(directory_id, access_level, latest_version.clone())
+           self.get_by_version(directory_id, access_level, *latest_version)
         } else {
             let private_key;
             let secret_key;

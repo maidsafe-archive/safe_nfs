@@ -32,11 +32,11 @@ impl DirectoryListing {
                access_level   : ::AccessLevel,
                parent_dir_key: Option<::metadata::directory_key::DirectoryKey>) -> Result<DirectoryListing, ::errors::NfsError> {
         let meta_data = try!(::metadata::directory_metadata::DirectoryMetadata::new(name,
-                                                                               tag_type,
-                                                                               versioned,
-                                                                               access_level,
-                                                                               user_metadata,
-                                                                               parent_dir_key));
+                                                                                    tag_type,
+                                                                                    versioned,
+                                                                                    access_level,
+                                                                                    user_metadata,
+                                                                                    parent_dir_key));
         Ok(DirectoryListing {
             metadata       : meta_data,
             sub_directories: Vec::new(),
@@ -60,31 +60,25 @@ impl DirectoryListing {
     }
 
     /// If file is present in the DirectoryListing then replace it else insert it
-    pub fn upsert_file(&mut self, file: ::file::File) -> Result<(), ::errors::NfsError> {
+    pub fn upsert_file(&mut self, file: ::file::File) {
         let modified_time = file.get_metadata().get_modified_time().clone();
-        match self.files.iter().position(|entry| entry.get_name() == file.get_name()) {
-            Some(pos) => {
-                let mut_file = try!(self.files.get_mut(pos).ok_or(::errors::NfsError::FailedToUpdateFile));
-                *mut_file = file;
-            },
-            None => self.files.push(file),
-        };
+        if let Some(mut existing) = self.files.clone().iter_mut().find(|entry| entry.get_name() == file.get_name()) {
+            *existing = file;
+        } else {
+            self.files.push(file);
+        }
         self.get_mut_metadata().set_modified_time(modified_time);
-        Ok(())
     }
 
-    /// If DirectoryInfo is present in the sub_directories of DirectoryListing then replace it else insert it
-    pub fn upsert_sub_directory(&mut self, directory_metadata: ::metadata::directory_metadata::DirectoryMetadata) -> Result<(), ::errors::NfsError> {
+    /// If DirectoryMetadata is present in the sub_directories of DirectoryListing then replace it else insert it
+    pub fn upsert_sub_directory(&mut self, directory_metadata: ::metadata::directory_metadata::DirectoryMetadata) {
         let modified_time = directory_metadata.get_modified_time().clone();
-        match self.sub_directories.iter().position(|entry| *entry.get_key().get_id() == *directory_metadata.get_key().get_id()) {
-            Some(pos) => {
-                let mut_directory_metadata = try!(self.sub_directories.get_mut(pos).ok_or(::errors::NfsError::FailedToUpdateDirectory));
-                *mut_directory_metadata = directory_metadata;
-            },
-            None => self.sub_directories.push(directory_metadata),
-        };
+        if let Some(mut existing) = self.sub_directories.clone().iter_mut().find(|entry| *entry.get_key().get_id() == *directory_metadata.get_key().get_id()) {
+            *existing = directory_metadata;
+        } else {
+            self.sub_directories.push(directory_metadata);
+        }
         self.get_mut_metadata().set_modified_time(modified_time);
-        Ok(())
     }
 
     /// Get all files in this DirectoryListing
@@ -150,18 +144,18 @@ impl DirectoryListing {
         self.get_sub_directories().iter().find(|info| *info.get_name() == *directory_name)
     }
 
-    /// Returns the position of the sub-directory in the subdirectory list
-    /// None is returned if the sub-directory is not found
-    pub fn get_sub_directory_index(&self,
-                                   directory_name: &String) -> Option<usize> {
-        self.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == *directory_name)
+    /// Remove a sub_directory
+    pub fn remove_sub_directory(&mut self, directory_name: &String) -> Result<(), ::errors::NfsError> {
+        let index = try!(self.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == *directory_name).ok_or(::errors::NfsError::DirectoryNotFound));
+        self.get_mut_sub_directories().remove(index);
+        Ok(())
     }
 
-    /// Returns the position of the files in the file list
-    /// None is returned if the file is not found
-    pub fn get_file_index(&self,
-                          file_name: &String) -> Option<usize> {
-        self.get_files().iter().position(|file| *file.get_name() == *file_name)
+    /// Remove a file
+    pub fn remove_file(&mut self, file_name: &String) -> Result<(), ::errors::NfsError> {
+        let index = try!(self.get_files().iter().position(|file| *file.get_name() == *file_name).ok_or(::errors::NfsError::FileNotFound));
+        self.get_mut_files().remove(index);
+        Ok(())
     }
 
     /// Generates a nonce based on the directory_id

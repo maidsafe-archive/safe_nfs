@@ -69,10 +69,10 @@ impl Writer {
         file.get_mut_metadata().set_modified_time(::time::now_utc());
         file.get_mut_metadata().set_size(size);
 
-        try!(directory.upsert_file(file.clone()));
+        directory.upsert_file(file.clone());
 
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-        try!(directory_helper.update(&directory));
+        let _ = try!(directory_helper.update(&directory));
 
         Ok(directory)
     }
