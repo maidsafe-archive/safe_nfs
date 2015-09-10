@@ -15,14 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-/// DirectoryInfo holds teh metadata information about the directory
-pub mod directory_info;
-
 /// DirectoryListing is the representation of a deserialised Directory in the network
 #[derive(Debug, RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct DirectoryListing {
-    info           : directory_info::DirectoryInfo,
-    sub_directories: Vec<directory_info::DirectoryInfo>,
+    metadata       : ::metadata::directory_metadata::DirectoryMetadata,
+    sub_directories: Vec<::metadata::directory_metadata::DirectoryMetadata>,
     files          : Vec<::file::File>,
 }
 
@@ -33,38 +30,33 @@ impl DirectoryListing {
                user_metadata  : Vec<u8>,
                versioned      : bool,
                access_level   : ::AccessLevel,
-               parent_dir_info: Option<&directory_info::DirectoryInfo>) -> Result<DirectoryListing, ::errors::NfsError> {
-        let meta_data = ::metadata::directory_metadata::DirectoryMetadata::new(name,
-                                                                               user_metadata,
+               parent_dir_key: Option<::metadata::directory_key::DirectoryKey>) -> Result<DirectoryListing, ::errors::NfsError> {
+        let meta_data = try!(::metadata::directory_metadata::DirectoryMetadata::new(name,
+                                                                               tag_type,
                                                                                versioned,
                                                                                access_level,
-                                                                               parent_dir_info.iter().next().map(|info| {
-                                                                                   ::metadata::directory_key::DirectoryKey::new(info.get_id().clone(),
-                                                                                                                                info.get_type_tag(),
-                                                                                                                                info.get_metadata().is_versioned(),
-                                                                                                                                info.get_metadata().get_access_level().clone())
-                                                                               }));
+                                                                               user_metadata,
+                                                                               parent_dir_key));
         Ok(DirectoryListing {
-            info           : try!(directory_info::DirectoryInfo::new(meta_data, tag_type)),
+            metadata       : meta_data,
             sub_directories: Vec::new(),
             files          : Vec::new(),
         })
     }
 
-    /// Get directory_info::DirectoryInfo
-    pub fn get_info(&self) -> &directory_info::DirectoryInfo {
-        &self.info
+    /// Returns the DirectoryKey representing the DirectoryListing
+    pub fn get_key(&self) -> &::metadata::directory_key::DirectoryKey {
+        &self.metadata.get_key()
     }
 
     /// Get Directory metadata
     pub fn get_metadata(&self) -> &::metadata::directory_metadata::DirectoryMetadata {
-        self.info.get_metadata()
+        &self.metadata
     }
 
     /// Get Directory metadata in mutable format so that it can also be updated
-    #[allow(dead_code)]
     pub fn get_mut_metadata(&mut self) -> &mut ::metadata::directory_metadata::DirectoryMetadata {
-        self.info.get_mut_metadata()
+        &mut self.metadata
     }
 
     /// If file is present in the DirectoryListing then replace it else insert it
@@ -82,14 +74,14 @@ impl DirectoryListing {
     }
 
     /// If DirectoryInfo is present in the sub_directories of DirectoryListing then replace it else insert it
-    pub fn upsert_sub_directory(&mut self, dir_info: ::directory_listing::directory_info::DirectoryInfo) -> Result<(), ::errors::NfsError> {
-        let modified_time = dir_info.get_metadata().get_modified_time().clone();
-        match self.sub_directories.iter().position(|entry| entry.get_id() == dir_info.get_id()) {
+    pub fn upsert_sub_directory(&mut self, directory_metadata: ::metadata::directory_metadata::DirectoryMetadata) -> Result<(), ::errors::NfsError> {
+        let modified_time = directory_metadata.get_modified_time().clone();
+        match self.sub_directories.iter().position(|entry| *entry.get_key().get_id() == *directory_metadata.get_key().get_id()) {
             Some(pos) => {
-                let mut_dir_info = try!(self.sub_directories.get_mut(pos).ok_or(::errors::NfsError::FailedToUpdateDirectory));
-                *mut_dir_info = dir_info;
+                let mut_directory_metadata = try!(self.sub_directories.get_mut(pos).ok_or(::errors::NfsError::FailedToUpdateDirectory));
+                *mut_directory_metadata = directory_metadata;
             },
-            None => self.sub_directories.push(dir_info),
+            None => self.sub_directories.push(directory_metadata),
         };
         self.get_mut_metadata().set_modified_time(modified_time);
         Ok(())
@@ -106,18 +98,13 @@ impl DirectoryListing {
     }
 
     /// Get all subdirectories in this DirectoryListing
-    pub fn get_sub_directories(&self) -> &Vec<directory_info::DirectoryInfo> {
+    pub fn get_sub_directories(&self) -> &Vec<::metadata::directory_metadata::DirectoryMetadata> {
         &self.sub_directories
     }
 
     /// Get all subdirectories in this DirectoryListing with mutability to update the listing of subdirectories
-    pub fn get_mut_sub_directories(&mut self) -> &mut Vec<directory_info::DirectoryInfo> {
+    pub fn get_mut_sub_directories(&mut self) -> &mut Vec<::metadata::directory_metadata::DirectoryMetadata> {
         &mut self.sub_directories
-    }
-
-    /// Get the unique ID that represents this DirectoryListing in the network
-    pub fn get_key(&self) ->  ::metadata::directory_key::DirectoryKey {
-        self.info.get_key()
     }
 
     /// Decrypts a directory listing
@@ -159,7 +146,7 @@ impl DirectoryListing {
     /// Get DirectoryInfo of sub_directory within a DirectoryListing.
     /// Returns the Option<DirectoryInfo> for the directory_name from the DirectoryListing
     pub fn find_sub_directory(&self,
-                              directory_name: &String) -> Option<&directory_info::DirectoryInfo> {
+                              directory_name: &String) -> Option<&::metadata::directory_metadata::DirectoryMetadata> {
         self.get_sub_directories().iter().find(|info| *info.get_name() == *directory_name)
     }
 

@@ -51,7 +51,7 @@ extern crate self_encryption;
 /// Module for File struct
 pub mod file;
 /// Module for Restful interfaces for storage
-pub mod rest;
+//pub mod rest;
 /// Errors
 pub mod errors;
 /// Helper for directory_listing and File for NFS Low level API
