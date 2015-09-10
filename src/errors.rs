@@ -50,6 +50,8 @@ pub enum NfsError {
     // TODO remove not found
     /// General
     NotFound,
+    /// unexpected error
+    Unexpected(String),
 }
 
 impl From<::safe_client::errors::ClientError> for NfsError {
@@ -74,6 +76,7 @@ impl Into<i32> for NfsError {
             NfsError::MetaDataMissingOrCorrupted  => NFS_ERROR_START_RANGE - 10,
             NfsError::NameIsEmpty                 => NFS_ERROR_START_RANGE - 11,
             NfsError::NotFound                    => NFS_ERROR_START_RANGE - 12,
+            NfsError::Unexpected(_)               => NFS_ERROR_START_RANGE - 13,
         }
     }
 }
@@ -94,6 +97,7 @@ impl ::std::fmt::Debug for NfsError {
             NfsError::MetaDataMissingOrCorrupted    => write!(f, "NfsError::MetaDataMissingOrCorrupted"),
             NfsError::NameIsEmpty                   => write!(f, "NfsError::NameIsEmpty"),
             NfsError::NotFound                      => write!(f, "NfsError::NotFound"),
+            NfsError::Unexpected(ref error)         => write!(f, "NfsError::Unexpected -> {:?}", error),
         }
     }
 }

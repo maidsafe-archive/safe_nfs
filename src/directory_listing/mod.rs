@@ -59,30 +59,6 @@ impl DirectoryListing {
         &mut self.metadata
     }
 
-    /// If file is present in the DirectoryListing then replace it else insert it
-    pub fn upsert_file(&mut self, file: ::file::File) {
-        let modified_time = file.get_metadata().get_modified_time().clone();
-        if let Some(index) = self.files.iter().position(|entry| *entry.get_name() == *file.get_name()) {
-            let mut existing = eval_option!(self.files.get_mut(index), "unexpected error");
-            *existing = file;
-        } else {
-            self.files.push(file);
-        }
-        self.get_mut_metadata().set_modified_time(modified_time);
-    }
-
-    /// If DirectoryMetadata is present in the sub_directories of DirectoryListing then replace it else insert it
-    pub fn upsert_sub_directory(&mut self, directory_metadata: ::metadata::directory_metadata::DirectoryMetadata) {
-        let modified_time = directory_metadata.get_modified_time().clone();
-        if let Some(index) = self.sub_directories.iter().position(|entry| *entry.get_key().get_id() == *directory_metadata.get_key().get_id()) {
-            let mut existing = eval_option!(self.sub_directories.get_mut(index), "unexpected error");
-            *existing = directory_metadata;
-        } else {
-            self.sub_directories.push(directory_metadata);
-        }
-        self.get_mut_metadata().set_modified_time(modified_time);
-    }
-
     /// Get all files in this DirectoryListing
     pub fn get_files(&self) -> &Vec<::file::File> {
         &self.files
@@ -144,6 +120,32 @@ impl DirectoryListing {
     pub fn find_sub_directory(&self,
                               directory_name: &String) -> Option<&::metadata::directory_metadata::DirectoryMetadata> {
         self.get_sub_directories().iter().find(|info| *info.get_name() == *directory_name)
+    }
+
+    /// If file is present in the DirectoryListing then replace it else insert it
+    pub fn upsert_file(&mut self, file: ::file::File) -> Result<(), ::errors::NfsError> {
+        let modified_time = file.get_metadata().get_modified_time().clone();
+        if let Some(index) = self.files.iter().position(|entry| *entry.get_name() == *file.get_name()) {
+            let mut existing = try!(self.files.get_mut(index).ok_or(::errors::NfsError::Unexpected("Element could not be found in specified index".to_string())));
+            *existing = file;
+        } else {
+            self.files.push(file);
+        }
+        self.get_mut_metadata().set_modified_time(modified_time);
+        Ok(())
+    }
+
+    /// If DirectoryMetadata is present in the sub_directories of DirectoryListing then replace it else insert it
+    pub fn upsert_sub_directory(&mut self, directory_metadata: ::metadata::directory_metadata::DirectoryMetadata) -> Result<(), ::errors::NfsError> {
+        let modified_time = directory_metadata.get_modified_time().clone();
+        if let Some(index) = self.sub_directories.iter().position(|entry| *entry.get_key().get_id() == *directory_metadata.get_key().get_id()) {
+            let mut existing = try!(self.sub_directories.get_mut(index).ok_or(::errors::NfsError::Unexpected("Element could not be found in specified index".to_string())));
+            *existing = directory_metadata;
+        } else {
+            self.sub_directories.push(directory_metadata);
+        }
+        self.get_mut_metadata().set_modified_time(modified_time);
+        Ok(())
     }
 
     /// Remove a sub_directory

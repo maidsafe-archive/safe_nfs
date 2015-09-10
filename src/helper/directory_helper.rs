@@ -53,7 +53,7 @@ impl DirectoryHelper {
         self.client.lock().unwrap().put(::routing::data::Data::StructuredData(structured_data), None);
 
         if let Some(mut parent_directory) = parent_directory {
-            parent_directory.upsert_sub_directory(directory.get_metadata().clone());
+            try!(parent_directory.upsert_sub_directory(directory.get_metadata().clone()));
             Ok((directory, try!(self.update(parent_directory))))
         } else {
             Ok((directory, None))
@@ -78,7 +78,7 @@ impl DirectoryHelper {
         try!(self.update_directory_listing(directory));
         if let Some(parent_dir_key) = directory.get_metadata().get_parent_dir_key() {
             let mut parent_directory = try!(self.get(&parent_dir_key));
-            parent_directory.upsert_sub_directory(directory.get_metadata().clone());
+            try!(parent_directory.upsert_sub_directory(directory.get_metadata().clone()));
             try!(self.update_directory_listing(&parent_directory));
             Ok(Some(parent_directory))
         } else {
