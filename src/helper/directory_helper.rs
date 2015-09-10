@@ -64,7 +64,7 @@ impl DirectoryHelper {
                   directory_to_delete: &String) -> Result<(), ::errors::NfsError> {
         try!(parent_directory.remove_sub_directory(directory_to_delete));
         parent_directory.get_mut_metadata().set_modified_time(::time::now_utc());
-        self.update_directory_listing(&parent_directory)        
+        self.update(&parent_directory)        
     }
 
     /// Updates an existing DirectoryListing in the network.
