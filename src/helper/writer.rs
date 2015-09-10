@@ -57,9 +57,10 @@ impl Writer {
     }
 
     /// close is invoked only after alll the data is completely written
-    /// The file/blob is saved only when the close is invoked. The update parent directory listing
-    /// is returned.
-    pub fn close(mut self) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+    /// The file/blob is saved only when the close is invoked.
+    /// Returns the update DirectoryListing which owns the file and also the updated DirectoryListing of the file's parent
+    /// Returns (files's parent_directory, Option<file's parent_directory's parent>)
+    pub fn close(mut self) -> Result<(::directory_listing::DirectoryListing, Option<::directory_listing::DirectoryListing>), ::errors::NfsError> {
         let mut file = self.file;
         let mut directory = self.parent_directory;
         let size = self.self_encryptor.len();
@@ -72,8 +73,10 @@ impl Writer {
         directory.upsert_file(file.clone());
 
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-        let _ = try!(directory_helper.update(&directory));
-
-        Ok(directory)
+        if let Some(updated_grand_parent) = try!(directory_helper.update(&directory)) {
+            Ok((directory, Some(updated_grand_parent)))
+        } else {
+            Ok((directory, None))
+        }
     }
 }

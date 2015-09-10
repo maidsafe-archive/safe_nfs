@@ -45,13 +45,13 @@ impl FileHelper {
     }
 
     /// Delete a file from the DirectoryListing
+    /// Returns Option<parent_directory's parent>
     pub fn delete(&self,
                   file_name       : String,
-                  parent_directory: &mut ::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
+                  parent_directory: &mut ::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
          try!(parent_directory.remove_file(&file_name));
          let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-         let _ = try!(directory_helper.update(&parent_directory));
-         Ok(())
+         directory_helper.update(&parent_directory)
     }
 
     /// Helper function to Update content of a file in a directory listing
@@ -66,8 +66,7 @@ impl FileHelper {
     }
 
     /// Updates the file metadata.
-    /// If the parent_directory passed as a parameter has parent_dir_key in its metadata,
-    /// then the directory corresponding to the parent_dir_key is updated and retirned. Else None is returned
+    /// Returns Option<parent_directory's parent>
     pub fn update_metadata(&self,
                            mut file        : ::file::File,
                            user_metadata   : Vec<u8>,

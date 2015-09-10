@@ -29,14 +29,17 @@ impl DirectoryHelper {
     }
 
     /// Creates a Directory in the network.
-    /// Returns the created DirectoryListing
+    /// When a directory is created and parent_directory is passed as a parameter. Then the parent directory is updated.
+    /// If the parent_directory passed has a parent, then the parent_directory's parent is also updated and the same is returned
+    /// Returns (created_directory, Option<parent_directory's parent>)
     pub fn create(&self,
                   directory_name  : String,
                   tag_type        : u64,
                   user_metadata   : Vec<u8>,
                   versioned       : bool,
                   access_level    : ::AccessLevel,
-                  parent_directory: Option<&mut ::directory_listing::DirectoryListing>) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+                  parent_directory: Option<&mut ::directory_listing::DirectoryListing>) -> Result<(::directory_listing::DirectoryListing,
+                                                                                                   Option<::directory_listing::DirectoryListing>), ::errors::NfsError> {
         let directory = try!(::directory_listing::DirectoryListing::new(directory_name,
                                                                         tag_type,
                                                                         user_metadata,
@@ -51,24 +54,26 @@ impl DirectoryHelper {
 
         if let Some(mut parent_directory) = parent_directory {
             parent_directory.upsert_sub_directory(directory.get_metadata().clone());
-            try!(self.update_directory_listing(parent_directory));
-        };
-
-        Ok(directory)
+            Ok((directory, try!(self.update(parent_directory))))
+        } else {
+            Ok((directory, None))
+        }
     }
 
     /// Deletes a sub directory
-    /// Returns the updated directory which is one level above the parent_directory passed as parameter, if the parent directory exists else None is returned.
+    /// The parent_directory's parent is also updated if present
+    /// Returns Option<parent_directory's parent>
     pub fn delete(&self,
                   parent_directory   : &mut ::directory_listing::DirectoryListing,
-                  directory_to_delete: &String) -> Result<(), ::errors::NfsError> {
+                  directory_to_delete: &String) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
         try!(parent_directory.remove_sub_directory(directory_to_delete));
         parent_directory.get_mut_metadata().set_modified_time(::time::now_utc());
-        self.update(&parent_directory)        
+        self.update(&parent_directory)
     }
 
     /// Updates an existing DirectoryListing in the network.
-    /// Returns the updated parent directory if the parent directory exists else None is returned.
+    /// The parent_directory's parent is also updated and the same is returned
+    /// Returns Option<parent_directory's parent>
     pub fn update(&self, directory: &::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
         try!(self.update_directory_listing(directory));
         if let Some(parent_dir_key) = directory.get_metadata().get_parent_dir_key() {
@@ -148,7 +153,7 @@ impl DirectoryHelper {
                                                          Vec::new(),
                                                          false,
                                                          ::AccessLevel::Private,
-                                                         None));
+                                                         None)).0;
                 try!(self.client.lock().unwrap().set_user_root_directory_id(created_directory.get_key().get_id().clone()));
                 Ok(created_directory)
             }
@@ -168,7 +173,7 @@ impl DirectoryHelper {
                                                          Vec::new(),
                                                          false,
                                                          ::AccessLevel::Private,
-                                                         None));
+                                                         None)).0;
                 try!(self.client.lock().unwrap().set_configuration_root_directory_id(created_directory.get_key().get_id().clone()));
                 created_directory
             }
@@ -179,7 +184,12 @@ impl DirectoryHelper {
                 Ok(try!(self.get(&directory_key)))
             },
             None => {
-                self.create(directory_name, ::UNVERSIONED_DIRECTORY_LISTING_TAG, Vec::new(), false, ::AccessLevel::Private, Some(&mut config_directory_listing))
+                Ok(try!(self.create(directory_name,
+                                    ::UNVERSIONED_DIRECTORY_LISTING_TAG,
+                                    Vec::new(),
+                                    false,
+                                    ::AccessLevel::Private,
+                                    Some(&mut config_directory_listing))).0)
             },
         }
     }
