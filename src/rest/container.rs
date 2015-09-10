@@ -306,7 +306,7 @@ mod test {
     #[test]
     fn create_container() {
         let client = get_client();
-        let mut container = Container::authorise(client.clone(), None).ok().unwrap();
+        let mut container = eval_result!(Container::authorise(client.clone(), None));
         eval_result!(container.create("Home".to_string(), true, ::AccessLevel::Private));
 
         assert_eq!(container.get_containers().len(), 1);
