@@ -113,7 +113,7 @@ impl DirectoryHelper {
 
         if versioned {
            let versions = try!(self.get_versions(directory_id, type_tag));
-           let latest_version = versions.last().unwrap();
+           let latest_version = try!(versions.last().ok_or(::errors::NfsError::from("Programming Error - Please report this as a Bug.")));
            self.get_by_version(directory_id, access_level, *latest_version)
         } else {
             let private_key;
