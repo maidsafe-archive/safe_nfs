@@ -115,7 +115,7 @@ fn container_operation(option: u32, container: &mut safe_nfs::rest::Container) -
                         2 | 4 => ::safe_nfs::AccessLevel::Public,
                         _     => ::safe_nfs::AccessLevel::Private,
                     };
-                    try!(container.create(name.clone(), versioned, access_level));
+                    try!(container.create(name.clone(), versioned, access_level, None));
                     println!("Created Container - {}", name);
                 },
                 Err(_) => println!("Invalid input"),
