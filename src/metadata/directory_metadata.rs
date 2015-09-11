@@ -88,7 +88,7 @@ impl DirectoryMetadata {
 
     /// Returns the Parent dir id
     pub fn get_parent_dir_key(&self) -> Option<&::metadata::directory_key::DirectoryKey> {
-        self.parent_dir_key.iter().next().map(|key| key)
+        self.parent_dir_key.iter().next()
     }
 
     /// Get user setteble custom metadata

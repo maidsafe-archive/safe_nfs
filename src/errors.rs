@@ -60,6 +60,12 @@ impl From<::safe_client::errors::ClientError> for NfsError {
     }
 }
 
+impl<'a> From<&'a str> for NfsError {
+    fn from(error: &'a str) -> NfsError {
+        NfsError::Unexpected(error.to_string())
+    }
+}
+
 impl Into<i32> for NfsError {
     fn into(self) -> i32 {
         match self {

@@ -53,7 +53,7 @@ impl DirectoryHelper {
         self.client.lock().unwrap().put(::routing::data::Data::StructuredData(structured_data), None);
 
         if let Some(mut parent_directory) = parent_directory {
-            try!(parent_directory.upsert_sub_directory(directory.get_metadata().clone()));
+            parent_directory.upsert_sub_directory(directory.get_metadata().clone());
             Ok((directory, try!(self.update(parent_directory))))
         } else {
             Ok((directory, None))
@@ -78,7 +78,7 @@ impl DirectoryHelper {
         try!(self.update_directory_listing(directory));
         if let Some(parent_dir_key) = directory.get_metadata().get_parent_dir_key() {
             let mut parent_directory = try!(self.get(&parent_dir_key));
-            try!(parent_directory.upsert_sub_directory(directory.get_metadata().clone()));
+            parent_directory.upsert_sub_directory(directory.get_metadata().clone());
             try!(self.update_directory_listing(&parent_directory));
             Ok(Some(parent_directory))
         } else {
@@ -111,9 +111,8 @@ impl DirectoryHelper {
         let versioned = directory_key.is_versioned();
         let access_level = directory_key.get_access_level();
 
-        let structured_data = try!(self.get_structured_data(directory_id, type_tag));
         if versioned {
-           let versions = try!(::safe_client::structured_data_operations::versioned::get_all_versions(&mut *self.client.lock().unwrap(), &structured_data));
+           let versions = try!(self.get_versions(directory_id, type_tag));
            let latest_version = versions.last().unwrap();
            self.get_by_version(directory_id, access_level, *latest_version)
         } else {
@@ -133,6 +132,8 @@ impl DirectoryHelper {
                 },
                 ::AccessLevel::Public => None,
             };
+
+            let structured_data = try!(self.get_structured_data(directory_id, type_tag));
             let serialised_directory_listing = try!(::safe_client::structured_data_operations::unversioned::get_data(self.client.clone(),
                                                                                                                  &structured_data,
                                                                                                                  encryption_keys));
