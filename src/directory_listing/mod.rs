@@ -15,75 +15,48 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-/// DirectoryInfo holds teh metadata information about the directory
-pub mod directory_info;
-
 /// DirectoryListing is the representation of a deserialised Directory in the network
 #[derive(Debug, RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct DirectoryListing {
-    info           : directory_info::DirectoryInfo,
-    sub_directories: Vec<directory_info::DirectoryInfo>,
+    metadata       : ::metadata::directory_metadata::DirectoryMetadata,
+    sub_directories: Vec<::metadata::directory_metadata::DirectoryMetadata>,
     files          : Vec<::file::File>,
 }
 
 impl DirectoryListing {
     /// Create a new DirectoryListing
-    pub fn new(name         : String,
-               tag_type     : u64,
-               user_metadata: Vec<u8>,
-               versioned    : bool,
-               access_level : ::AccessLevel,
-               parent_dir   : Option<(::routing::NameType, u64)>) -> Result<DirectoryListing, ::errors::NfsError> {
-        let meta_data = ::metadata::directory_metadata::DirectoryMetadata::new(name,
-                                                                               user_metadata,
-                                                                               versioned,
-                                                                               access_level,
-                                                                               parent_dir);
+    pub fn new(name           : String,
+               tag_type       : u64,
+               user_metadata  : Vec<u8>,
+               versioned      : bool,
+               access_level   : ::AccessLevel,
+               parent_dir_key: Option<::metadata::directory_key::DirectoryKey>) -> Result<DirectoryListing, ::errors::NfsError> {
+        let meta_data = try!(::metadata::directory_metadata::DirectoryMetadata::new(name,
+                                                                                    tag_type,
+                                                                                    versioned,
+                                                                                    access_level,
+                                                                                    user_metadata,
+                                                                                    parent_dir_key));
         Ok(DirectoryListing {
-            info           : try!(directory_info::DirectoryInfo::new(meta_data, tag_type)),
+            metadata       : meta_data,
             sub_directories: Vec::new(),
             files          : Vec::new(),
         })
     }
 
-    /// Get directory_info::DirectoryInfo
-    pub fn get_info(&self) -> &directory_info::DirectoryInfo {
-        &self.info
+    /// Returns the DirectoryKey representing the DirectoryListing
+    pub fn get_key(&self) -> &::metadata::directory_key::DirectoryKey {
+        &self.metadata.get_key()
     }
 
     /// Get Directory metadata
     pub fn get_metadata(&self) -> &::metadata::directory_metadata::DirectoryMetadata {
-        self.info.get_metadata()
+        &self.metadata
     }
 
     /// Get Directory metadata in mutable format so that it can also be updated
-    #[allow(dead_code)]
     pub fn get_mut_metadata(&mut self) -> &mut ::metadata::directory_metadata::DirectoryMetadata {
-        self.info.get_mut_metadata()
-    }
-
-    /// If file is present in the DirectoryListing then replace it else insert it
-    pub fn upsert_file(&mut self, file: ::file::File) -> Result<(), ::errors::NfsError>{
-        match self.files.iter().position(|entry| entry.get_name() == file.get_name()) {
-            Some(pos) => {
-                let mut_file = try!(self.files.get_mut(pos).ok_or(::errors::NfsError::FailedToUpdateFile));
-                *mut_file = file;
-            },
-            None => self.files.push(file),
-        };
-        Ok(())
-    }
-
-    /// If DirectoryInfo is present in the sub_directories of DirectoryListing then replace it else insert it
-    pub fn upsert_sub_directory(&mut self, dir_info: ::directory_listing::directory_info::DirectoryInfo) -> Result<(), ::errors::NfsError>{
-        match self.sub_directories.iter().position(|entry| entry.get_name() == dir_info.get_name()) {
-            Some(pos) => {
-                let mut_dir_info = try!(self.sub_directories.get_mut(pos).ok_or(::errors::NfsError::FailedToUpdateDirectory));
-                *mut_dir_info = dir_info;
-            },
-            None => self.sub_directories.push(dir_info),
-        };
-        Ok(())
+        &mut self.metadata
     }
 
     /// Get all files in this DirectoryListing
@@ -97,18 +70,13 @@ impl DirectoryListing {
     }
 
     /// Get all subdirectories in this DirectoryListing
-    pub fn get_sub_directories(&self) -> &Vec<directory_info::DirectoryInfo> {
+    pub fn get_sub_directories(&self) -> &Vec<::metadata::directory_metadata::DirectoryMetadata> {
         &self.sub_directories
     }
 
     /// Get all subdirectories in this DirectoryListing with mutability to update the listing of subdirectories
-    pub fn get_mut_sub_directories(&mut self) -> &mut Vec<directory_info::DirectoryInfo> {
+    pub fn get_mut_sub_directories(&mut self) -> &mut Vec<::metadata::directory_metadata::DirectoryMetadata> {
         &mut self.sub_directories
-    }
-
-    /// Get the unique ID that represents this DirectoryListing in the network
-    pub fn get_key(&self) ->  (&::routing::NameType, u64) {
-        self.info.get_key()
     }
 
     /// Decrypts a directory listing
@@ -137,7 +105,7 @@ impl DirectoryListing {
         se.write(&serialised_data, 0);
         let datamap = se.close();
         let serialised_data_map = try!(::safe_client::utility::serialise(&datamap));
-        Ok(try!(client.lock().unwrap().hybrid_encrypt(&serialised_data_map, Some(&DirectoryListing::generate_nonce(&self.get_key().0)))))
+        Ok(try!(client.lock().unwrap().hybrid_encrypt(&serialised_data_map, Some(&DirectoryListing::generate_nonce(self.get_key().get_id())))))
     }
 
     /// Get DirectoryInfo of sub_directory within a DirectoryListing.
@@ -150,22 +118,49 @@ impl DirectoryListing {
     /// Get DirectoryInfo of sub_directory within a DirectoryListing.
     /// Returns the Option<DirectoryInfo> for the directory_name from the DirectoryListing
     pub fn find_sub_directory(&self,
-                              directory_name: &String) -> Option<&directory_info::DirectoryInfo> {
+                              directory_name: &String) -> Option<&::metadata::directory_metadata::DirectoryMetadata> {
         self.get_sub_directories().iter().find(|info| *info.get_name() == *directory_name)
     }
 
-    /// Returns the position of the sub-directory in the subdirectory list
-    /// None is returned if the sub-directory is not found
-    pub fn get_sub_directory_index(&self,
-                                   directory_name: &String) -> Option<usize> {
-        self.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == *directory_name)
+    /// If file is present in the DirectoryListing then replace it else insert it
+    pub fn upsert_file(&mut self, file: ::file::File) {
+        let modified_time = file.get_metadata().get_modified_time().clone();
+        // TODO try using the below approach for efficiency - also try the same in upsert_sub_directory
+        // if let Some(mut existing_file) = self.files.iter_mut().find(|entry| *entry.get_name() == *file.get_name()) {
+        // *existing_file = file;
+        if let Some(index) = self.files.iter().position(|entry| *entry.get_name() == *file.get_name()) {
+            let mut existing = eval_option!(self.files.get_mut(index), "Programming Error - Report this as a Bug.");
+            *existing = file;
+        } else {
+            self.files.push(file);
+        }
+        self.get_mut_metadata().set_modified_time(modified_time);
     }
 
-    /// Returns the position of the files in the file list
-    /// None is returned if the file is not found
-    pub fn get_file_index(&self,
-                          file_name: &String) -> Option<usize> {
-        self.get_files().iter().position(|file| *file.get_name() == *file_name)
+    /// If DirectoryMetadata is present in the sub_directories of DirectoryListing then replace it else insert it
+    pub fn upsert_sub_directory(&mut self, directory_metadata: ::metadata::directory_metadata::DirectoryMetadata) {
+        let modified_time = directory_metadata.get_modified_time().clone();
+        if let Some(index) = self.sub_directories.iter().position(|entry| *entry.get_key().get_id() == *directory_metadata.get_key().get_id()) {
+            let mut existing = eval_option!(self.sub_directories.get_mut(index), "Programming Error - Report this as a Bug.");
+            *existing = directory_metadata;
+        } else {
+            self.sub_directories.push(directory_metadata);
+        }
+        self.get_mut_metadata().set_modified_time(modified_time);        
+    }
+
+    /// Remove a sub_directory
+    pub fn remove_sub_directory(&mut self, directory_name: &String) -> Result<(), ::errors::NfsError> {
+        let index = try!(self.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == *directory_name).ok_or(::errors::NfsError::DirectoryNotFound));
+        self.get_mut_sub_directories().remove(index);
+        Ok(())
+    }
+
+    /// Remove a file
+    pub fn remove_file(&mut self, file_name: &String) -> Result<(), ::errors::NfsError> {
+        let index = try!(self.get_files().iter().position(|file| *file.get_name() == *file_name).ok_or(::errors::NfsError::FileNotFound));
+        self.get_mut_files().remove(index);
+        Ok(())
     }
 
     /// Generates a nonce based on the directory_id

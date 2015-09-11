@@ -45,14 +45,13 @@ impl FileHelper {
     }
 
     /// Delete a file from the DirectoryListing
+    /// Returns Option<parent_directory's parent>
     pub fn delete(&self,
                   file_name       : String,
-                  parent_directory: &mut ::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
-         let index = try!(parent_directory.get_file_index(&file_name).ok_or(::errors::NfsError::FileNotFound));
-         parent_directory.get_mut_files().remove(index);
+                  parent_directory: &mut ::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
+         try!(parent_directory.remove_file(&file_name));
          let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-         try!(directory_helper.update(&parent_directory));
-         Ok(())
+         directory_helper.update(&parent_directory)
     }
 
     /// Helper function to Update content of a file in a directory listing
@@ -62,21 +61,19 @@ impl FileHelper {
                   file            : ::file::File,
                   mode            : ::helper::writer::Mode,
                   parent_directory: ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
-        // TODO improve by comparing file::metadata::parent_info with parent_dir_listing::info and
-        // return new error NotAValidParent
-        try!(parent_directory.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
+        let _ = try!(parent_directory.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         Ok(::helper::writer::Writer::new(self.client.clone(), mode, parent_directory, file))
     }
 
-    /// Updates the file metadata. Returns the updated parent DirectoryListing
+    /// Updates the file metadata.
+    /// Returns Option<parent_directory's parent>
     pub fn update_metadata(&self,
-                           mut file            : ::file::File,
-                           user_metadata       : Vec<u8>,
-                           mut parent_directory: ::directory_listing::DirectoryListing) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
-        // TODO Should we remove the below validation?
-        try!(parent_directory.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
+                           mut file        : ::file::File,
+                           user_metadata   : Vec<u8>,
+                           parent_directory: &mut ::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
+        let _ = try!(parent_directory.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         file.get_mut_metadata().set_user_metadata(user_metadata);
-        try!(parent_directory.upsert_file(file));
+        parent_directory.upsert_file(file);
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         directory_helper.update(&parent_directory)
     }
@@ -88,11 +85,11 @@ impl FileHelper {
         let mut versions = Vec::<::file::File>::new();
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
 
-        let sdv_versions = try!(directory_helper.get_versions(parent_directory.get_key()));
+        let sdv_versions = try!(directory_helper.get_versions(parent_directory.get_key().get_id(), parent_directory.get_key().get_type_tag()));
         let mut modified_time = ::time::empty_tm();
         for version_id in sdv_versions {
-            let directory_listing = try!(directory_helper.get_by_version(parent_directory.get_key(),
-                                                                         parent_directory.get_metadata().get_access_level(),
+            let directory_listing = try!(directory_helper.get_by_version(parent_directory.get_key().get_id(),
+                                                                         parent_directory.get_key().get_access_level(),
                                                                          version_id.clone()));
             if let Some(file) = directory_listing.get_files().iter().find(|&entry| entry.get_name() == file.get_name()) {
                 if *file.get_metadata().get_modified_time() != modified_time {
@@ -126,13 +123,13 @@ mod test {
                                                            Vec::new(),
                                                            true,
                                                            ::AccessLevel::Private,
-                                                           None));
+                                                           None)).0;
         let file_helper = ::helper::file_helper::FileHelper::new(client.clone());
         let file_name = "hello.txt".to_string();
         { // create
             let mut writer = eval_result!(file_helper.create(file_name.clone(), Vec::new(), directory));
             writer.write(&vec![0u8; 100], 0);
-            directory = eval_result!(writer.close());
+            directory = eval_result!(writer.close()).0;
             assert!(directory.find_file(&file_name).is_some());
         }
         {// read
@@ -145,7 +142,7 @@ mod test {
             let file = eval_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
             let mut writer = eval_result!(file_helper.update(file, ::helper::writer::Mode::Overwrite, directory));
             writer.write(&vec![1u8; 50], 0);
-            directory = eval_result!(writer.close());
+            directory = eval_result!(writer.close()).0;
             let file = eval_option!(directory.find_file(&file_name), "File not found");
             let mut reader = file_helper.read(file);
             let size = reader.size();
@@ -155,7 +152,7 @@ mod test {
             let file = eval_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
             let mut writer = eval_result!(file_helper.update(file, ::helper::writer::Mode::Modify, directory));
             writer.write(&vec![2u8; 10], 0);
-            directory = eval_result!(writer.close());
+            directory = eval_result!(writer.close()).0;
             let file = eval_option!(directory.find_file(&file_name), "File not found");
             let mut reader = file_helper.read(file);
             let size = reader.size();
@@ -170,7 +167,7 @@ mod test {
         }
         {// Update Metadata
             let file = eval_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
-            directory = eval_result!(file_helper.update_metadata(file, vec![12u8; 10], directory));
+            eval_result!(file_helper.update_metadata(file, vec![12u8; 10], &mut directory));
             let file = eval_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
             assert_eq!(*file.get_metadata().get_user_metadata(), vec![12u8; 10]);
         }

@@ -17,5 +17,7 @@
 
 /// FileMetadata
 pub mod file_metadata;
+/// DirectoryKey
+pub mod directory_key;
 /// DirectoryMetadata
 pub mod directory_metadata;

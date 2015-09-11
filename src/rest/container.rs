@@ -31,9 +31,8 @@ impl Container {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(client.clone());
         let directory = match container_info {
             Some(container_info) => {
-                let dir_info = container_info.convert_to_directory_info();
-                let metadata = dir_info.get_metadata();
-                try!(directory_helper.get(dir_info.get_key(), metadata.is_versioned(), metadata.get_access_level()))
+                let metadata = container_info.convert_to_directory_metadata();
+                try!(directory_helper.get(metadata.get_key()))
             },
             None => try!(directory_helper.get_user_root_directory_listing()),
         };
@@ -44,12 +43,10 @@ impl Container {
     }
 
     /// Creates a Container
-    pub fn create(&mut self, name: String, versioned: bool, access_level: ::AccessLevel) -> Result<::rest::Container, ::errors::NfsError> {
+    pub fn create(&mut self, name: String, versioned: bool, access_level: ::AccessLevel, metadata: Option<String>) -> Result<::rest::Container, ::errors::NfsError> {
         if name.is_empty() {
             return Err(::errors::NfsError::NameIsEmpty);
         }
-        // TODO add metadata support to containers
-        let metadata = None;
         let user_metadata = try!(self.validate_metadata(metadata));
         let tag_type = if versioned {
             ::VERSIONED_DIRECTORY_LISTING_TAG
@@ -62,7 +59,7 @@ impl Container {
                 let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
                 Ok(Container {
                     client: self.client.clone(),
-                    directory_listing: try!(directory_helper.create(name, tag_type, user_metadata, versioned, access_level, Some(&mut self.directory_listing))),
+                    directory_listing: try!(directory_helper.create(name, tag_type, user_metadata, versioned, access_level, Some(&mut self.directory_listing))).0,
                 })
             }
         }
@@ -75,7 +72,7 @@ impl Container {
 
     /// Return the unique id of the container
     pub fn get_info(&self) -> ::rest::ContainerInfo {
-        ::rest::ContainerInfo::convert_from_directory_info(self.directory_listing.get_info().clone())
+        ::rest::ContainerInfo::convert_from_directory_metadata(self.directory_listing.get_metadata().clone())
     }
 
     /// Returns the user metadata saved as String.
@@ -107,48 +104,40 @@ impl Container {
     /// Returns the list of child containers
     pub fn get_containers(&self) -> Vec<::rest::ContainerInfo> {
         self.directory_listing.get_sub_directories().iter().map(|info| {
-                ::rest::ContainerInfo::convert_from_directory_info(info.clone())
+                ::rest::ContainerInfo::convert_from_directory_metadata(info.clone())
             }).collect()
     }
 
-    // /// Updates the metadata of the container
-    // pub fn update_metadata(&mut self, metadata: Option<String>) -> Result<(), String>{
-    //     match self.validate_metadata(metadata) {
-    //         Ok(user_metadata) => {
-    //             self.directory_listing.get_mut_metadata().set_user_metadata(user_metadata);
-    //             let mut directory_helper = ::helper::DirectoryHelper::new(self.client.clone());
-    //             match directory_helper.update(&self.directory_listing) {
-    //                 Ok(_) => Ok(()),
-    //                 Err(_) => Err("Error".to_string()),
-    //             }
-    //         },
-    //         Err(err) => Err(err),
-    //     }
-    // }
+    /// Updates the metadata of the container
+    pub fn update_metadata(&mut self, metadata: Option<String>) -> Result<(), ::errors::NfsError>{
+        let user_metadata = try!(self.validate_metadata(metadata));
+        self.directory_listing.get_mut_metadata().set_user_metadata(user_metadata);
+        let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
+        try!(directory_helper.update(&self.directory_listing));
+        Ok(())
+    }
 
     /// Retrieves Versions for the container
     pub fn get_versions(&self) -> Result<Vec<[u8; 64]>, ::errors::NfsError> {
-        self.list_container_versions(self.directory_listing.get_key())
+        self.list_container_versions(self.directory_listing.get_key().get_id(), self.directory_listing.get_key().get_type_tag())
     }
 
     /// Retrieves Versions for the container being referred by the container_id
     pub fn get_container_versions(&self, container_info: &::rest::container_info::ContainerInfo) -> Result<Vec<[u8; 64]>, ::errors::NfsError> {
-        let directory_info = container_info.convert_to_directory_info();
-        self.list_container_versions(directory_info.get_key())
+        let directory_metadata = container_info.convert_to_directory_metadata();
+        self.list_container_versions(directory_metadata.get_id(), directory_metadata.get_type_tag())
     }
 
     /// Fetches the latest version of the child container.
     /// Can fetch a specific version of the Container by passing the corresponding VersionId.
     pub fn get_container(&mut self, container_info: &::rest::container_info::ContainerInfo, version: Option<[u8; 64]>) -> Result<Container, ::errors::NfsError> {
-        let dir_info = container_info.convert_to_directory_info();
+        let directory_metadata = container_info.convert_to_directory_metadata();
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         let dir_listing = match version {
-            Some(version_id) => try!(directory_helper.get_by_version(self.directory_listing.get_key(),
-                                                                     self.directory_listing.get_metadata().get_access_level(),
+            Some(version_id) => try!(directory_helper.get_by_version(directory_metadata.get_id(),
+                                                                     directory_metadata.get_access_level(),
                                                                      ::routing::NameType(version_id))),
-            None =>  try!(directory_helper.get(dir_info.get_key(),
-                                               dir_info.get_metadata().is_versioned(),
-                                               dir_info.get_metadata().get_access_level())),
+            None =>  try!(directory_helper.get(directory_metadata.get_key())),
         };
         Ok(Container {
             client: self.client.clone(),
@@ -159,7 +148,8 @@ impl Container {
    /// Deletes the child container
     pub fn delete_container(&mut self, name: &String) -> Result<(), ::errors::NfsError> {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-        directory_helper.delete(&mut self.directory_listing, name)
+        try!(directory_helper.delete(&mut self.directory_listing, name));
+        Ok(())
     }
 
     /// Creates a Blob within the container
@@ -181,7 +171,7 @@ impl Container {
         writer.write(data, 0);
         Ok(Container {
             client           : self.client.clone(),
-            directory_listing: try!(writer.close()),
+            directory_listing: try!(writer.close()).0,
         })
     }
 
@@ -213,39 +203,42 @@ impl Container {
     }
 
     /// Update the metadata of the Blob in the container
-    pub fn update_blob_metadata(&mut self, blob: ::rest::blob::Blob, metadata: Option<String>) ->Result<Container, ::errors::NfsError> {
+    /// Returns Updated parent container, if the parent container exists.
+    pub fn update_blob_metadata(&mut self, blob: ::rest::blob::Blob, metadata: Option<String>) ->Result<Option<Container>, ::errors::NfsError> {
         let user_metadata = try!(self.validate_metadata(metadata));
         let file = blob.convert_to_file();
         let file_helper = ::helper::file_helper::FileHelper::new(self.client.clone());
-        Ok(Container {
-            client           : self.client.clone(),
-            directory_listing: try!(file_helper.update_metadata(file.clone(), user_metadata, self.directory_listing.clone())),
-        })
+        if let Some(parent_directory_listing) = try!(file_helper.update_metadata(file.clone(), user_metadata, &mut self.directory_listing)) {
+            Ok(Some(Container {
+                client           : self.client.clone(),
+                directory_listing: parent_directory_listing,
+            }))
+        } else {
+            Ok(None)
+        }
     }
 
     /// Delete blob from the container
     pub fn delete_blob(&mut self, name: String) -> Result<(), ::errors::NfsError> {
         let file_helper = ::helper::file_helper::FileHelper::new(self.client.clone());
-        try!(file_helper.delete(name, &mut self.directory_listing));
+        let _ = try!(file_helper.delete(name, &mut self.directory_listing));
         Ok(())
     }
 
     /// Copies the latest blob version from the container to the specified destination container
     pub fn copy_blob(&mut self, blob_name: &String, to_container: &::rest::container_info::ContainerInfo) -> Result<(), ::errors::NfsError> {
-        let to_dir_info = to_container.convert_to_directory_info();
-        if self.directory_listing.get_key() == to_dir_info.get_key() {
+        let to_dir = to_container.convert_to_directory_metadata();
+        if self.directory_listing.get_key() == to_dir.get_key() {
             return Err(::errors::NfsError::DestinationAndSourceAreSame);
         }
         let file = try!(self.directory_listing.find_file(blob_name).ok_or(::errors::NfsError::NotFound));
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-        let mut destination = try!(directory_helper.get(to_dir_info.get_key(),
-                                                        to_dir_info.get_metadata().is_versioned(),
-                                                        to_dir_info.get_metadata().get_access_level()));
+        let mut destination = try!(directory_helper.get(to_dir.get_key()));
         if destination.find_file(blob_name).is_some() {
            return Err(::errors::NfsError::FileExistsInDestination);
         }
         destination.get_mut_files().push(file.clone());
-        try!(directory_helper.update(&destination));
+        let _ = try!(directory_helper.update(&destination));
         Ok(())
     }
 
@@ -261,9 +254,9 @@ impl Container {
         }
     }
 
-    fn list_container_versions(&self, dir_key: (&::routing::NameType, u64)) -> Result<Vec<[u8; 64]>, ::errors::NfsError> {
+    fn list_container_versions(&self, dir_id: &::routing::NameType, type_tag: u64) -> Result<Vec<[u8; 64]>, ::errors::NfsError> {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-        let versions = try!(directory_helper.get_versions(dir_key));
+        let versions = try!(directory_helper.get_versions(dir_id, type_tag));
         Ok(versions.iter().map(|v| v.0).collect())
     }
 
@@ -295,19 +288,19 @@ mod test {
         let client = get_client();
         let root_dir = eval_result!(Container::authorise(client.clone(), None));
         let root_dir_second = eval_result!(Container::authorise(client.clone(), None));
-        assert_eq!(*root_dir.get_info().convert_to_directory_info().get_key().0,
-                   *root_dir_second.get_info().convert_to_directory_info().get_key().0);
+        assert_eq!(*root_dir.get_info().convert_to_directory_metadata().get_key().get_id(),
+                   *root_dir_second.get_info().convert_to_directory_metadata().get_key().get_id());
 
         let root_dir_from_info = eval_result!(Container::authorise(client, Some(root_dir.get_info())));
-        assert_eq!(*root_dir.get_info().convert_to_directory_info().get_key().0,
-                   *root_dir_from_info.get_info().convert_to_directory_info().get_key().0);
+        assert_eq!(*root_dir.get_info().convert_to_directory_metadata().get_key().get_id(),
+                   *root_dir_from_info.get_info().convert_to_directory_metadata().get_key().get_id());
     }
 
     #[test]
     fn create_container() {
         let client = get_client();
         let mut container = Container::authorise(client.clone(), None).ok().unwrap();
-        eval_result!(container.create("Home".to_string(), true, ::AccessLevel::Private));
+        eval_result!(container.create("Home".to_string(), true, ::AccessLevel::Private, None));
 
         assert_eq!(container.get_containers().len(), 1);
         assert_eq!(container.get_containers()[0].get_name(), "Home");
@@ -319,7 +312,7 @@ mod test {
         let client = get_client();
         let dir_name = "Home".to_string();
         let mut container = eval_result!(Container::authorise(client, None));
-        eval_result!(container.create(dir_name.clone(), true, ::AccessLevel::Private));
+        eval_result!(container.create(dir_name.clone(), true, ::AccessLevel::Private, None));
 
         assert_eq!(container.get_containers().len(), 1);
         assert_eq!(container.get_containers()[0].get_name(), "Home");
@@ -333,7 +326,7 @@ mod test {
     fn create_update_delete_blob() {
         let client = get_client();
         let mut container = eval_result!(Container::authorise(client.clone(), None));
-        let mut home_container = eval_result!(container.create("Home".to_string(), true, ::AccessLevel::Private));
+        let mut home_container = eval_result!(container.create("Home".to_string(), true, ::AccessLevel::Private, None));
 
         assert_eq!(container.get_containers().len(), 1);
         assert_eq!(container.get_containers()[0].get_name(), "Home");
@@ -365,11 +358,11 @@ mod test {
             }
         }
         let metadata = "{\"purpose\": \"test\"}".to_string();
-        home_container = eval_result!(home_container.update_blob_metadata(blob, Some(metadata.clone())));
+        eval_result!(home_container.update_blob_metadata(blob, Some(metadata.clone())));
         let blob = eval_result!(home_container.get_blob("sample.txt".to_string()));
         assert_eq!(blob.get_metadata(), metadata);
 
-        let mut docs_container = eval_result!(container.create("Docs".to_string(), true, ::AccessLevel::Private));
+        let mut docs_container = eval_result!(container.create("Docs".to_string(), true, ::AccessLevel::Private, None));
         assert_eq!(docs_container.get_blobs().len(), 0);
         let _ = home_container.copy_blob(&"sample.txt".to_string(), &docs_container.get_info());
         docs_container = eval_result!(container.get_container(&docs_container.get_info(), None));

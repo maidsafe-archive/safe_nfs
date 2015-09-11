@@ -18,31 +18,51 @@
 /// Metadata about a File or a Directory
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct DirectoryMetadata {
+    key           : ::metadata::directory_key::DirectoryKey,
     name          : String,
     created_time  : ::time::Tm,
     modified_time : ::time::Tm,
     user_metadata : Vec<u8>,
-    versioned     : bool,
-    access_level  : ::AccessLevel,
-    parent_dir_key: Option<(::routing::NameType, u64)>,
+    parent_dir_key: Option<::metadata::directory_key::DirectoryKey>,
 }
 
 impl DirectoryMetadata {
     /// Create a new instance of Metadata
     pub fn new(name          : String,
-               user_metadata : Vec<u8>,
+               type_tag      : u64,
                versioned     : bool,
                access_level  : ::AccessLevel,
-               parent_dir_key: Option<(::routing::NameType, u64)>) -> DirectoryMetadata {
-        DirectoryMetadata {
+               user_metadata : Vec<u8>,
+               parent_dir_key: Option<::metadata::directory_key::DirectoryKey>) -> Result<DirectoryMetadata, ::errors::NfsError> {
+        let id = ::routing::NameType::new(try!(::safe_client::utility::generate_random_array_u8_64()));
+        Ok(DirectoryMetadata {
+            key           : ::metadata::directory_key::DirectoryKey::new(id, type_tag, versioned, access_level),
             name          : name,
             created_time  : ::time::now_utc(),
             modified_time : ::time::now_utc(),
             user_metadata : user_metadata,
-            versioned     : versioned,
-            access_level  : access_level,
             parent_dir_key: parent_dir_key,
-        }
+        })
+    }
+
+    /// Return the id
+    pub fn get_id(&self) -> &::routing::NameType {
+        self.key.get_id()
+    }
+
+    /// Return type_tag
+    pub fn get_type_tag(&self) -> u64 {
+        self.key.get_type_tag()
+    }
+
+    /// Returns true if the DirectoryListing is versioned, else returns false
+    pub fn is_versioned(&self) -> bool {
+        self.key.is_versioned()
+    }
+
+    /// Returns the AccessLevel of the DirectoryListing
+    pub fn get_access_level(&self) -> &::AccessLevel {
+        self.key.get_access_level()
     }
 
     /// Get time of creation
@@ -61,24 +81,19 @@ impl DirectoryMetadata {
         &self.name
     }
 
-    /// Returns the AccessLevel
-    pub fn get_access_level(&self) -> &::AccessLevel {
-        &self.access_level
+    /// Returns the DirectoryKey
+    pub fn get_key(&self) -> &::metadata::directory_key::DirectoryKey {
+        &self.key
     }
 
     /// Returns the Parent dir id
-    pub fn get_parent_dir_key(&self) -> Option<(&::routing::NameType, u64)> {
-        self.parent_dir_key.iter().next().map(|a| (&a.0, a.1))
+    pub fn get_parent_dir_key(&self) -> Option<&::metadata::directory_key::DirectoryKey> {
+        self.parent_dir_key.iter().next()
     }
 
     /// Get user setteble custom metadata
     pub fn get_user_metadata(&self) -> &Vec<u8> {
         &self.user_metadata
-    }
-
-    /// Returns whther the DirectoryListing is versioned or not
-    pub fn is_versioned(&self) -> bool {
-        self.versioned
     }
 
     /// Set name associated with the structure (file or directory) that this metadata is a part
@@ -104,16 +119,15 @@ impl ::rustc_serialize::Encodable for DirectoryMetadata {
         let created_time = self.created_time.to_timespec();
         let modified_time = self.modified_time.to_timespec();
 
-        e.emit_struct("DirectoryMetadata", 9, |e| {
-            try!(e.emit_struct_field("name",               0, |e| self.name.encode(e)));
-            try!(e.emit_struct_field("created_time_sec",   1, |e| created_time.sec.encode(e)));
-            try!(e.emit_struct_field("created_time_nsec",  2, |e| created_time.nsec.encode(e)));
-            try!(e.emit_struct_field("modified_time_sec",  3, |e| modified_time.sec.encode(e)));
-            try!(e.emit_struct_field("modified_time_nsec", 4, |e| modified_time.nsec.encode(e)));
-            try!(e.emit_struct_field("user_metadata",      5, |e| self.user_metadata.encode(e)));
-            try!(e.emit_struct_field("versioned",          6, |e| self.versioned.encode(e)));
-            try!(e.emit_struct_field("access_level",       7, |e| self.access_level.encode(e)));
-            try!(e.emit_struct_field("parent_dir_key",     8, |e| self.parent_dir_key.encode(e)));
+        e.emit_struct("DirectoryMetadata", 8, |e| {
+            try!(e.emit_struct_field("key",                0, |e| self.key.encode(e)));
+            try!(e.emit_struct_field("name",               1, |e| self.name.encode(e)));
+            try!(e.emit_struct_field("created_time_sec",   2, |e| created_time.sec.encode(e)));
+            try!(e.emit_struct_field("created_time_nsec",  3, |e| created_time.nsec.encode(e)));
+            try!(e.emit_struct_field("modified_time_sec",  4, |e| modified_time.sec.encode(e)));
+            try!(e.emit_struct_field("modified_time_nsec", 5, |e| modified_time.nsec.encode(e)));
+            try!(e.emit_struct_field("user_metadata",      6, |e| self.user_metadata.encode(e)));
+            try!(e.emit_struct_field("parent_dir_key",     7, |e| self.parent_dir_key.encode(e)));
 
             Ok(())
         })
@@ -122,21 +136,20 @@ impl ::rustc_serialize::Encodable for DirectoryMetadata {
 
 impl ::rustc_serialize::Decodable for DirectoryMetadata {
     fn decode<D: ::rustc_serialize::Decoder>(d: &mut D) -> Result<DirectoryMetadata, D::Error> {
-        d.read_struct("DirectoryMetadata", 9, |d| {
+        d.read_struct("DirectoryMetadata", 8, |d| {
             Ok(DirectoryMetadata {
-                name          : try!(d.read_struct_field("name", 0, |d| ::rustc_serialize::Decodable::decode(d))),
+                key           : try!(d.read_struct_field("key",  0, |d| ::rustc_serialize::Decodable::decode(d))),
+                name          : try!(d.read_struct_field("name", 1, |d| ::rustc_serialize::Decodable::decode(d))),
                 created_time  : ::time::at_utc(::time::Timespec {
-                                                   sec : try!(d.read_struct_field("created_time_sec",  1, |d| ::rustc_serialize::Decodable::decode(d))),
-                                                   nsec: try!(d.read_struct_field("created_time_nsec", 2, |d| ::rustc_serialize::Decodable::decode(d))),
+                                                   sec : try!(d.read_struct_field("created_time_sec",  2, |d| ::rustc_serialize::Decodable::decode(d))),
+                                                   nsec: try!(d.read_struct_field("created_time_nsec", 3, |d| ::rustc_serialize::Decodable::decode(d))),
                                                }),
                 modified_time : ::time::at_utc(::time::Timespec {
-                                                   sec : try!(d.read_struct_field("modified_time_sec",  3, |d| ::rustc_serialize::Decodable::decode(d))),
-                                                   nsec: try!(d.read_struct_field("modified_time_nsec", 4, |d| ::rustc_serialize::Decodable::decode(d))),
+                                                   sec : try!(d.read_struct_field("modified_time_sec",  4, |d| ::rustc_serialize::Decodable::decode(d))),
+                                                   nsec: try!(d.read_struct_field("modified_time_nsec", 5, |d| ::rustc_serialize::Decodable::decode(d))),
                                                }),
-                user_metadata : try!(d.read_struct_field("user_metadata",  5, |d| ::rustc_serialize::Decodable::decode(d))),
-                versioned     : try!(d.read_struct_field("versioned",      6, |d| ::rustc_serialize::Decodable::decode(d))),
-                access_level  : try!(d.read_struct_field("access_level",   7, |d| ::rustc_serialize::Decodable::decode(d))),
-                parent_dir_key: try!(d.read_struct_field("parent_dir_key", 8, |d| ::rustc_serialize::Decodable::decode(d))),
+                user_metadata : try!(d.read_struct_field("user_metadata",  6, |d| ::rustc_serialize::Decodable::decode(d))),
+                parent_dir_key: try!(d.read_struct_field("parent_dir_key", 7, |d| ::rustc_serialize::Decodable::decode(d))),
             })
         })
     }
@@ -147,12 +160,27 @@ mod test {
     use super::*;
 
     #[test]
-    fn serialise() {
-        let obj_before = DirectoryMetadata::new("hello.txt".to_string(),
-                                                "{mime: \"application/json\"}".to_string().into_bytes(),
-                                                true,
-                                                ::AccessLevel::Private,
-                                                None);
+    fn serialise_directorty_metadata_without_parent_directory() {
+        let obj_before = eval_result!(DirectoryMetadata::new("hello.txt".to_string(),
+                                                             99u64,
+                                                             true,
+                                                             ::AccessLevel::Private,
+                                                             "{mime: \"application/json\"}".to_string().into_bytes(),
+                                                             None));
+        let serialised_data = eval_result!(::safe_client::utility::serialise(&obj_before));
+        let obj_after = eval_result!(::safe_client::utility::deserialise(&serialised_data));
+        assert_eq!(obj_before, obj_after);
+    }
+
+    #[test]
+    fn serialise_directorty_metadata_with_parent_directory() {
+        let id = ::routing::NameType::new(eval_result!((::safe_client::utility::generate_random_array_u8_64())));
+        let obj_before = eval_result!(DirectoryMetadata::new("hello.txt".to_string(),
+                                                             99u64,
+                                                             true,
+                                                             ::AccessLevel::Private,
+                                                             "{mime: \"application/json\"}".to_string().into_bytes(),
+                                                             Some(::metadata::directory_key::DirectoryKey::new(id, 100u64, false, ::AccessLevel::Private))));
         let serialised_data = eval_result!(::safe_client::utility::serialise(&obj_before));
         let obj_after = eval_result!(::safe_client::utility::deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);
