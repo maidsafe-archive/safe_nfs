@@ -85,7 +85,7 @@ impl DirectoryListing {
                    access_level: &::AccessLevel,
                    data        : Vec<u8>) -> Result<DirectoryListing, ::errors::NfsError> {
         let decrypted_data_map = match *access_level {
-            ::AccessLevel::Private => try!(client.lock().unwrap().hybrid_decrypt(&data,
+            ::AccessLevel::Private => try!(eval_result!(client.lock()).hybrid_decrypt(&data,
                                                                                  Some(&DirectoryListing::generate_nonce(directory_id)))),
             ::AccessLevel::Public => data,
         };
@@ -105,7 +105,7 @@ impl DirectoryListing {
         se.write(&serialised_data, 0);
         let datamap = se.close();
         let serialised_data_map = try!(::safe_client::utility::serialise(&datamap));
-        Ok(try!(client.lock().unwrap().hybrid_encrypt(&serialised_data_map, Some(&DirectoryListing::generate_nonce(self.get_key().get_id())))))
+        Ok(try!(eval_result!(client.lock()).hybrid_encrypt(&serialised_data_map, Some(&DirectoryListing::generate_nonce(&self.get_key().get_id())))))
     }
 
     /// Get DirectoryInfo of sub_directory within a DirectoryListing.
@@ -146,7 +146,7 @@ impl DirectoryListing {
         } else {
             self.sub_directories.push(directory_metadata);
         }
-        self.get_mut_metadata().set_modified_time(modified_time);        
+        self.get_mut_metadata().set_modified_time(modified_time);
     }
 
     /// Remove a sub_directory
