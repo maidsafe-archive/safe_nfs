@@ -50,7 +50,7 @@ pub enum NfsError {
     // TODO remove not found
     /// General
     NotFound,
-    /// unexpected error
+    /// Unexpected error
     Unexpected(String),
 }
 
