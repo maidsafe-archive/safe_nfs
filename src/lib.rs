@@ -47,6 +47,7 @@ extern crate sodiumoxide;
 extern crate rustc_serialize;
 extern crate self_encryption;
 #[macro_use] extern crate safe_client;
+#[macro_use] extern crate log;
 
 /// Module for File struct
 pub mod file;

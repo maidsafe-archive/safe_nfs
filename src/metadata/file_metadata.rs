@@ -28,6 +28,7 @@ pub struct FileMetadata {
 impl FileMetadata {
     /// Create a new instance of FileMetadata
     pub fn new(name: String, user_metadata: Vec<u8>) -> FileMetadata {
+        debug!("Creating instance of file metadata ...");
         FileMetadata {
             name         : name,
             size         : 0,
@@ -88,6 +89,7 @@ impl FileMetadata {
 
 impl ::rustc_serialize::Encodable for FileMetadata {
     fn encode<E: ::rustc_serialize::Encoder>(&self, e: &mut E) -> Result<(), E::Error> {
+        debug!("File metadata encoding self ...");
         let created_time = self.created_time.to_timespec();
         let modified_time = self.modified_time.to_timespec();
 
@@ -107,6 +109,7 @@ impl ::rustc_serialize::Encodable for FileMetadata {
 
 impl ::rustc_serialize::Decodable for FileMetadata {
     fn decode<D: ::rustc_serialize::Decoder>(d: &mut D) -> Result<FileMetadata, D::Error> {
+        debug!("File metadata decoding self ...");
         d.read_struct("FileMetadata", 7, |d| {
             Ok(FileMetadata {
                 name         : try!(d.read_struct_field("name", 0, |d| ::rustc_serialize::Decodable::decode(d))),

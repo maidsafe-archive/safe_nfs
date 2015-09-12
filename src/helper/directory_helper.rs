@@ -23,6 +23,7 @@ pub struct DirectoryHelper {
 impl DirectoryHelper {
     /// Create a new DirectoryHelper instance
     pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>) -> DirectoryHelper {
+        debug!("Creating of a directory helper instance ...");
         DirectoryHelper {
             client: client,
         }
@@ -40,6 +41,7 @@ impl DirectoryHelper {
                   access_level    : ::AccessLevel,
                   parent_directory: Option<&mut ::directory_listing::DirectoryListing>) -> Result<(::directory_listing::DirectoryListing,
                                                                                                    Option<::directory_listing::DirectoryListing>), ::errors::NfsError> {
+        debug!("Creating a directory in the network ...");
         let directory = try!(::directory_listing::DirectoryListing::new(directory_name,
                                                                         tag_type,
                                                                         user_metadata,
@@ -51,7 +53,7 @@ impl DirectoryHelper {
 
         let structured_data = try!(self.save_directory_listing(&directory));
         self.client.lock().unwrap().put(::routing::data::Data::StructuredData(structured_data), None);
-
+        debug!("Created directory in the network.");
         if let Some(mut parent_directory) = parent_directory {
             parent_directory.upsert_sub_directory(directory.get_metadata().clone());
             Ok((directory, try!(self.update(parent_directory))))
@@ -66,6 +68,7 @@ impl DirectoryHelper {
     pub fn delete(&self,
                   parent_directory   : &mut ::directory_listing::DirectoryListing,
                   directory_to_delete: &String) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
+        debug!("Deleting a sub directory ...");
         try!(parent_directory.remove_sub_directory(directory_to_delete));
         parent_directory.get_mut_metadata().set_modified_time(::time::now_utc());
         self.update(&parent_directory)
@@ -75,6 +78,7 @@ impl DirectoryHelper {
     /// The parent_directory's parent is also updated and the same is returned
     /// Returns Option<parent_directory's parent>
     pub fn update(&self, directory: &::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
+        debug!("Updating parent directory listing in network ...");
         try!(self.update_directory_listing(directory));
         if let Some(parent_dir_key) = directory.get_metadata().get_parent_dir_key() {
             let mut parent_directory = try!(self.get(&parent_dir_key));
@@ -111,6 +115,7 @@ impl DirectoryHelper {
         let versioned = directory_key.is_versioned();
         let access_level = directory_key.get_access_level();
 
+        debug!("Getting directory listing by version ...");
         if versioned {
            let versions = try!(self.get_versions(directory_id, type_tag));
            let latest_version = versions.last().unwrap();
@@ -143,6 +148,7 @@ impl DirectoryHelper {
 
     /// Returns the Root Directory
     pub fn get_user_root_directory_listing(&self) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+        debug!("Retrieving root directory ...");
         let root_directory_id = self.client.lock().unwrap().get_user_root_directory_id().map(|id| { id.clone() });
         match  root_directory_id {
             Some(id) => {
@@ -165,6 +171,7 @@ impl DirectoryHelper {
     /// Creates the directory or the root or both if it doesn't find one.
     #[allow(dead_code)]
     pub fn get_configuration_directory_listing(&self, directory_name: String) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
+        debug!("Retrieving directory listing configurations ...");
         let config_dir_id = self.client.lock().unwrap().get_configuration_root_directory_id().map(|id| { id.clone() });
         let mut config_directory_listing = match config_dir_id {
             Some(id) => try!(self.get(&::metadata::directory_key::DirectoryKey::new(id, ::UNVERSIONED_DIRECTORY_LISTING_TAG, false, ::AccessLevel::Private))),
@@ -204,6 +211,7 @@ impl DirectoryHelper {
         let versioned = directory.get_key().is_versioned();
 
         if versioned {
+            debug!("Creating versioned structured data ...");
             let serialised_data = match *access_level {
                 ::AccessLevel::Private => try!(directory.encrypt(self.client.clone())),
                 ::AccessLevel::Public => try!(::safe_client::utility::serialise(&directory)),
@@ -219,6 +227,7 @@ impl DirectoryHelper {
                                                                                  Vec::new(),
                                                                                  &signing_key)))
         } else {
+            debug!("Creating unversion structured data ...");
             let private_key = try!(self.client.lock().unwrap().get_public_encryption_key()).clone();
             let secret_key = try!(self.client.lock().unwrap().get_secret_encryption_key()).clone();
             let nonce = ::directory_listing::DirectoryListing::generate_nonce(directory.get_key().get_id());
@@ -243,6 +252,7 @@ impl DirectoryHelper {
     }
 
     fn update_directory_listing(&self, directory: &::directory_listing::DirectoryListing) -> Result<(), ::errors::NfsError> {
+        debug!("Updating directory listing ...");
         let structured_data = try!(self.get_structured_data(directory.get_key().get_id(), directory.get_key().get_type_tag()));
 
         let signing_key = try!(self.client.lock().unwrap().get_secret_signing_key()).clone();
@@ -283,6 +293,7 @@ impl DirectoryHelper {
                                                                                 &signing_key,
                                                                                 encryption_keys))
         };
+        debug!("Directory updated.");
         self.client.lock().unwrap().post(::routing::data::Data::StructuredData(updated_structured_data), None);
         Ok(())
     }
@@ -301,6 +312,7 @@ impl DirectoryHelper {
     fn get_structured_data(&self,
                            id      : &::routing::NameType,
                            type_tag: u64) -> Result<::routing::structured_data::StructuredData, ::errors::NfsError> {
+        debug!("Getting structured data from the network ...");
         let request = ::routing::data::DataRequest::StructuredData(id.clone(), type_tag);
         let response_getter = self.client.lock().unwrap().get(request, None);
         match try!(response_getter.get()) {
@@ -313,6 +325,7 @@ impl DirectoryHelper {
     fn get_immutable_data(&self,
                           id       : ::routing::NameType,
                           data_type: ::routing::immutable_data::ImmutableDataType) -> Result<::routing::immutable_data::ImmutableData, ::errors::NfsError> {
+        debug!("Getting immutable data from the network ...");
         let request = ::routing::data::DataRequest::ImmutableData(id, data_type);
         let response_getter = self.client.lock().unwrap().get(request, None);
         match try!(response_getter.get()) {

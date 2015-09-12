@@ -38,6 +38,7 @@ impl Writer {
                mode            : Mode,
                parent_directory: ::directory_listing::DirectoryListing,
                file            : ::file::File) -> Writer {
+        debug!("Creating instance of writer ...");
         let datamap = match mode {
                 Mode::Modify    => file.get_datamap().clone(),
                 Mode::Overwrite => ::self_encryption::datamap::DataMap::None,
@@ -56,7 +57,7 @@ impl Writer {
         self.self_encryptor.write(data, position);
     }
 
-    /// close is invoked only after alll the data is completely written
+    /// close is invoked only after all the data is completely written
     /// The file/blob is saved only when the close is invoked.
     /// Returns the update DirectoryListing which owns the file and also the updated DirectoryListing of the file's parent
     /// Returns (files's parent_directory, Option<file's parent_directory's parent>)

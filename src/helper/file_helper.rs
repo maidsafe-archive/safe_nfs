@@ -23,6 +23,7 @@ pub struct FileHelper {
 impl FileHelper {
     /// Create a new FileHelper instance
     pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>) -> FileHelper {
+        debug!("Creating a filehelper instance ...");
         FileHelper {
             client: client,
         }
@@ -35,6 +36,7 @@ impl FileHelper {
                   name            : String,
                   user_metatdata  : Vec<u8>,
                   parent_directory: ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
+        debug!("Creating a file in a directory listing ...");
         match parent_directory.find_file(&name) {
             Some(_) => Err(::errors::NfsError::AlreadyExists),
             None => {
@@ -49,6 +51,7 @@ impl FileHelper {
     pub fn delete(&self,
                   file_name       : String,
                   parent_directory: &mut ::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
+         debug!("Deleting {delete_name} file from directory listing ...",delete_name = file_name);
          try!(parent_directory.remove_file(&file_name));
          let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
          directory_helper.update(&parent_directory)
@@ -61,6 +64,7 @@ impl FileHelper {
                   file            : ::file::File,
                   mode            : ::helper::writer::Mode,
                   parent_directory: ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
+        debug!("Updating file ...");
         let _ = try!(parent_directory.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         Ok(::helper::writer::Writer::new(self.client.clone(), mode, parent_directory, file))
     }
@@ -71,6 +75,7 @@ impl FileHelper {
                            mut file        : ::file::File,
                            user_metadata   : Vec<u8>,
                            parent_directory: &mut ::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
+        debug!("Updating file metadata ...");
         let _ = try!(parent_directory.find_file(file.get_name()).ok_or(::errors::NfsError::FileNotFound));
         file.get_mut_metadata().set_user_metadata(user_metadata);
         parent_directory.upsert_file(file);
@@ -82,6 +87,7 @@ impl FileHelper {
     pub fn get_versions(&self,
                         file            : &::file::File,
                         parent_directory: &::directory_listing::DirectoryListing) -> Result<Vec<::file::File>, ::errors::NfsError> {
+        debug!("Retrieving versions of file ...");
         let mut versions = Vec::<::file::File>::new();
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
 

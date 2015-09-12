@@ -31,6 +31,7 @@ impl DirectoryListing {
                versioned      : bool,
                access_level   : ::AccessLevel,
                parent_dir_key: Option<::metadata::directory_key::DirectoryKey>) -> Result<DirectoryListing, ::errors::NfsError> {
+        debug!("Creating directory listing ...");
         let meta_data = try!(::metadata::directory_metadata::DirectoryMetadata::new(name,
                                                                                     tag_type,
                                                                                     versioned,
@@ -84,6 +85,7 @@ impl DirectoryListing {
                    directory_id: &::routing::NameType,
                    access_level: &::AccessLevel,
                    data        : Vec<u8>) -> Result<DirectoryListing, ::errors::NfsError> {
+        debug!("Decrypting directory listing ...");
         let decrypted_data_map = match *access_level {
             ::AccessLevel::Private => try!(client.lock().unwrap().hybrid_decrypt(&data,
                                                                                  Some(&DirectoryListing::generate_nonce(directory_id)))),
@@ -100,6 +102,7 @@ impl DirectoryListing {
     /// Encrypts the directory listing
     pub fn encrypt(&self,
                    client: ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>) -> Result<Vec<u8>, ::errors::NfsError> {
+        debug!("Encrypting directory listing ...");
         let serialised_data = try!(::safe_client::utility::serialise(&self));
         let mut se = ::self_encryption::SelfEncryptor::new(::safe_client::SelfEncryptionStorage::new(client.clone()), ::self_encryption::datamap::DataMap::None);
         se.write(&serialised_data, 0);
