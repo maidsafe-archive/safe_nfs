@@ -149,12 +149,12 @@ impl DirectoryHelper {
                 self.get(&::metadata::directory_key::DirectoryKey::new(id, ::UNVERSIONED_DIRECTORY_LISTING_TAG, false, ::AccessLevel::Private))
             },
             None => {
-                let created_directory = try!(self.create(::ROOT_DIRECTORY_NAME.to_string(),
-                                                         ::UNVERSIONED_DIRECTORY_LISTING_TAG,
-                                                         Vec::new(),
-                                                         false,
-                                                         ::AccessLevel::Private,
-                                                         None)).0;
+                let (created_directory, _) = try!(self.create(::ROOT_DIRECTORY_NAME.to_string(),
+                                                              ::UNVERSIONED_DIRECTORY_LISTING_TAG,
+                                                              Vec::new(),
+                                                              false,
+                                                              ::AccessLevel::Private,
+                                                              None));
                 try!(eval_result!(self.client.lock()).set_user_root_directory_id(created_directory.get_key().get_id().clone()));
                 Ok(created_directory)
             }
@@ -163,18 +163,17 @@ impl DirectoryHelper {
 
     /// Returns the Configuration DirectoryListing from the configuration root folder
     /// Creates the directory or the root or both if it doesn't find one.
-    #[allow(dead_code)]
     pub fn get_configuration_directory_listing(&self, directory_name: String) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         let config_dir_id = eval_result!(self.client.lock()).get_configuration_root_directory_id().map(|id| { id.clone() });
         let mut config_directory_listing = match config_dir_id {
             Some(id) => try!(self.get(&::metadata::directory_key::DirectoryKey::new(id, ::UNVERSIONED_DIRECTORY_LISTING_TAG, false, ::AccessLevel::Private))),
             None => {
-                let created_directory = try!(self.create(::CONFIGURATION_DIRECTORY_NAME.to_string(),
+                let (created_directory, _) = try!(self.create(::CONFIGURATION_DIRECTORY_NAME.to_string(),
                                                          ::UNVERSIONED_DIRECTORY_LISTING_TAG,
                                                          Vec::new(),
                                                          false,
                                                          ::AccessLevel::Private,
-                                                         None)).0;
+                                                         None));
                 try!(eval_result!(self.client.lock()).set_configuration_root_directory_id(created_directory.get_key().get_id().clone()));
                 created_directory
             }
@@ -185,12 +184,13 @@ impl DirectoryHelper {
                 Ok(try!(self.get(&directory_key)))
             },
             None => {
-                Ok(try!(self.create(directory_name,
-                                    ::UNVERSIONED_DIRECTORY_LISTING_TAG,
-                                    Vec::new(),
-                                    false,
-                                    ::AccessLevel::Private,
-                                    Some(&mut config_directory_listing))).0)
+                let (directory, _) = try!(self.create(directory_name,
+                                                      ::UNVERSIONED_DIRECTORY_LISTING_TAG,
+                                                      Vec::new(),
+                                                      false,
+                                                      ::AccessLevel::Private,
+                                                      Some(&mut config_directory_listing)));
+                Ok(directory)
             },
         }
     }
@@ -332,24 +332,36 @@ mod test {
         let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
         let dir_helper = DirectoryHelper::new(client.clone());
         // Create a Directory
-        let mut directory = eval_result!(dir_helper.create("DirName".to_string(),
-                                                           ::VERSIONED_DIRECTORY_LISTING_TAG,
-                                                           Vec::new(),
-                                                           true,
-                                                           ::AccessLevel::Private,
-                                                           None)).0;
-        let fetched = eval_result!(dir_helper.get(directory.get_key()));
-        assert_eq!(directory, fetched);
+        let (mut directory, grand_parent) = eval_result!(dir_helper.create("DirName".to_string(),
+                                                                           ::VERSIONED_DIRECTORY_LISTING_TAG,
+                                                                           Vec::new(),
+                                                                           true,
+                                                                           ::AccessLevel::Private,
+                                                                           None));
+        assert!(grand_parent.is_none());
+        assert_eq!(directory, eval_result!(dir_helper.get(directory.get_key())));
         // Create a Child directory and update the parent_directory
-        let child_directory = eval_result!(dir_helper.create("Child".to_string(),
-                                                             ::VERSIONED_DIRECTORY_LISTING_TAG,
-                                                             Vec::new(),
-                                                             true,
-                                                             ::AccessLevel::Private,
-                                                             Some(&mut directory))).0;
+        let (mut child_directory, grand_parent) = eval_result!(dir_helper.create("Child".to_string(),
+                                                                                 ::VERSIONED_DIRECTORY_LISTING_TAG,
+                                                                                 Vec::new(),
+                                                                                 true,
+                                                                                 ::AccessLevel::Private,
+                                                                                 Some(&mut directory)));
+        assert!(grand_parent.is_none());
         // Assert whether parent is updated
         let parent = eval_result!(dir_helper.get(directory.get_key()));
         assert!(parent.find_sub_directory(child_directory.get_metadata().get_name()).is_some());
+
+        let (grand_child_directory, grand_parent) = eval_result!(dir_helper.create("Grand Child".to_string(),
+                                                                                   ::VERSIONED_DIRECTORY_LISTING_TAG,
+                                                                                   Vec::new(),
+                                                                                   true,
+                                                                                   ::AccessLevel::Private,
+                                                                                   Some(&mut child_directory)));
+        assert!(grand_parent.is_some());
+        let grand_parent = eval_option!(grand_parent, "Grand Parent Should be updated");
+        assert_eq!(*grand_parent.get_metadata().get_name(), *directory.get_metadata().get_name());
+        assert_eq!(*grand_parent.get_metadata().get_modified_time(), *grand_child_directory.get_metadata().get_created_time());
     }
 
     #[test]
@@ -359,12 +371,13 @@ mod test {
             let test_client = eval_result!(::safe_client::utility::test_utils::get_client());
             let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
             let dir_helper = DirectoryHelper::new(client.clone());
-            public_directory = eval_result!(dir_helper.create("PublicDirectory".to_string(),
-                                                              ::VERSIONED_DIRECTORY_LISTING_TAG,
-                                                              vec![2u8, 10],
-                                                              true,
-                                                              ::AccessLevel::Public,
-                                                              None)).0;
+            let (directory, _) = eval_result!(dir_helper.create("PublicDirectory".to_string(),
+                                                                ::VERSIONED_DIRECTORY_LISTING_TAG,
+                                                                vec![2u8, 10],
+                                                                true,
+                                                                ::AccessLevel::Public,
+                                                                None));
+            public_directory = directory;
         }
         {
             let test_client = eval_result!(::safe_client::utility::test_utils::get_client());
@@ -382,12 +395,13 @@ mod test {
             let test_client = eval_result!(::safe_client::utility::test_utils::get_client());
             let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
             let dir_helper = DirectoryHelper::new(client.clone());
-            public_directory = eval_result!(dir_helper.create("PublicDirectory".to_string(),
-                                                              ::UNVERSIONED_DIRECTORY_LISTING_TAG,
-                                                              vec![2u8, 10],
-                                                              false,
-                                                              ::AccessLevel::Public,
-                                                              None)).0;
+            let (directory, _) = eval_result!(dir_helper.create("PublicDirectory".to_string(),
+                                                                ::UNVERSIONED_DIRECTORY_LISTING_TAG,
+                                                                vec![2u8, 10],
+                                                                false,
+                                                                ::AccessLevel::Public,
+                                                                None));
+            public_directory = directory;
         }
         {
             let test_client = eval_result!(::safe_client::utility::test_utils::get_client());
@@ -405,12 +419,12 @@ mod test {
         let dir_helper = DirectoryHelper::new(client.clone());
 
         let mut root_dir = eval_result!(dir_helper.get_user_root_directory_listing());
-        let created_dir = eval_result!(dir_helper.create("DirName".to_string(),
-                                                         ::VERSIONED_DIRECTORY_LISTING_TAG,
-                                                         Vec::new(),
-                                                         true,
-                                                         ::AccessLevel::Private,
-                                                         Some(&mut root_dir))).0;
+        let (created_dir, _) = eval_result!(dir_helper.create("DirName".to_string(),
+                                                              ::VERSIONED_DIRECTORY_LISTING_TAG,
+                                                              Vec::new(),
+                                                              true,
+                                                              ::AccessLevel::Private,
+                                                              Some(&mut root_dir)));
         let root_dir = eval_result!(dir_helper.get_user_root_directory_listing());
         assert!(root_dir.find_sub_directory(created_dir.get_metadata().get_name()).is_some());
     }
@@ -433,12 +447,12 @@ mod test {
         let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
         let dir_helper = DirectoryHelper::new(client.clone());
 
-        let mut dir_listing = eval_result!(dir_helper.create("DirName2".to_string(),
-                                                             ::VERSIONED_DIRECTORY_LISTING_TAG,
-                                                             Vec::new(),
-                                                             true,
-                                                             ::AccessLevel::Private,
-                                                             None)).0;
+        let (mut dir_listing, _) = eval_result!(dir_helper.create("DirName2".to_string(),
+                                                                  ::VERSIONED_DIRECTORY_LISTING_TAG,
+                                                                  Vec::new(),
+                                                                  true,
+                                                                  ::AccessLevel::Private,
+                                                                  None));
 
         let mut versions = eval_result!(dir_helper.get_versions(dir_listing.get_key().get_id(), dir_listing.get_key().get_type_tag()));
         assert_eq!(versions.len(), 1);
@@ -459,4 +473,48 @@ mod test {
                                                                      versions[0].clone()));
         assert_eq!(*rxd_dir_listing.get_metadata().get_name(), "DirName2".to_string());
     }
+
+    #[test]
+    fn delete_directory() {
+        let test_client = eval_result!(::safe_client::utility::test_utils::get_client());
+        let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
+        let dir_helper = DirectoryHelper::new(client.clone());
+        // Create a Directory
+        let (mut directory, grand_parent) = eval_result!(dir_helper.create("DirName".to_string(),
+                                                                           ::VERSIONED_DIRECTORY_LISTING_TAG,
+                                                                           Vec::new(),
+                                                                           true,
+                                                                           ::AccessLevel::Private,
+                                                                           None));
+        assert!(grand_parent.is_none());
+        assert_eq!(directory, eval_result!(dir_helper.get(directory.get_key())));
+        // Create a Child directory and update the parent_directory
+        let (mut child_directory, grand_parent) = eval_result!(dir_helper.create("Child".to_string(),
+                                                                                 ::VERSIONED_DIRECTORY_LISTING_TAG,
+                                                                                 Vec::new(),
+                                                                                 true,
+                                                                                 ::AccessLevel::Private,
+                                                                                 Some(&mut directory)));
+        assert!(grand_parent.is_none());
+        // Assert whether parent is updated
+        let parent = eval_result!(dir_helper.get(directory.get_key()));
+        assert!(parent.find_sub_directory(child_directory.get_metadata().get_name()).is_some());
+
+        let (grand_child_directory, grand_parent) = eval_result!(dir_helper.create("Grand Child".to_string(),
+                                                                                   ::VERSIONED_DIRECTORY_LISTING_TAG,
+                                                                                   Vec::new(),
+                                                                                   true,
+                                                                                   ::AccessLevel::Private,
+                                                                                   Some(&mut child_directory)));
+
+        eval_option!(grand_parent, "Grand Parent Should be updated");
+
+        let delete_result = eval_result!(dir_helper.delete(&mut child_directory, grand_child_directory.get_metadata().get_name()));
+        let updated_grand_parent = eval_option!(delete_result, "Parent directory should be returned");
+        assert_eq!(*updated_grand_parent.get_metadata().get_id(), *directory.get_metadata().get_id());
+
+        let delete_result = eval_result!(dir_helper.delete(&mut directory, child_directory.get_metadata().get_name()));
+        assert!(delete_result.is_none());
+    }
+
 }

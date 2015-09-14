@@ -118,18 +118,19 @@ mod test {
     fn file_crud() {
         let client = get_client();
         let dir_helper = ::helper::directory_helper::DirectoryHelper::new(client.clone());
-        let mut directory = eval_result!(dir_helper.create("DirName".to_string(),
-                                                           ::VERSIONED_DIRECTORY_LISTING_TAG,
-                                                           Vec::new(),
-                                                           true,
-                                                           ::AccessLevel::Private,
-                                                           None)).0;
+        let (mut directory, _) = eval_result!(dir_helper.create("DirName".to_string(),
+                                                                ::VERSIONED_DIRECTORY_LISTING_TAG,
+                                                                Vec::new(),
+                                                                true,
+                                                                ::AccessLevel::Private,
+                                                                None));
         let file_helper = ::helper::file_helper::FileHelper::new(client.clone());
         let file_name = "hello.txt".to_string();
         { // create
             let mut writer = eval_result!(file_helper.create(file_name.clone(), Vec::new(), directory));
             writer.write(&vec![0u8; 100], 0);
-            directory = eval_result!(writer.close()).0;
+            let (updated_directory, _) = eval_result!(writer.close());
+            directory = updated_directory;
             assert!(directory.find_file(&file_name).is_some());
         }
         {// read
@@ -142,7 +143,8 @@ mod test {
             let file = eval_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
             let mut writer = eval_result!(file_helper.update(file, ::helper::writer::Mode::Overwrite, directory));
             writer.write(&vec![1u8; 50], 0);
-            directory = eval_result!(writer.close()).0;
+            let (updated_directory, _) = eval_result!(writer.close());
+            directory = updated_directory;
             let file = eval_option!(directory.find_file(&file_name), "File not found");
             let mut reader = file_helper.read(file);
             let size = reader.size();
@@ -152,7 +154,8 @@ mod test {
             let file = eval_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
             let mut writer = eval_result!(file_helper.update(file, ::helper::writer::Mode::Modify, directory));
             writer.write(&vec![2u8; 10], 0);
-            directory = eval_result!(writer.close()).0;
+            let (updated_directory, _) = eval_result!(writer.close());
+            directory = updated_directory;
             let file = eval_option!(directory.find_file(&file_name), "File not found");
             let mut reader = file_helper.read(file);
             let size = reader.size();
