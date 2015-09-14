@@ -38,7 +38,7 @@ impl FileHelper {
         match parent_directory.find_file(&name) {
             Some(_) => Err(::errors::NfsError::AlreadyExists),
             None => {
-                let file = ::file::File::new(::metadata::file_metadata::FileMetadata::new(name, user_metatdata), ::self_encryption::datamap::DataMap::None);
+                let file = try!(::file::File::new(::metadata::file_metadata::FileMetadata::new(name, user_metatdata), ::self_encryption::datamap::DataMap::None));
                 Ok(::helper::writer::Writer::new(self.client.clone(), ::helper::writer::Mode::Overwrite, parent_directory, file))
             },
         }

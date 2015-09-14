@@ -98,7 +98,6 @@ impl DirectoryMetadata {
 
     /// Set name associated with the structure (file or directory) that this metadata is a part
     /// of
-    #[allow(dead_code)]
     pub fn set_name(&mut self, name: String) {
         self.name = name;
     }
@@ -175,14 +174,36 @@ mod test {
     #[test]
     fn serialise_directorty_metadata_with_parent_directory() {
         let id = ::routing::NameType::new(eval_result!((::safe_client::utility::generate_random_array_u8_64())));
+        let parent_directory = ::metadata::directory_key::DirectoryKey::new(id, 100u64, false, ::AccessLevel::Private);
         let obj_before = eval_result!(DirectoryMetadata::new("hello.txt".to_string(),
                                                              99u64,
                                                              true,
                                                              ::AccessLevel::Private,
                                                              "{mime: \"application/json\"}".to_string().into_bytes(),
-                                                             Some(::metadata::directory_key::DirectoryKey::new(id, 100u64, false, ::AccessLevel::Private))));
+                                                             Some(parent_directory.clone())));
         let serialised_data = eval_result!(::safe_client::utility::serialise(&obj_before));
-        let obj_after = eval_result!(::safe_client::utility::deserialise(&serialised_data));
-        assert_eq!(obj_before, obj_after);
+        let obj_after: DirectoryMetadata = eval_result!(::safe_client::utility::deserialise(&serialised_data));
+        assert_eq!(*eval_option!(obj_after.get_parent_dir_key(), "Directory should not be None"), parent_directory);
+    }
+
+    #[test]
+    fn update_using_setters() {
+        let id = ::routing::NameType::new(eval_result!((::safe_client::utility::generate_random_array_u8_64())));
+        let modified_time = ::time::now_utc();
+        let mut obj_before = eval_result!(DirectoryMetadata::new("hello.txt".to_string(),
+                                                             99u64,
+                                                             true,
+                                                             ::AccessLevel::Private,
+                                                             Vec::new(),
+                                                             Some(::metadata::directory_key::DirectoryKey::new(id, 100u64, false, ::AccessLevel::Private))));
+        let user_metadata = "{mime: \"application/json\"}".to_string().into_bytes();
+        obj_before.set_user_metadata(user_metadata.clone());
+        obj_before.set_modified_time(modified_time.clone());
+        obj_before.set_name("index.txt".to_string());
+        let serialised_data = eval_result!(::safe_client::utility::serialise(&obj_before));
+        let obj_after: DirectoryMetadata = eval_result!(::safe_client::utility::deserialise(&serialised_data));
+        assert_eq!(user_metadata, *obj_after.get_user_metadata());
+        assert_eq!(modified_time, *obj_after.get_modified_time());
+        assert_eq!("index.txt".to_string(), *obj_after.get_name());
     }
 }

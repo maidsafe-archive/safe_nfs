@@ -99,7 +99,7 @@ impl DirectoryHelper {
                           version     : ::routing::NameType) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
           let immutable_data = try!(self.get_immutable_data(version, ::routing::immutable_data::ImmutableDataType::Normal));
           match *access_level {
-              ::AccessLevel::Private => ::directory_listing::DirectoryListing::decrypt(self.client.clone(), directory_id, access_level, immutable_data.value().clone()),
+              ::AccessLevel::Private => ::directory_listing::DirectoryListing::decrypt(self.client.clone(), directory_id, immutable_data.value().clone()),
               ::AccessLevel::Public  => Ok(try!(::safe_client::utility::deserialise(immutable_data.value()))),
           }
     }

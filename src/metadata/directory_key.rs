@@ -54,3 +54,29 @@ impl DirectoryKey {
     }
 
 }
+
+#[cfg(test)]
+mod test {
+
+    /// Should be able to serialise & deserialise the DirectoryKey
+    #[test]
+    fn serailise_and_deserialise_directory_key() {
+        let id = ::routing::NameType(eval_result!(::safe_client::utility::generate_random_array_u8_64()));
+        let tag = 10u64;
+        let versioned = false;
+        let access_level = ::AccessLevel::Private;
+
+        let directory_key = ::metadata::directory_key::DirectoryKey::new(id.clone(),
+                                                                         tag,
+                                                                         versioned,
+                                                                         access_level.clone());
+
+        let serialised = eval_result!(::safe_client::utility::serialise(&directory_key));
+        let deserilaised_key: ::metadata::directory_key::DirectoryKey = eval_result!(::safe_client::utility::deserialise(&serialised));
+        assert_eq!(*deserilaised_key.get_id(), id);
+        assert_eq!(*deserilaised_key.get_access_level(), access_level);
+        assert_eq!(deserilaised_key.is_versioned(), versioned);
+        assert_eq!(deserilaised_key.get_type_tag(), tag);
+    }
+
+}
