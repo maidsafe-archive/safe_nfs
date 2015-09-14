@@ -40,7 +40,7 @@ cargo test
 ## TODO
 
 ### [0.1.1]
-- [ ] [MAID-1305](https://maidsafe.atlassian.net/browse/MAID-1305) Remove Arc<Mutex<Client>> from Directory Helper
+- [ ] [MAID-1305](https://maidsafe.atlassian.net/browse/MAID-1305) Expand test cases
 - [X] [MAID-1306](https://maidsafe.atlassian.net/browse/MAID-1306) Remove all unwraps() AND Check for Ok(try!( and see if really required (ie., for error conversion etc)
 - [X] [MAID-1307](https://maidsafe.atlassian.net/browse/MAID-1307) Address the TODO’s and make temporary fixes as permanent
 - [X] [MAID-1308](https://maidsafe.atlassian.net/browse/MAID-1308) Test cases for addressed TODO's and permanent fixes
