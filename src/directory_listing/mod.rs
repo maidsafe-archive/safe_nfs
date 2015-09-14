@@ -177,7 +177,7 @@ mod test {
     fn serialise_and_deserialise_directory_listing() {
         let obj_before = eval_result!(DirectoryListing::new("Home".to_string(),
                                                             10,
-                                                            "{mime:\"application/json\"}".to_string().into_bytes(),
+                                                            "some metadata about the directory".to_string().into_bytes(),
                                                             true,
                                                             ::AccessLevel::Private,
                                                             None));
@@ -207,11 +207,11 @@ mod test {
     #[test]
     fn find_upsert_remove_file() {
         let mut directory_listing = eval_result!(DirectoryListing::new("Home".to_string(),
-                                                                   10,
-                                                                   Vec::new(),
-                                                                   true,
-                                                                   ::AccessLevel::Private,
-                                                                   None));
+                                                                       10,
+                                                                       Vec::new(),
+                                                                       true,
+                                                                       ::AccessLevel::Private,
+                                                                       None));
         let mut file = eval_result!(::file::File::new(::metadata::file_metadata::FileMetadata::new("index.html".to_string(), Vec::new()),
                                                       ::self_encryption::datamap::DataMap::None));
         assert!(directory_listing.find_file(file.get_name()).is_none());
@@ -226,8 +226,8 @@ mod test {
         directory_listing.upsert_file(file2.clone());
         assert_eq!(directory_listing.get_files().len(), 2);
 
-        eval_option!(directory_listing.find_file(file.get_name()), "File is not found");
-        eval_option!(directory_listing.find_file(file2.get_name()), "File is not found");
+        eval_option!(directory_listing.find_file(file.get_name()), "File not found");
+        eval_option!(directory_listing.find_file(file2.get_name()), "File not found");
 
         eval_result!(directory_listing.remove_file(file.get_metadata().get_name()));
         assert!(directory_listing.find_file(file.get_name()).is_none());
@@ -236,6 +236,48 @@ mod test {
 
         eval_result!(directory_listing.remove_file(file2.get_metadata().get_name()));
         assert_eq!(directory_listing.get_files().len(), 0);
+    }
+
+    #[test]
+    fn find_upsert_remove_directory() {
+        let mut directory_listing = eval_result!(DirectoryListing::new("Home".to_string(),
+                                                                       10,
+                                                                       Vec::new(),
+                                                                       true,
+                                                                       ::AccessLevel::Private,
+                                                                       None));
+        let mut sub_directory = eval_result!(DirectoryListing::new("Child one".to_string(),
+                                                                   10,
+                                                                   Vec::new(),
+                                                                   true,
+                                                                   ::AccessLevel::Private,
+                                                                   None));
+        assert!(directory_listing.find_sub_directory(sub_directory.get_metadata().get_name()).is_none());
+        directory_listing.upsert_sub_directory(sub_directory.get_metadata().clone());
+        assert!(directory_listing.find_sub_directory(sub_directory.get_metadata().get_name()).is_some());
+
+        sub_directory.get_mut_metadata().set_name("Child_1".to_string());
+        directory_listing.upsert_sub_directory(sub_directory.get_metadata().clone());
+        assert_eq!(directory_listing.get_sub_directories().len(), 1);
+        let sub_directory_two = eval_result!(DirectoryListing::new("Child Two".to_string(),
+                                                                   10,
+                                                                   Vec::new(),
+                                                                   true,
+                                                                   ::AccessLevel::Private,
+                                                                   None));
+        directory_listing.upsert_sub_directory(sub_directory_two.get_metadata().clone());
+        assert_eq!(directory_listing.get_sub_directories().len(), 2);
+
+        eval_option!(directory_listing.find_sub_directory(sub_directory.get_metadata().get_name()), "Directory not found");
+        eval_option!(directory_listing.find_sub_directory(sub_directory_two.get_metadata().get_name()), "Directory not found");
+
+        eval_result!(directory_listing.remove_sub_directory(sub_directory.get_metadata().get_name()));
+        assert!(directory_listing.find_sub_directory(sub_directory.get_metadata().get_name()).is_none());
+        assert!(directory_listing.find_sub_directory(sub_directory_two.get_metadata().get_name()).is_some());
+        assert_eq!(directory_listing.get_sub_directories().len(), 1);
+
+        eval_result!(directory_listing.remove_sub_directory(sub_directory_two.get_metadata().get_name()));
+        assert_eq!(directory_listing.get_sub_directories().len(), 0);
     }
 
 }

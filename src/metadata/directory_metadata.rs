@@ -164,7 +164,7 @@ mod test {
                                                              99u64,
                                                              true,
                                                              ::AccessLevel::Private,
-                                                             "{mime: \"application/json\"}".to_string().into_bytes(),
+                                                             Vec::new(),
                                                              None));
         let serialised_data = eval_result!(::safe_client::utility::serialise(&obj_before));
         let obj_after = eval_result!(::safe_client::utility::deserialise(&serialised_data));
@@ -179,7 +179,7 @@ mod test {
                                                              99u64,
                                                              true,
                                                              ::AccessLevel::Private,
-                                                             "{mime: \"application/json\"}".to_string().into_bytes(),
+                                                             "Some user metadata".to_string().into_bytes(),
                                                              Some(parent_directory.clone())));
         let serialised_data = eval_result!(::safe_client::utility::serialise(&obj_before));
         let obj_after: DirectoryMetadata = eval_result!(::safe_client::utility::deserialise(&serialised_data));
@@ -191,11 +191,11 @@ mod test {
         let id = ::routing::NameType::new(eval_result!((::safe_client::utility::generate_random_array_u8_64())));
         let modified_time = ::time::now_utc();
         let mut obj_before = eval_result!(DirectoryMetadata::new("hello.txt".to_string(),
-                                                             99u64,
-                                                             true,
-                                                             ::AccessLevel::Private,
-                                                             Vec::new(),
-                                                             Some(::metadata::directory_key::DirectoryKey::new(id, 100u64, false, ::AccessLevel::Private))));
+                                                                 99u64,
+                                                                 true,
+                                                                 ::AccessLevel::Private,
+                                                                 Vec::new(),
+                                                                 Some(::metadata::directory_key::DirectoryKey::new(id, 100u64, false, ::AccessLevel::Private))));
         let user_metadata = "{mime: \"application/json\"}".to_string().into_bytes();
         obj_before.set_user_metadata(user_metadata.clone());
         obj_before.set_modified_time(modified_time.clone());
