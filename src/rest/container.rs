@@ -24,8 +24,11 @@ pub struct Container {
 }
 
 impl Container {
-    /// Authorises the directory access and returns the Container, if authorisation is successful.
-    /// Operations can be performed only after the authorisation is successful.
+
+    /// Authorises the directory access.
+    /// This sevrves as the initial access point of the Rest API. Operations can only be performed on a Container object.
+    /// If the ContainerInfo parameter is None, then the user's root directory is returned.
+    /// Returns the Container, if authorisation is successful.
     pub fn authorise(client        : ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>,
                      container_info: Option<::rest::ContainerInfo>) -> Result<Container, ::errors::NfsError> {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(client.clone());
@@ -42,8 +45,25 @@ impl Container {
         })
     }
 
-    /// Creates a Container
-    pub fn create(&mut self, name: String, versioned: bool, access_level: ::AccessLevel, metadata: Option<String>) -> Result<::rest::Container, ::errors::NfsError> {
+    /// This functions is incoked to create a new container
+    /// Say there are nested containers,
+    ///     Home
+    ///       -  Pictures
+    /// In the above example, `Home` is top level container and `Pictures` container is a child of `Home`
+    /// When a new Conatiner `Tour` is created within `Pictures`, the following updates are carried out.
+    ///     1. A new container is created
+    ///     2. The metadata of the new Container (`Tour`) is added to the list of containers of `Pictures`.
+    ///        Modified time of `Tour` Container is also updated.
+    ///     3. Metadata of `Tour` is updated in `Home`.
+    /// Thus when a Container is created, the function returns the created Container and also the parent of the Container in which the new Container is being returned.
+    /// Based on the above example, when the Container `Tour` is created in `Pictures`, this function would return a tpule of (Tour, Home)
+    /// In case if there is no parent for the Container then `None` is returned.
+    /// Returns tuple of created_container & parent_container of the the current
+    pub fn create(&mut self,
+                  name: String,
+                  versioned: bool,
+                  access_level: ::AccessLevel,
+                  metadata: Option<String>) -> Result<(::rest::Container, Option<::rest::Container>), ::errors::NfsError> {
         if name.is_empty() {
             return Err(::errors::NfsError::NameIsEmpty);
         }
@@ -57,17 +77,35 @@ impl Container {
             Some(_) => Err(::errors::NfsError::AlreadyExists),
             None => {
                 let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-                Ok(Container {
+                let (created_directory, grand_parent) = try!(directory_helper.create(name,
+                                                                                     tag_type,
+                                                                                     user_metadata,
+                                                                                     versioned,
+                                                                                     access_level,
+                                                                                     Some(&mut self.directory_listing)));
+                let created_container = Container {
                     client: self.client.clone(),
-                    directory_listing: try!(directory_helper.create(name, tag_type, user_metadata, versioned, access_level, Some(&mut self.directory_listing))).0,
-                })
+                    directory_listing: created_directory,
+                };
+                let parent = grand_parent.iter().next().map(|parent_directory| {
+                    Container {
+                        client: self.client.clone(),
+                        directory_listing: parent_directory.clone(),
+                    }
+                });
+                Ok((created_container, parent))
             }
         }
     }
 
-    /// Returns the Created time of the container
+    /// Returns the created time of the container
     pub fn get_created_time(&self) -> &::time::Tm {
         self.directory_listing.get_metadata().get_created_time()
+    }
+
+    /// Returns the last modified time of the container
+    pub fn get_modified_time(&self) -> &::time::Tm {
+        self.directory_listing.get_metadata().get_modified_time()
     }
 
     /// Return the unique id of the container
@@ -109,12 +147,17 @@ impl Container {
     }
 
     /// Updates the metadata of the container
-    pub fn update_metadata(&mut self, metadata: Option<String>) -> Result<(), ::errors::NfsError>{
+    pub fn update_metadata(&mut self, metadata: Option<String>) -> Result<Option<::rest::container::Container>, ::errors::NfsError>{
         let user_metadata = try!(self.validate_metadata(metadata));
         self.directory_listing.get_mut_metadata().set_user_metadata(user_metadata);
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-        try!(directory_helper.update(&self.directory_listing));
-        Ok(())
+        let parent_directory = try!(directory_helper.update(&self.directory_listing));
+        Ok(parent_directory.iter().next().map(|parent_directory| {
+            Container {
+                client: self.client.clone(),
+                directory_listing: parent_directory.clone(),
+            }
+        }))
     }
 
     /// Retrieves Versions for the container
