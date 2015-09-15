@@ -170,11 +170,11 @@ impl DirectoryHelper {
         let config_dir_id = eval_result!(self.client.lock()).get_configuration_root_directory_id().map(|id| { id.clone() });
         let mut config_directory_listing = match config_dir_id {
             Some(id) => {
-                debug!("Retrieving configuration root directory at id {:?} ...", id);
+                debug!("Retrieving root configuration directory at id {:?} ...", id);
                 try!(self.get(&::metadata::directory_key::DirectoryKey::new(id, ::UNVERSIONED_DIRECTORY_LISTING_TAG, false, ::AccessLevel::Private)))
             },
             None => {
-                debug!("Creating root directory ...");
+                debug!("Creating root configuration directory ...");
                 let created_directory = try!(self.create(::CONFIGURATION_DIRECTORY_NAME.to_string(),
                                                          ::UNVERSIONED_DIRECTORY_LISTING_TAG,
                                                          Vec::new(),
@@ -192,7 +192,7 @@ impl DirectoryHelper {
                 Ok(try!(self.get(&directory_key)))
             },
             None => {
-                debug!("Creating new directory {:?} in root directory ...", directory_name);
+                debug!("Creating new directory {:?} in root configuration directory ...", directory_name);
                 Ok(try!(self.create(directory_name,
                                     ::UNVERSIONED_DIRECTORY_LISTING_TAG,
                                     Vec::new(),
