@@ -112,9 +112,23 @@ impl DirectoryListing {
 
     /// Get DirectoryInfo of sub_directory within a DirectoryListing.
     /// Returns the Option<DirectoryInfo> for the directory_name from the DirectoryListing
+    pub fn find_file_by_id(&self,
+                           id: &::routing::NameType) -> Option<&::file::File> {
+        self.get_files().iter().find(|file| *file.get_id() == *id)
+    }
+
+    /// Get DirectoryInfo of sub_directory within a DirectoryListing.
+    /// Returns the Option<DirectoryInfo> for the directory_name from the DirectoryListing
     pub fn find_sub_directory(&self,
                               directory_name: &String) -> Option<&::metadata::directory_metadata::DirectoryMetadata> {
         self.get_sub_directories().iter().find(|info| *info.get_name() == *directory_name)
+    }
+
+    /// Get DirectoryInfo of sub_directory within a DirectoryListing.
+    /// Returns the Option<DirectoryInfo> for the directory_name from the DirectoryListing
+    pub fn find_sub_directory_by_id(&self,
+                                    id: &::routing::NameType) -> Option<&::metadata::directory_metadata::DirectoryMetadata> {
+        self.get_sub_directories().iter().find(|info| *info.get_id() == *id)
     }
 
     /// If file is present in the DirectoryListing then replace it else insert it
@@ -129,7 +143,7 @@ impl DirectoryListing {
         } else {
             self.files.push(file);
         }
-        self.get_mut_metadata().set_modified_time(modified_time);
+        self.get_mut_metadata().set_modified_time(modified_time)
     }
 
     /// If DirectoryMetadata is present in the sub_directories of DirectoryListing then replace it else insert it

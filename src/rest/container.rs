@@ -204,11 +204,12 @@ impl Container {
 
     /// Update the metadata of the Blob in the container
     /// Returns Updated parent container, if the parent container exists.
-    pub fn update_blob_metadata(&mut self, blob: ::rest::blob::Blob, metadata: Option<String>) ->Result<Option<Container>, ::errors::NfsError> {
+    pub fn update_blob_metadata(&mut self, mut blob: ::rest::blob::Blob, metadata: Option<String>) ->Result<Option<Container>, ::errors::NfsError> {
         let user_metadata = try!(self.validate_metadata(metadata));
-        let file = blob.convert_to_file();
         let file_helper = ::helper::file_helper::FileHelper::new(self.client.clone());
-        if let Some(parent_directory_listing) = try!(file_helper.update_metadata(file.clone(), user_metadata, &mut self.directory_listing)) {
+        let mut file = blob.convert_to_mut_file();
+        file.get_mut_metadata().set_user_metadata(user_metadata);
+        if let Some(parent_directory_listing) = try!(file_helper.update(file.clone(), &mut self.directory_listing)) {
             Ok(Some(Container {
                 client           : self.client.clone(),
                 directory_listing: parent_directory_listing,
@@ -244,7 +245,7 @@ impl Container {
 
     fn get_writer_for_blob(&self, blob: &::rest::blob::Blob, mode: ::helper::writer::Mode) -> Result<::helper::writer::Writer, ::errors::NfsError> {
         let helper = ::helper::file_helper::FileHelper::new(self.client.clone());
-        helper.update(blob.convert_to_file().clone(), mode, self.directory_listing.clone())
+        helper.update_content(blob.convert_to_file().clone(), mode, &self.directory_listing)
     }
 
     fn get_reader_for_blob<'a>(&self, blob: &'a ::rest::blob::Blob) -> Result<::helper::reader::Reader<'a>, ::errors::NfsError> {
