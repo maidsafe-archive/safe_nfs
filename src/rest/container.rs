@@ -189,10 +189,15 @@ impl Container {
     }
 
    /// Deletes the child container
-    pub fn delete_container(&mut self, name: &String) -> Result<(), ::errors::NfsError> {
+    pub fn delete_container(&mut self, name: &String) -> Result<Option<::rest::container::Container>, ::errors::NfsError> {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-        try!(directory_helper.delete(&mut self.directory_listing, name));
-        Ok(())
+        let parent_directory = try!(directory_helper.delete(&mut self.directory_listing, name));
+        Ok(parent_directory.iter().next().map(|parent_directory| {
+            Container {
+                client: self.client.clone(),
+                directory_listing: parent_directory.clone(),
+            }
+        }))
     }
 
     /// Creates a Blob within the container
@@ -209,13 +214,19 @@ impl Container {
     }
 
     /// Updates the blob content. Writes the complete data and updates the Blob
-    pub fn update_blob_content(&mut self, blob: &::rest::Blob, data: &[u8]) -> Result<Container, ::errors::NfsError> {
+    pub fn update_blob_content(&mut self, blob: &::rest::Blob, data: &[u8]) -> Result<(Container, Option<Container>), ::errors::NfsError> {
         let mut writer = try!(self.get_writer_for_blob(blob, ::helper::writer::Mode::Overwrite));
         writer.write(data, 0);
-        Ok(Container {
+        let (parent_directory, grand_parent) = try!(writer.close());
+        Ok((Container {
             client           : self.client.clone(),
-            directory_listing: try!(writer.close()).0,
-        })
+            directory_listing: parent_directory,
+        }, grand_parent.iter().next().map(|parent_directory| {
+            Container {
+                client: self.client.clone(),
+                directory_listing: parent_directory.clone(),
+            }
+        })))
     }
 
     /// Return a writter object for the Blob, through which the content of the blob can be updated
