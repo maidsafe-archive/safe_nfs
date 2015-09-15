@@ -140,7 +140,7 @@ impl Container {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         let dir_listing = match version {
             Some(version_id) => {
-                    debug!("Retrieving version using version id {:?} ...",version_id);
+                    debug!("Retrieving using version id ...");
                     try!(directory_helper.get_by_version(directory_metadata.get_id(),
                                                          directory_metadata.get_access_level(),
                                                          ::routing::NameType(version_id)))

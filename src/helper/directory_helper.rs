@@ -50,7 +50,7 @@ impl DirectoryHelper {
                                                                         })));
 
         let structured_data = try!(self.save_directory_listing(&directory));
-        debug!("Posting PUT request to network to save structured data for {:?} directory ...",directory_name);
+        debug!("Posting PUT request to network to save structured data for directory ...");
         eval_result!(self.client.lock()).put(::routing::data::Data::StructuredData(structured_data), None);
         
         if let Some(mut parent_directory) = parent_directory {
@@ -147,7 +147,7 @@ impl DirectoryHelper {
         let root_directory_id = eval_result!(self.client.lock()).get_user_root_directory_id().map(|id| { id.clone() });
         match  root_directory_id {
             Some(id) => {
-                debug!("Retrieving directory at id {:?} ...");
+                debug!("Retrieving directory at id {:?} ...",id);
                 self.get(&::metadata::directory_key::DirectoryKey::new(id, ::UNVERSIONED_DIRECTORY_LISTING_TAG, false, ::AccessLevel::Private))
             },
             None => {
