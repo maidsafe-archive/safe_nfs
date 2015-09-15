@@ -361,7 +361,7 @@ mod test {
         assert!(grand_parent.is_some());
         let grand_parent = eval_option!(grand_parent, "Grand Parent Should be updated");
         assert_eq!(*grand_parent.get_metadata().get_name(), *directory.get_metadata().get_name());
-        assert_eq!(*grand_parent.get_metadata().get_modified_time(), *grand_child_directory.get_metadata().get_created_time());
+        assert_eq!(*grand_parent.get_metadata().get_modified_time(), *grand_child_directory.get_metadata().get_modified_time());
     }
 
     #[test]
