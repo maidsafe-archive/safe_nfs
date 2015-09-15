@@ -38,7 +38,6 @@ impl Writer {
                mode            : Mode,
                parent_directory: ::directory_listing::DirectoryListing,
                file            : ::file::File) -> Writer {
-        debug!("Creating instance of writer ...");
         let datamap = match mode {
                 Mode::Modify    => file.get_datamap().clone(),
                 Mode::Overwrite => ::self_encryption::datamap::DataMap::None,
@@ -54,6 +53,7 @@ impl Writer {
 
     /// Data of a file/blob can be written in smaller chunks
     pub fn write(&mut self, data: &[u8], position: u64) {
+        debug!("Writing file data at position {:?} ...",position);
         self.self_encryptor.write(data, position);
     }
 

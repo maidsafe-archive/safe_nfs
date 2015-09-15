@@ -34,7 +34,6 @@ impl DirectoryMetadata {
                access_level  : ::AccessLevel,
                user_metadata : Vec<u8>,
                parent_dir_key: Option<::metadata::directory_key::DirectoryKey>) -> Result<DirectoryMetadata, ::errors::NfsError> {
-        debug!("Creating new instance of metadata ...");
         let id = ::routing::NameType::new(try!(::safe_client::utility::generate_random_array_u8_64()));
         Ok(DirectoryMetadata {
             key           : ::metadata::directory_key::DirectoryKey::new(id, type_tag, versioned, access_level),
@@ -117,7 +116,6 @@ impl DirectoryMetadata {
 
 impl ::rustc_serialize::Encodable for DirectoryMetadata {
     fn encode<E: ::rustc_serialize::Encoder>(&self, e: &mut E) -> Result<(), E::Error> {
-        debug!("Directory encoding self ...");
         let created_time = self.created_time.to_timespec();
         let modified_time = self.modified_time.to_timespec();
 
@@ -138,7 +136,6 @@ impl ::rustc_serialize::Encodable for DirectoryMetadata {
 
 impl ::rustc_serialize::Decodable for DirectoryMetadata {
     fn decode<D: ::rustc_serialize::Decoder>(d: &mut D) -> Result<DirectoryMetadata, D::Error> {
-        debug!("Directory decoding self ...");
         d.read_struct("DirectoryMetadata", 8, |d| {
             Ok(DirectoryMetadata {
                 key           : try!(d.read_struct_field("key",  0, |d| ::rustc_serialize::Decodable::decode(d))),

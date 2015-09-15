@@ -29,15 +29,17 @@ impl Container {
     pub fn authorise(client        : ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>,
                      container_info: Option<::rest::ContainerInfo>) -> Result<Container, ::errors::NfsError> {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(client.clone());
-        debug!("Retrieving directory matching container info ...");
         let directory = match container_info {
             Some(container_info) => {
+                debug!("Authorising specific container ...");
                 let metadata = container_info.convert_to_directory_metadata();
                 try!(directory_helper.get(metadata.get_key()))
             },
-            None => try!(directory_helper.get_user_root_directory_listing()),
+            None => {
+                debug!("Authorising root container ...");
+                try!(directory_helper.get_user_root_directory_listing())
+            },
         };
-        debug!("Directory retrieved. ");
         Ok(Container {
             client: client,
             directory_listing: directory,
@@ -46,7 +48,6 @@ impl Container {
 
     /// Creates a Container
     pub fn create(&mut self, name: String, versioned: bool, access_level: ::AccessLevel, metadata: Option<String>) -> Result<::rest::Container, ::errors::NfsError> {
-        debug!("Creating container ...");
         if name.is_empty() {
             return Err(::errors::NfsError::NameIsEmpty);
         }
@@ -59,6 +60,7 @@ impl Container {
         match self.directory_listing.find_sub_directory(&name) {
             Some(_) => Err(::errors::NfsError::AlreadyExists),
             None => {
+                debug!("Creating directory name {:?} ...",name);
                 let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
                 Ok(Container {
                     client: self.client.clone(),
@@ -134,14 +136,19 @@ impl Container {
     /// Fetches the latest version of the child container.
     /// Can fetch a specific version of the Container by passing the corresponding VersionId.
     pub fn get_container(&mut self, container_info: &::rest::container_info::ContainerInfo, version: Option<[u8; 64]>) -> Result<Container, ::errors::NfsError> {
-        debug!("Retrieving a container ...");
         let directory_metadata = container_info.convert_to_directory_metadata();
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         let dir_listing = match version {
-            Some(version_id) => try!(directory_helper.get_by_version(directory_metadata.get_id(),
-                                                                     directory_metadata.get_access_level(),
-                                                                     ::routing::NameType(version_id))),
-            None =>  try!(directory_helper.get(directory_metadata.get_key())),
+            Some(version_id) => {
+                    debug!("Retrieving version using version id {:?} ...",version_id);
+                    try!(directory_helper.get_by_version(directory_metadata.get_id(),
+                                                         directory_metadata.get_access_level(),
+                                                         ::routing::NameType(version_id)))
+            },
+            None =>  {
+                    debug!("Retrieving the latest version ...");
+                    try!(directory_helper.get(directory_metadata.get_key()))
+            },
         };
         Ok(Container {
             client: self.client.clone(),
@@ -151,7 +158,6 @@ impl Container {
 
    /// Deletes the child container
     pub fn delete_container(&mut self, name: &String) -> Result<(), ::errors::NfsError> {
-        debug!("Deleting a container ...");
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         try!(directory_helper.delete(&mut self.directory_listing, name));
         Ok(())
@@ -173,6 +179,7 @@ impl Container {
     /// Updates the blob content. Writes the complete data and updates the Blob
     pub fn update_blob_content(&mut self, blob: &::rest::Blob, data: &[u8]) -> Result<Container, ::errors::NfsError> {
         let mut writer = try!(self.get_writer_for_blob(blob, ::helper::writer::Mode::Overwrite));
+        debug!("Writing data to blob ...");
         writer.write(data, 0);
         Ok(Container {
             client           : self.client.clone(),
@@ -189,6 +196,7 @@ impl Container {
     /// Reads the content of the blob and returns the complete content
     pub fn get_blob_content(&self, blob: &::rest::Blob) -> Result<Vec<u8>, ::errors::NfsError> {
         let mut reader = try!(self.get_reader_for_blob(blob));
+        debug!("Reading contents of a blob ...");
         let size = reader.size();
         reader.read(0, size)
     }
@@ -232,7 +240,6 @@ impl Container {
 
     /// Copies the latest blob version from the container to the specified destination container
     pub fn copy_blob(&mut self, blob_name: &String, to_container: &::rest::container_info::ContainerInfo) -> Result<(), ::errors::NfsError> {
-        debug!("Copying blob from destination to source ...");
         let to_dir = to_container.convert_to_directory_metadata();
         if self.directory_listing.get_key() == to_dir.get_key() {
             return Err(::errors::NfsError::DestinationAndSourceAreSame);
@@ -243,6 +250,7 @@ impl Container {
         if destination.find_file(blob_name).is_some() {
            return Err(::errors::NfsError::FileExistsInDestination);
         }
+        debug!("Adding {:?} blob to destination files ...",blob_name);
         destination.get_mut_files().push(file.clone());
         let _ = try!(directory_helper.update(&destination));
         Ok(())
@@ -267,7 +275,6 @@ impl Container {
     }
 
     fn validate_metadata(&self, metadata: Option<String>) -> Result<Vec<u8>, ::errors::NfsError> {
-        debug!("Validating metadata ...");
         match metadata {
             Some(data) => {
                 if data.len() == 0 {

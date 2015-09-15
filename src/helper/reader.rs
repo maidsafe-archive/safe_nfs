@@ -28,7 +28,6 @@ impl<'a> Reader<'a> {
     /// Create a new instance of Reader
     pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>,
                file  : &'a ::file::File) -> Reader {
-        debug!("Creating instance of Reader ...");
         let se_storage = ::safe_client::SelfEncryptionStorage::new(client.clone());
 
         Reader {
@@ -40,15 +39,16 @@ impl<'a> Reader<'a> {
 
     /// Returns the total size of the file/blob
     pub fn size(&self) -> u64 {
+        debug!("Retrieving file length ...");
         self.self_encryptor.len()
     }
     
     /// Read data from file/blob
     pub fn read(&mut self,  position: u64, length: u64) -> Result<Vec<u8>, ::errors::NfsError> {
-        debug!("Reading data from file/blob ...");
         if (position + length) > self.size() {
             Err(::errors::NfsError::InvalidRangeSpecified)
         } else {
+            debug!("Reading data from file from {pos} to {len} ...",pos = position, len = length);
             Ok(self.self_encryptor.read(position, length))
         }
     }

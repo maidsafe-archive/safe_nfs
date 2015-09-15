@@ -28,7 +28,6 @@ pub struct DirectoryKey {
 impl DirectoryKey {
     /// Creates a new instance of DirectoryKey
     pub fn new(directory_id: ::routing::NameType, type_tag: u64, versioned: bool, access_level: ::AccessLevel) -> DirectoryKey {
-        debug!("Creating instance of directory key ...");
         DirectoryKey {
             id          : directory_id,
             type_tag    : type_tag,

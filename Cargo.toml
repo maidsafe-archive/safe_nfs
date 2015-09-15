@@ -16,7 +16,7 @@ routing         = "0.3.*"
 self_encryption = "0.2.*"
 
 # ---- Others ----
-log				= "*"
+log             = "*"
 time            = "*"
 sodiumoxide     = "*"
 rustc-serialize = "*"
