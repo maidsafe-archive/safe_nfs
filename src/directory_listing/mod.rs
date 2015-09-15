@@ -93,7 +93,7 @@ impl DirectoryListing {
         let datamap: ::self_encryption::datamap::DataMap = try!(::safe_client::utility::deserialise(&decrypted_data_map));
         let mut se = ::self_encryption::SelfEncryptor::new(::safe_client::SelfEncryptionStorage::new(client.clone()), datamap);
         let length = se.len();
-        debug!("Reading encrypted storage of length {:?} ...",length);
+        debug!("Reading encrypted storage of length {:?} ...", length);
         let serialised_directory_listing = se.read(0, length);
         Ok(try!(::safe_client::utility::deserialise(&serialised_directory_listing)))
     }
@@ -158,7 +158,7 @@ impl DirectoryListing {
     /// Remove a sub_directory
     pub fn remove_sub_directory(&mut self, directory_name: &String) -> Result<(), ::errors::NfsError> {
         let index = try!(self.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == *directory_name).ok_or(::errors::NfsError::DirectoryNotFound));
-        debug!("Removing sub directory at index {:?} ...",index);
+        debug!("Removing sub directory at index {:?} ...", index);
         self.get_mut_sub_directories().remove(index);
         Ok(())
     }
@@ -166,7 +166,7 @@ impl DirectoryListing {
     /// Remove a file
     pub fn remove_file(&mut self, file_name: &String) -> Result<(), ::errors::NfsError> {
         let index = try!(self.get_files().iter().position(|file| *file.get_name() == *file_name).ok_or(::errors::NfsError::FileNotFound));
-        debug!("Removing file at index {:?} ...",index);
+        debug!("Removing file at index {:?} ...", index);
         self.get_mut_files().remove(index);
         Ok(())
     }

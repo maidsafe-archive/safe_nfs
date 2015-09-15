@@ -52,7 +52,6 @@ impl DirectoryHelper {
         let structured_data = try!(self.save_directory_listing(&directory));
         debug!("Posting PUT request to network to save structured data for directory ...");
         eval_result!(self.client.lock()).put(::routing::data::Data::StructuredData(structured_data), None);
-        
         if let Some(mut parent_directory) = parent_directory {
             parent_directory.upsert_sub_directory(directory.get_metadata().clone());
             Ok((directory, try!(self.update(parent_directory))))
@@ -147,7 +146,7 @@ impl DirectoryHelper {
         let root_directory_id = eval_result!(self.client.lock()).get_user_root_directory_id().map(|id| { id.clone() });
         match  root_directory_id {
             Some(id) => {
-                debug!("Retrieving directory at id {:?} ...",id);
+                debug!("Retrieving directory at id {:?} ...", id);
                 self.get(&::metadata::directory_key::DirectoryKey::new(id, ::UNVERSIONED_DIRECTORY_LISTING_TAG, false, ::AccessLevel::Private))
             },
             None => {
@@ -188,12 +187,12 @@ impl DirectoryHelper {
         };
         match config_directory_listing.get_sub_directories().iter().position(|metadata| *metadata.get_name() == directory_name) {
             Some(index) => {
-                debug!("Retrieving {:?} directory configuration ...",directory_name);
+                debug!("Retrieving {:?} specific configuration directory ...", directory_name);
                 let directory_key = config_directory_listing.get_sub_directories()[index].get_key();
                 Ok(try!(self.get(&directory_key)))
             },
             None => {
-                debug!("Creating new directory {:?} in root directory ...",directory_name);
+                debug!("Creating new directory {:?} in root directory ...", directory_name);
                 Ok(try!(self.create(directory_name,
                                     ::UNVERSIONED_DIRECTORY_LISTING_TAG,
                                     Vec::new(),

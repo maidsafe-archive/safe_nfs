@@ -60,7 +60,7 @@ impl Container {
         match self.directory_listing.find_sub_directory(&name) {
             Some(_) => Err(::errors::NfsError::AlreadyExists),
             None => {
-                debug!("Creating directory name {:?} ...",name);
+                debug!("Creating directory name {:?} ...", name);
                 let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
                 Ok(Container {
                     client: self.client.clone(),
@@ -250,7 +250,7 @@ impl Container {
         if destination.find_file(blob_name).is_some() {
            return Err(::errors::NfsError::FileExistsInDestination);
         }
-        debug!("Adding {:?} blob to destination files ...",blob_name);
+        debug!("Adding {:?} blob to destination files ...", blob_name);
         destination.get_mut_files().push(file.clone());
         let _ = try!(directory_helper.update(&destination));
         Ok(())

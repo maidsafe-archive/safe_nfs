@@ -53,7 +53,7 @@ impl Writer {
 
     /// Data of a file/blob can be written in smaller chunks
     pub fn write(&mut self, data: &[u8], position: u64) {
-        debug!("Writing file data at position {:?} ...",position);
+        debug!("Writing file data at position {:?} ...", position);
         self.self_encryptor.write(data, position);
     }
 
