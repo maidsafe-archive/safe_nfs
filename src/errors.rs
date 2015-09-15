@@ -20,6 +20,7 @@
 pub const NFS_ERROR_START_RANGE: i32 = ::safe_client::errors::CLIENT_ERROR_START_RANGE - 500;
 
 /// NFS Errors
+#[allow(variant_size_differences)]
 pub enum NfsError {
     /// Client Error
     ClientError(::safe_client::errors::ClientError),

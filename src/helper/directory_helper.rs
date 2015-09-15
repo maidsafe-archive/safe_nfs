@@ -169,11 +169,11 @@ impl DirectoryHelper {
             Some(id) => try!(self.get(&::metadata::directory_key::DirectoryKey::new(id, ::UNVERSIONED_DIRECTORY_LISTING_TAG, false, ::AccessLevel::Private))),
             None => {
                 let (created_directory, _) = try!(self.create(::CONFIGURATION_DIRECTORY_NAME.to_string(),
-                                                         ::UNVERSIONED_DIRECTORY_LISTING_TAG,
-                                                         Vec::new(),
-                                                         false,
-                                                         ::AccessLevel::Private,
-                                                         None));
+                                                              ::UNVERSIONED_DIRECTORY_LISTING_TAG,
+                                                              Vec::new(),
+                                                              false,
+                                                              ::AccessLevel::Private,
+                                                              None));
                 try!(eval_result!(self.client.lock()).set_configuration_root_directory_id(created_directory.get_key().get_id().clone()));
                 created_directory
             }
