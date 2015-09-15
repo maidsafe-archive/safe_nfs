@@ -48,7 +48,7 @@ impl<'a> Reader<'a> {
         if (position + length) > self.size() {
             Err(::errors::NfsError::InvalidRangeSpecified)
         } else {
-            debug!("Reading data from file from {pos} to {len} ...", pos = position, len = length);
+            debug!("Reading {len} bytes of data from file starting at offset of {pos} bytes ...", len = length, pos = position);
             Ok(self.self_encryptor.read(position, length))
         }
     }
