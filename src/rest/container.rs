@@ -245,7 +245,7 @@ impl Container {
 
     fn get_writer_for_blob(&self, blob: &::rest::blob::Blob, mode: ::helper::writer::Mode) -> Result<::helper::writer::Writer, ::errors::NfsError> {
         let helper = ::helper::file_helper::FileHelper::new(self.client.clone());
-        helper.update_content(blob.convert_to_file().clone(), mode, &self.directory_listing)
+        helper.update_content(blob.convert_to_file().clone(), mode, self.directory_listing.clone())
     }
 
     fn get_reader_for_blob<'a>(&self, blob: &'a ::rest::blob::Blob) -> Result<::helper::reader::Reader<'a>, ::errors::NfsError> {

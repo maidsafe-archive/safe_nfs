@@ -40,12 +40,11 @@ impl DirectoryHelper {
                   access_level    : ::AccessLevel,
                   parent_directory: Option<&mut ::directory_listing::DirectoryListing>) -> Result<(::directory_listing::DirectoryListing,
                                                                                                    Option<::directory_listing::DirectoryListing>), ::errors::NfsError> {
-        if let Some(parent_directory) = parent_directory.iter().next() {
-            match parent_directory.find_sub_directory(&directory_name) {
-                Some(_) => return Err(::errors::NfsError::AlreadyExists),
-                None => (),
-            }
+
+        if parent_directory.iter().next().and_then(|dir| dir.find_sub_directory(&directory_name)).is_some() {
+             return Err(::errors::NfsError::AlreadyExists);
         }
+
         let directory = try!(::directory_listing::DirectoryListing::new(directory_name,
                                                                         tag_type,
                                                                         user_metadata,
