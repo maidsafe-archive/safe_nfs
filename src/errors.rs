@@ -20,14 +20,14 @@
 pub const NFS_ERROR_START_RANGE: i32 = ::safe_client::errors::CLIENT_ERROR_START_RANGE - 500;
 
 /// NFS Errors
-#[allow(variant_size_differences)]
+#[allow(variant_size_differences)] // TODO
 pub enum NfsError {
     /// Client Error
     ClientError(::safe_client::errors::ClientError),
     // TODO remove already exists
     /// If Directory already exists
     AlreadyExists,
-    /// Destonation is Same as the Source
+    /// Destination is Same as the Source
     DestinationAndSourceAreSame,
     /// Directory not found
     DirectoryNotFound,
