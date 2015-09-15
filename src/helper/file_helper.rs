@@ -56,7 +56,7 @@ impl FileHelper {
 
     /// Updates the file metadata.
     /// Returns Option<parent_directory's parent>
-    pub fn update(&self,
+    pub fn update_metadata(&self,
                   file            : ::file::File,
                   parent_directory: &mut ::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
         let _ = try!(parent_directory.find_file_by_id(file.get_id()).ok_or(::errors::NfsError::FileNotFound));
@@ -178,7 +178,7 @@ mod test {
         {// Update Metadata
             let mut file = eval_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
             file.get_mut_metadata().set_user_metadata(vec![12u8; 10]);
-            eval_result!(file_helper.update(file, &mut directory));
+            eval_result!(file_helper.update_metadata(file, &mut directory));
             let file = eval_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
             assert_eq!(*file.get_metadata().get_user_metadata(), vec![12u8; 10]);
         }

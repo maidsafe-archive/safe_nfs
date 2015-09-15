@@ -209,7 +209,7 @@ impl Container {
         let file_helper = ::helper::file_helper::FileHelper::new(self.client.clone());
         let mut file = blob.convert_to_mut_file();
         file.get_mut_metadata().set_user_metadata(user_metadata);
-        if let Some(parent_directory_listing) = try!(file_helper.update(file.clone(), &mut self.directory_listing)) {
+        if let Some(parent_directory_listing) = try!(file_helper.update_metadata(file.clone(), &mut self.directory_listing)) {
             Ok(Some(Container {
                 client           : self.client.clone(),
                 directory_listing: parent_directory_listing,
