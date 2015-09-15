@@ -49,6 +49,7 @@ impl FileHelper {
     pub fn delete(&self,
                   file_name       : String,
                   parent_directory: &mut ::directory_listing::DirectoryListing) -> Result<Option<::directory_listing::DirectoryListing>, ::errors::NfsError> {
+         debug!("Deleting {:?} file from directory listing ...", file_name);
          try!(parent_directory.remove_file(&file_name));
          let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
          directory_helper.update(&parent_directory)

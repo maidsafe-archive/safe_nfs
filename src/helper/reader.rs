@@ -39,6 +39,7 @@ impl<'a> Reader<'a> {
 
     /// Returns the total size of the file/blob
     pub fn size(&self) -> u64 {
+        debug!("Retrieving file length ...");
         self.self_encryptor.len()
     }
     
@@ -47,6 +48,7 @@ impl<'a> Reader<'a> {
         if (position + length) > self.size() {
             Err(::errors::NfsError::InvalidRangeSpecified)
         } else {
+            debug!("Reading {len} bytes of data from file starting at offset of {pos} bytes ...", len = length, pos = position);
             Ok(self.self_encryptor.read(position, length))
         }
     }

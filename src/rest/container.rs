@@ -31,10 +31,14 @@ impl Container {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(client.clone());
         let directory = match container_info {
             Some(container_info) => {
+                debug!("Authorising specific container ...");
                 let metadata = container_info.convert_to_directory_metadata();
                 try!(directory_helper.get(metadata.get_key()))
             },
-            None => try!(directory_helper.get_user_root_directory_listing()),
+            None => {
+                debug!("Authorising root container ...");
+                try!(directory_helper.get_user_root_directory_listing())
+            },
         };
         Ok(Container {
             client: client,
@@ -56,6 +60,7 @@ impl Container {
         match self.directory_listing.find_sub_directory(&name) {
             Some(_) => Err(::errors::NfsError::AlreadyExists),
             None => {
+                debug!("Creating directory name {:?} ...", name);
                 let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
                 Ok(Container {
                     client: self.client.clone(),
@@ -134,10 +139,16 @@ impl Container {
         let directory_metadata = container_info.convert_to_directory_metadata();
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         let dir_listing = match version {
-            Some(version_id) => try!(directory_helper.get_by_version(directory_metadata.get_id(),
-                                                                     directory_metadata.get_access_level(),
-                                                                     ::routing::NameType(version_id))),
-            None =>  try!(directory_helper.get(directory_metadata.get_key())),
+            Some(version_id) => {
+                    debug!("Retrieving using version id ...");
+                    try!(directory_helper.get_by_version(directory_metadata.get_id(),
+                                                         directory_metadata.get_access_level(),
+                                                         ::routing::NameType(version_id)))
+            },
+            None =>  {
+                    debug!("Retrieving the latest version ...");
+                    try!(directory_helper.get(directory_metadata.get_key()))
+            },
         };
         Ok(Container {
             client: self.client.clone(),
@@ -168,6 +179,7 @@ impl Container {
     /// Updates the blob content. Writes the complete data and updates the Blob
     pub fn update_blob_content(&mut self, blob: &::rest::Blob, data: &[u8]) -> Result<Container, ::errors::NfsError> {
         let mut writer = try!(self.get_writer_for_blob(blob, ::helper::writer::Mode::Overwrite));
+        debug!("Writing data to blob ...");
         writer.write(data, 0);
         Ok(Container {
             client           : self.client.clone(),
@@ -184,6 +196,7 @@ impl Container {
     /// Reads the content of the blob and returns the complete content
     pub fn get_blob_content(&self, blob: &::rest::Blob) -> Result<Vec<u8>, ::errors::NfsError> {
         let mut reader = try!(self.get_reader_for_blob(blob));
+        debug!("Reading contents of a blob ...");
         let size = reader.size();
         reader.read(0, size)
     }
@@ -237,6 +250,7 @@ impl Container {
         if destination.find_file(blob_name).is_some() {
            return Err(::errors::NfsError::FileExistsInDestination);
         }
+        debug!("Adding {:?} blob to destination files ...", blob_name);
         destination.get_mut_files().push(file.clone());
         let _ = try!(directory_helper.update(&destination));
         Ok(())
