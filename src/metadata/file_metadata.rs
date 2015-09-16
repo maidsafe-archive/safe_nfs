@@ -64,8 +64,7 @@ impl FileMetadata {
     }
 
 
-    /// Set name associated with the structure (file or directory)
-    #[allow(dead_code)]
+    /// Set name associated with the structure (file or directory)    
     pub fn set_name(&mut self, name: String) {
         self.name = name;
     }
@@ -130,7 +129,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn serialise() {
+    fn serialise_and_deserialise_file_metadata() {
         let obj_before = FileMetadata::new("hello.txt".to_string(),
                                            "{mime: \"application/json\"}".to_string().into_bytes());
         let serialised_data = eval_result!(::safe_client::utility::serialise(&obj_before));
