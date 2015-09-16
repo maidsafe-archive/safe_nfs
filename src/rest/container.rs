@@ -32,12 +32,11 @@ impl Container {
     pub fn authorise(client        : ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>,
                      container_info: Option<::rest::ContainerInfo>) -> Result<Container, ::errors::NfsError> {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(client.clone());
-        let directory = match container_info {
-            Some(container_info) => {
-                let metadata = container_info.convert_to_directory_metadata();
-                try!(directory_helper.get(metadata.get_key()))
-            },
-            None => try!(directory_helper.get_user_root_directory_listing()),
+        let directory = if let Some(container_info) = container_info {
+            let metadata = container_info.convert_to_directory_metadata();
+            try!(directory_helper.get(metadata.get_key()))
+        } else {
+            try!(directory_helper.get_user_root_directory_listing())
         };
         Ok(Container {
             client: client,
@@ -65,7 +64,10 @@ impl Container {
                   access_level: ::AccessLevel,
                   metadata: Option<String>) -> Result<(::rest::Container, Option<::rest::Container>), ::errors::NfsError> {
         if name.is_empty() {
-            return Err(::errors::NfsError::NameIsEmpty);
+            return Err(::errors::NfsError::from("Parameter 'name' cannot be empty"));
+        }
+        if self.directory_listing.find_sub_directory(&name).is_some() {
+            return Err(::errors::NfsError::AlreadyExists);
         }
         let user_metadata = try!(self.validate_metadata(metadata));
         let tag_type = if versioned {
@@ -73,29 +75,24 @@ impl Container {
         } else {
             ::UNVERSIONED_DIRECTORY_LISTING_TAG
         };
-        match self.directory_listing.find_sub_directory(&name) {
-            Some(_) => Err(::errors::NfsError::AlreadyExists),
-            None => {
-                let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
-                let (created_directory, grand_parent) = try!(directory_helper.create(name,
-                                                                                     tag_type,
-                                                                                     user_metadata,
-                                                                                     versioned,
-                                                                                     access_level,
-                                                                                     Some(&mut self.directory_listing)));
-                let created_container = Container {
-                    client: self.client.clone(),
-                    directory_listing: created_directory,
-                };
-                let parent = grand_parent.iter().next().map(|parent_directory| {
-                    Container {
-                        client: self.client.clone(),
-                        directory_listing: parent_directory.clone(),
-                    }
-                });
-                Ok((created_container, parent))
+        let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
+        let (created_directory, grand_parent) = try!(directory_helper.create(name,
+                                                                             tag_type,
+                                                                             user_metadata,
+                                                                             versioned,
+                                                                             access_level,
+                                                                             Some(&mut self.directory_listing)));
+        let created_container = Container {
+            client: self.client.clone(),
+            directory_listing: created_directory,
+        };
+        let parent = grand_parent.map(|parent_directory| {
+            Container {
+                client: self.client.clone(),
+                directory_listing: parent_directory.clone(),
             }
-        }
+        });
+        Ok((created_container, parent))
     }
 
     /// Returns the created time of the container
@@ -380,7 +377,7 @@ mod test {
     fn create_update_delete_blob() {
         let client = get_client();
         let mut container = eval_result!(Container::authorise(client.clone(), None));
-        let mut home_container = eval_result!(container.create("Home".to_string(), true, ::AccessLevel::Private, None));
+        let (mut home_container, _) = eval_result!(container.create("Home".to_string(), true, ::AccessLevel::Private, None));
 
         assert_eq!(container.get_containers().len(), 1);
         assert_eq!(container.get_containers()[0].get_name(), "Home");
@@ -416,7 +413,7 @@ mod test {
         let blob = eval_result!(home_container.get_blob("sample.txt".to_string()));
         assert_eq!(blob.get_metadata(), metadata);
 
-        let mut docs_container = eval_result!(container.create("Docs".to_string(), true, ::AccessLevel::Private, None));
+        let (mut docs_container, _) = eval_result!(container.create("Docs".to_string(), true, ::AccessLevel::Private, None));
         assert_eq!(docs_container.get_blobs().len(), 0);
         let _ = home_container.copy_blob(&"sample.txt".to_string(), &docs_container.get_info());
         docs_container = eval_result!(container.get_container(&docs_container.get_info(), None));
@@ -424,5 +421,9 @@ mod test {
 
         let _ = home_container.delete_blob("sample.txt".to_string());
         assert_eq!(home_container.get_blobs().len(), 0);
+
+        let (_, parent) = eval_result!(home_container.create("Pictures".to_string(), true, ::AccessLevel::Private, None));
+        assert!(parent.is_some());
+        assert_eq!(*eval_option!(parent, "parent container should be present").get_name(), *container.get_name());
     }
 }
