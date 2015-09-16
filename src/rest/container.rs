@@ -68,9 +68,6 @@ impl Container {
         if name.is_empty() {
             return Err(::errors::NfsError::from("Parameter 'name' cannot be empty"));
         }
-        if self.directory_listing.find_sub_directory(&name).is_some() {
-            return Err(::errors::NfsError::AlreadyExists);
-        }
         let user_metadata = try!(self.validate_metadata(metadata));
         let tag_type = if versioned {
             ::VERSIONED_DIRECTORY_LISTING_TAG
@@ -338,7 +335,6 @@ impl Container {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -368,6 +364,7 @@ mod test {
 
         assert_eq!(container.get_containers().len(), 1);
         assert_eq!(container.get_containers()[0].get_name(), "Home");
+        assert!(container.create("Home".to_string(), true, ::AccessLevel::Private, None).is_err());
     }
 
 
@@ -399,8 +396,9 @@ mod test {
         let data = "Hello World!".to_string().into_bytes();
         writer.write(&data[..], 0);
         eval_result!(writer.close());
-
         home_container = eval_result!(container.get_container(&home_container.get_info(), None));
+        assert!(home_container.create_blob("sample.txt".to_string(), None).is_err());
+
         assert_eq!(eval_result!(home_container.get_blob_versions(&"sample.txt".to_string())).len(), 1);
         let blob = eval_result!(home_container.get_blob("sample.txt".to_string()));
         assert_eq!(eval_result!(home_container.get_blob_content(&blob)), data);
