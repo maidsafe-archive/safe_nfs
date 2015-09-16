@@ -24,35 +24,24 @@ pub const NFS_ERROR_START_RANGE: i32 = ::safe_client::errors::CLIENT_ERROR_START
 pub enum NfsError {
     /// Client Error
     ClientError(::safe_client::errors::ClientError),
-    // TODO remove already exists
-    /// If Directory already exists
-    AlreadyExists,
+    /// If Directory already exists with the same name in the same level
+    DirectoryAlreadyExistsWithSameName,
     /// Destination is Same as the Source
     DestinationAndSourceAreSame,
     /// Directory not found
     DirectoryNotFound,
+    /// File Already exists with the same name in a directory
+    FileAlreadyExistsWithSameName,
     /// File does not match with the existing file in the directory listing
     FileDoesNotMatch,
-    /// Failed to update directory
-    FailedToUpdateDirectory,
-    /// Failed to update file
-    FailedToUpdateFile,
     /// File already present in the destonation specified
     FileExistsInDestination,
     /// File not found
     FileNotFound,
     /// Invalid byte range specified
     InvalidRangeSpecified,
-    // TODO remove MetadataIsEmpty
-    /// Metadata can not be empty
-    MetadataIsEmpty,
-    /// Metadata for the directory is missing or may be corrupted
-    MetaDataMissingOrCorrupted,
-    /// Name can not be empty
-    NameIsEmpty,
-    // TODO remove not found
-    /// General
-    NotFound,
+    /// Validation error - if the field passed as parameter is not valid
+    ParameterIsNotValid,
     /// Unexpected error
     Unexpected(String),
 }
@@ -72,21 +61,17 @@ impl<'a> From<&'a str> for NfsError {
 impl Into<i32> for NfsError {
     fn into(self) -> i32 {
         match self {
-            NfsError::ClientError(error)          => error.into(),
-            NfsError::AlreadyExists               => NFS_ERROR_START_RANGE - 1,
-            NfsError::DestinationAndSourceAreSame => NFS_ERROR_START_RANGE - 2,
-            NfsError::DirectoryNotFound           => NFS_ERROR_START_RANGE - 3,
-            NfsError::FailedToUpdateDirectory     => NFS_ERROR_START_RANGE - 4,
-            NfsError::FailedToUpdateFile          => NFS_ERROR_START_RANGE - 5,
-            NfsError::FileExistsInDestination     => NFS_ERROR_START_RANGE - 6,
-            NfsError::FileNotFound                => NFS_ERROR_START_RANGE - 7,
-            NfsError::InvalidRangeSpecified       => NFS_ERROR_START_RANGE - 8,
-            NfsError::MetadataIsEmpty             => NFS_ERROR_START_RANGE - 9,
-            NfsError::MetaDataMissingOrCorrupted  => NFS_ERROR_START_RANGE - 10,
-            NfsError::NameIsEmpty                 => NFS_ERROR_START_RANGE - 11,
-            NfsError::NotFound                    => NFS_ERROR_START_RANGE - 12,
-            NfsError::Unexpected(_)               => NFS_ERROR_START_RANGE - 13,
-            NfsError::FileDoesNotMatch            => NFS_ERROR_START_RANGE - 14,
+            NfsError::ClientError(error)                    => error.into(),
+            NfsError::DirectoryAlreadyExistsWithSameName    => NFS_ERROR_START_RANGE - 1,
+            NfsError::DestinationAndSourceAreSame           => NFS_ERROR_START_RANGE - 2,
+            NfsError::DirectoryNotFound                     => NFS_ERROR_START_RANGE - 3,
+            NfsError::FileAlreadyExistsWithSameName         => NFS_ERROR_START_RANGE - 4,
+            NfsError::FileDoesNotMatch                      => NFS_ERROR_START_RANGE - 5,
+            NfsError::FileExistsInDestination               => NFS_ERROR_START_RANGE - 6,
+            NfsError::FileNotFound                          => NFS_ERROR_START_RANGE - 7,
+            NfsError::InvalidRangeSpecified                 => NFS_ERROR_START_RANGE - 8,
+            NfsError::ParameterIsNotValid                   => NFS_ERROR_START_RANGE - 9,
+            NfsError::Unexpected(_)                         => NFS_ERROR_START_RANGE - 10,
         }
     }
 }
@@ -94,21 +79,17 @@ impl Into<i32> for NfsError {
 impl ::std::fmt::Debug for NfsError {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         match *self {
-            NfsError::ClientError(ref error)        => write!(f, "NfsError::ClientError -> {:?}", error),
-            NfsError::AlreadyExists                 => write!(f, "NfsError::AlreadyExists"),
-            NfsError::DestinationAndSourceAreSame   => write!(f, "NfsError::DestinationAndSourceAreSame"),
-            NfsError::DirectoryNotFound             => write!(f, "NfsError::DirectoryNotFound"),
-            NfsError::FailedToUpdateDirectory       => write!(f, "NfsError::FailedToUpdateDirectory"),
-            NfsError::FailedToUpdateFile            => write!(f, "NfsError::FailedToUpdateFile"),
-            NfsError::FileExistsInDestination       => write!(f, "NfsError::FileExistsInDestination"),
-            NfsError::FileNotFound                  => write!(f, "NfsError::FileNotFound"),
-            NfsError::InvalidRangeSpecified         => write!(f, "NfsError::InvalidRangeSpecified"),
-            NfsError::MetadataIsEmpty               => write!(f, "NfsError::MetadataIsEmpty"),
-            NfsError::MetaDataMissingOrCorrupted    => write!(f, "NfsError::MetaDataMissingOrCorrupted"),
-            NfsError::NameIsEmpty                   => write!(f, "NfsError::NameIsEmpty"),
-            NfsError::NotFound                      => write!(f, "NfsError::NotFound"),
-            NfsError::Unexpected(ref error)         => write!(f, "NfsError::Unexpected -> {:?}", error),
-            NfsError::FileDoesNotMatch              => write!(f, "NfsError::FileDoesNotMatch"),
+            NfsError::ClientError(ref error)                => write!(f, "NfsError::ClientError -> {:?}", error),
+            NfsError::DirectoryAlreadyExistsWithSameName    => write!(f, "NfsError::DirectoryAlreadyExistsWithSameName"),
+            NfsError::DestinationAndSourceAreSame           => write!(f, "NfsError::DestinationAndSourceAreSame"),
+            NfsError::DirectoryNotFound                     => write!(f, "NfsError::DirectoryNotFound"),
+            NfsError::FileAlreadyExistsWithSameName         => write!(f, "NfsError::FileAlreadyExistsWithSameName"),
+            NfsError::FileDoesNotMatch                      => write!(f, "NfsError::FileDoesNotMatch"),
+            NfsError::FileExistsInDestination               => write!(f, "NfsError::FileExistsInDestination"),
+            NfsError::FileNotFound                          => write!(f, "NfsError::FileNotFound"),
+            NfsError::InvalidRangeSpecified                 => write!(f, "NfsError::InvalidRangeSpecified"),
+            NfsError::ParameterIsNotValid                   => write!(f, "NfsError::ParameterIsNotValid"),
+            NfsError::Unexpected(ref error)                 => write!(f, "NfsError::Unexpected -> {:?}", error),
         }
     }
 }

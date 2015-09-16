@@ -66,7 +66,7 @@ impl Container {
                   access_level: ::AccessLevel,
                   metadata: Option<String>) -> Result<(::rest::Container, Option<::rest::Container>), ::errors::NfsError> {
         if name.is_empty() {
-            return Err(::errors::NfsError::from("Parameter 'name' cannot be empty"));
+            return Err(::errors::NfsError::ParameterIsNotValid);
         }
         let user_metadata = try!(self.validate_metadata(metadata));
         let tag_type = if versioned {
@@ -132,7 +132,7 @@ impl Container {
     pub fn get_blob(&self, name: String) -> Result<::rest::blob::Blob, ::errors::NfsError> {
         match self.directory_listing.find_file(&name) {
             Some(file) => Ok(::rest::blob::Blob::from(file.clone())),
-            None => Err(::errors::NfsError::NotFound),
+            None => Err(::errors::NfsError::FileNotFound),
         }
     }
 
@@ -209,7 +209,7 @@ impl Container {
     /// The blob is created only after the writter.close() is invoked
     pub fn create_blob(&mut self, name: String, metadata: Option<String>) -> Result<::helper::writer::Writer, ::errors::NfsError> {
         if name.is_empty() {
-            return Err(::errors::NfsError::NameIsEmpty);
+            return Err(::errors::NfsError::ParameterIsNotValid);
         }
         let user_metadata = try!(self.validate_metadata(metadata));
         let file_helper = ::helper::file_helper::FileHelper::new(self.client.clone());
@@ -255,7 +255,7 @@ impl Container {
 
     /// Returns the list of versions_id for the blob
     pub fn get_blob_versions(&self, name: &String) -> Result<Vec<::rest::blob::Blob>, ::errors::NfsError>{
-        let file = try!(self.directory_listing.find_file(name).ok_or(::errors::NfsError::NotFound));
+        let file = try!(self.directory_listing.find_file(name).ok_or(::errors::NfsError::FileNotFound));
         let file_helper = ::helper::file_helper::FileHelper::new(self.client.clone());
         let versions = try!(file_helper.get_versions(&file, &self.directory_listing));
         Ok(versions.iter().map(|file| { ::rest::blob::Blob::from(file.clone()) }).collect())
@@ -291,7 +291,7 @@ impl Container {
         if self.directory_listing.get_key() == to_dir.get_key() {
             return Err(::errors::NfsError::DestinationAndSourceAreSame);
         }
-        let file = try!(self.directory_listing.find_file(blob_name).ok_or(::errors::NfsError::NotFound));
+        let file = try!(self.directory_listing.find_file(blob_name).ok_or(::errors::NfsError::FileNotFound));
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         let mut destination = try!(directory_helper.get(to_dir.get_key()));
         if destination.find_file(blob_name).is_some() {
@@ -311,7 +311,7 @@ impl Container {
     fn get_reader_for_blob<'a>(&self, blob: &'a ::rest::blob::Blob) -> Result<::helper::reader::Reader<'a>, ::errors::NfsError> {
         match self.directory_listing.find_file(blob.get_name()) {
             Some(_) => Ok(::helper::reader::Reader::new(self.client.clone(), blob.into_file())),
-            None    => Err(::errors::NfsError::NotFound),
+            None    => Err(::errors::NfsError::FileNotFound),
         }
     }
 
@@ -325,7 +325,7 @@ impl Container {
         match metadata {
             Some(data) => {
                 if data.len() == 0 {
-                    Err(::errors::NfsError::MetadataIsEmpty)
+                    Err(::errors::NfsError::ParameterIsNotValid)
                 } else {
                     Ok(data.into_bytes())
                 }

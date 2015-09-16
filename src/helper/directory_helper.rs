@@ -42,7 +42,7 @@ impl DirectoryHelper {
                                                                                                    Option<::directory_listing::DirectoryListing>), ::errors::NfsError> {
 
         if parent_directory.iter().next().and_then(|dir| dir.find_sub_directory(&directory_name)).is_some() {
-             return Err(::errors::NfsError::AlreadyExists);
+             return Err(::errors::NfsError::DirectoryAlreadyExistsWithSameName);
         }
 
         let directory = try!(::directory_listing::DirectoryListing::new(directory_name,
