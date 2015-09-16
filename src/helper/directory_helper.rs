@@ -55,8 +55,8 @@ impl DirectoryHelper {
                                                                         })));
 
         let structured_data = try!(self.save_directory_listing(&directory));
+        debug!("Posting PUT request to network to save structured data for directory ...");
         eval_result!(self.client.lock()).put(::routing::data::Data::StructuredData(structured_data), None);
-
         if let Some(mut parent_directory) = parent_directory {
             parent_directory.upsert_sub_directory(directory.get_metadata().clone());
             Ok((directory, try!(self.update(parent_directory))))
@@ -151,9 +151,11 @@ impl DirectoryHelper {
         let root_directory_id = eval_result!(self.client.lock()).get_user_root_directory_id().map(|id| { id.clone() });
         match  root_directory_id {
             Some(id) => {
+                debug!("Retrieving directory at id {:?} ...", id);
                 self.get(&::metadata::directory_key::DirectoryKey::new(id, ::UNVERSIONED_DIRECTORY_LISTING_TAG, false, ::AccessLevel::Private))
             },
             None => {
+                debug!("Retrieving root directory ...");
                 let (created_directory, _) = try!(self.create(::ROOT_DIRECTORY_NAME.to_string(),
                                                               ::UNVERSIONED_DIRECTORY_LISTING_TAG,
                                                               Vec::new(),
@@ -171,8 +173,12 @@ impl DirectoryHelper {
     pub fn get_configuration_directory_listing(&self, directory_name: String) -> Result<::directory_listing::DirectoryListing, ::errors::NfsError> {
         let config_dir_id = eval_result!(self.client.lock()).get_configuration_root_directory_id().map(|id| { id.clone() });
         let mut config_directory_listing = match config_dir_id {
-            Some(id) => try!(self.get(&::metadata::directory_key::DirectoryKey::new(id, ::UNVERSIONED_DIRECTORY_LISTING_TAG, false, ::AccessLevel::Private))),
+            Some(id) => {
+                debug!("Retrieving root configuration directory at id {:?} ...", id);
+                try!(self.get(&::metadata::directory_key::DirectoryKey::new(id, ::UNVERSIONED_DIRECTORY_LISTING_TAG, false, ::AccessLevel::Private)))
+            },
             None => {
+                debug!("Creating root configuration directory ...");
                 let (created_directory, _) = try!(self.create(::CONFIGURATION_DIRECTORY_NAME.to_string(),
                                                               ::UNVERSIONED_DIRECTORY_LISTING_TAG,
                                                               Vec::new(),
@@ -185,10 +191,12 @@ impl DirectoryHelper {
         };
         match config_directory_listing.get_sub_directories().iter().position(|metadata| *metadata.get_name() == directory_name) {
             Some(index) => {
+                debug!("Retrieving {:?} specific configuration directory ...", directory_name);
                 let directory_key = config_directory_listing.get_sub_directories()[index].get_key();
                 Ok(try!(self.get(&directory_key)))
             },
             None => {
+                debug!("Creating new directory {:?} in root configuration directory ...", directory_name);
                 let (directory, _) = try!(self.create(directory_name,
                                                       ::UNVERSIONED_DIRECTORY_LISTING_TAG,
                                                       Vec::new(),
@@ -288,6 +296,7 @@ impl DirectoryHelper {
                                                                                 &signing_key,
                                                                                 encryption_keys))
         };
+        debug!("Posting updated structured data to the network ...");
         eval_result!(self.client.lock()).post(::routing::data::Data::StructuredData(updated_structured_data), None);
         Ok(())
     }
@@ -298,6 +307,7 @@ impl DirectoryHelper {
                               data_type: ::routing::immutable_data::ImmutableDataType) -> Result<::routing::NameType, ::errors::NfsError> {
         let immutable_data = ::routing::immutable_data::ImmutableData::new(data_type, data);
         let name = immutable_data.name();
+        debug!("Posting PUT request to save immutable data to the network ...");
         eval_result!(self.client.lock()).put(::routing::data::Data::ImmutableData(immutable_data), None);
         Ok(name)
     }
@@ -307,6 +317,7 @@ impl DirectoryHelper {
                            id      : &::routing::NameType,
                            type_tag: u64) -> Result<::routing::structured_data::StructuredData, ::errors::NfsError> {
         let request = ::routing::data::DataRequest::StructuredData(id.clone(), type_tag);
+        debug!("Getting structured data from the network ...");
         let response_getter = eval_result!(self.client.lock()).get(request, None);
         match try!(response_getter.get()) {
             ::routing::data::Data::StructuredData(structured_data) => Ok(structured_data),
@@ -319,6 +330,7 @@ impl DirectoryHelper {
                           id       : ::routing::NameType,
                           data_type: ::routing::immutable_data::ImmutableDataType) -> Result<::routing::immutable_data::ImmutableData, ::errors::NfsError> {
         let request = ::routing::data::DataRequest::ImmutableData(id, data_type);
+        debug!("Getting immutable data from the network ...");
         let response_getter = eval_result!(self.client.lock()).get(request, None);
         match try!(response_getter.get()) {
             ::routing::data::Data::ImmutableData(immutable_data) => Ok(immutable_data),
