@@ -20,16 +20,19 @@
 pub const NFS_ERROR_START_RANGE: i32 = ::safe_client::errors::CLIENT_ERROR_START_RANGE - 500;
 
 /// NFS Errors
+#[allow(variant_size_differences)] // TODO
 pub enum NfsError {
     /// Client Error
     ClientError(::safe_client::errors::ClientError),
     // TODO remove already exists
     /// If Directory already exists
     AlreadyExists,
-    /// Destonation is Same as the Source
+    /// Destination is Same as the Source
     DestinationAndSourceAreSame,
     /// Directory not found
     DirectoryNotFound,
+    /// File does not match with the existing file in the directory listing
+    FileDoesNotMatch,
     /// Failed to update directory
     FailedToUpdateDirectory,
     /// Failed to update file
@@ -83,6 +86,7 @@ impl Into<i32> for NfsError {
             NfsError::NameIsEmpty                 => NFS_ERROR_START_RANGE - 11,
             NfsError::NotFound                    => NFS_ERROR_START_RANGE - 12,
             NfsError::Unexpected(_)               => NFS_ERROR_START_RANGE - 13,
+            NfsError::FileDoesNotMatch            => NFS_ERROR_START_RANGE - 14,
         }
     }
 }
@@ -104,6 +108,7 @@ impl ::std::fmt::Debug for NfsError {
             NfsError::NameIsEmpty                   => write!(f, "NfsError::NameIsEmpty"),
             NfsError::NotFound                      => write!(f, "NfsError::NotFound"),
             NfsError::Unexpected(ref error)         => write!(f, "NfsError::Unexpected -> {:?}", error),
+            NfsError::FileDoesNotMatch              => write!(f, "NfsError::FileDoesNotMatch"),
         }
     }
 }

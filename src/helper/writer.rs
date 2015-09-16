@@ -53,10 +53,11 @@ impl Writer {
 
     /// Data of a file/blob can be written in smaller chunks
     pub fn write(&mut self, data: &[u8], position: u64) {
+        debug!("Writing file data at position {:?} ...", position);
         self.self_encryptor.write(data, position);
     }
 
-    /// close is invoked only after alll the data is completely written
+    /// close is invoked only after all the data is completely written
     /// The file/blob is saved only when the close is invoked.
     /// Returns the update DirectoryListing which owns the file and also the updated DirectoryListing of the file's parent
     /// Returns (files's parent_directory, Option<file's parent_directory's parent>)

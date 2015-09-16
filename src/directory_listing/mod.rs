@@ -88,6 +88,7 @@ impl DirectoryListing {
         let datamap: ::self_encryption::datamap::DataMap = try!(::safe_client::utility::deserialise(&decrypted_data_map));
         let mut se = ::self_encryption::SelfEncryptor::new(::safe_client::SelfEncryptionStorage::new(client.clone()), datamap);
         let length = se.len();
+        debug!("Reading encrypted storage of length {:?} ...", length);
         let serialised_directory_listing = se.read(0, length);
         Ok(try!(::safe_client::utility::deserialise(&serialised_directory_listing)))
     }
@@ -97,6 +98,7 @@ impl DirectoryListing {
                    client: ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>) -> Result<Vec<u8>, ::errors::NfsError> {
         let serialised_data = try!(::safe_client::utility::serialise(&self));
         let mut se = ::self_encryption::SelfEncryptor::new(::safe_client::SelfEncryptionStorage::new(client.clone()), ::self_encryption::datamap::DataMap::None);
+        debug!("Writing to storage using self encryption ...");
         se.write(&serialised_data, 0);
         let datamap = se.close();
         let serialised_data_map = try!(::safe_client::utility::serialise(&datamap));
@@ -112,9 +114,23 @@ impl DirectoryListing {
 
     /// Get DirectoryInfo of sub_directory within a DirectoryListing.
     /// Returns the Option<DirectoryInfo> for the directory_name from the DirectoryListing
+    pub fn find_file_by_id(&self,
+                           id: &::routing::NameType) -> Option<&::file::File> {
+        self.get_files().iter().find(|file| *file.get_id() == *id)
+    }
+
+    /// Get DirectoryInfo of sub_directory within a DirectoryListing.
+    /// Returns the Option<DirectoryInfo> for the directory_name from the DirectoryListing
     pub fn find_sub_directory(&self,
                               directory_name: &String) -> Option<&::metadata::directory_metadata::DirectoryMetadata> {
         self.get_sub_directories().iter().find(|info| *info.get_name() == *directory_name)
+    }
+
+    /// Get DirectoryInfo of sub_directory within a DirectoryListing.
+    /// Returns the Option<DirectoryInfo> for the directory_name from the DirectoryListing
+    pub fn find_sub_directory_by_id(&self,
+                                    id: &::routing::NameType) -> Option<&::metadata::directory_metadata::DirectoryMetadata> {
+        self.get_sub_directories().iter().find(|info| *info.get_id() == *id)
     }
 
     /// If file is present in the DirectoryListing then replace it else insert it
@@ -124,21 +140,25 @@ impl DirectoryListing {
         // if let Some(mut existing_file) = self.files.iter_mut().find(|entry| *entry.get_name() == *file.get_name()) {
         // *existing_file = file;
         if let Some(index) = self.files.iter().position(|entry| *entry.get_id() == *file.get_id()) {
+            debug!("Replacing file in directory listing ...");
             let mut existing = eval_option!(self.files.get_mut(index), "Programming Error - Report this as a Bug.");
             *existing = file;
         } else {
+            debug!("Adding file to directory listing ...");
             self.files.push(file);
         }
-        self.get_mut_metadata().set_modified_time(modified_time);
+        self.get_mut_metadata().set_modified_time(modified_time)
     }
 
     /// If DirectoryMetadata is present in the sub_directories of DirectoryListing then replace it else insert it
     pub fn upsert_sub_directory(&mut self, directory_metadata: ::metadata::directory_metadata::DirectoryMetadata) {
         let modified_time = directory_metadata.get_modified_time().clone();
         if let Some(index) = self.sub_directories.iter().position(|entry| *entry.get_key().get_id() == *directory_metadata.get_key().get_id()) {
+            debug!("Replacing directory listing metadata ...");
             let mut existing = eval_option!(self.sub_directories.get_mut(index), "Programming Error - Report this as a Bug.");
             *existing = directory_metadata;
         } else {
+            debug!("Adding metadata to directory listing ...");
             self.sub_directories.push(directory_metadata);
         }
         self.get_mut_metadata().set_modified_time(modified_time);
@@ -147,6 +167,7 @@ impl DirectoryListing {
     /// Remove a sub_directory
     pub fn remove_sub_directory(&mut self, directory_name: &String) -> Result<(), ::errors::NfsError> {
         let index = try!(self.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == *directory_name).ok_or(::errors::NfsError::DirectoryNotFound));
+        debug!("Removing sub directory at index {:?} ...", index);
         self.get_mut_sub_directories().remove(index);
         Ok(())
     }
@@ -154,6 +175,7 @@ impl DirectoryListing {
     /// Remove a file
     pub fn remove_file(&mut self, file_name: &String) -> Result<(), ::errors::NfsError> {
         let index = try!(self.get_files().iter().position(|file| *file.get_name() == *file_name).ok_or(::errors::NfsError::FileNotFound));
+        debug!("Removing file at index {:?} ...", index);
         self.get_mut_files().remove(index);
         Ok(())
     }

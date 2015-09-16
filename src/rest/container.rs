@@ -33,9 +33,11 @@ impl Container {
                      container_info: Option<::rest::ContainerInfo>) -> Result<Container, ::errors::NfsError> {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(client.clone());
         let directory = if let Some(container_info) = container_info {
+            debug!("Authorising specific container ...");
             let metadata = container_info.into_directory_metadata();
             try!(directory_helper.get(metadata.get_key()))
         } else {
+            debug!("Authorising root container ...");
             try!(directory_helper.get_user_root_directory_listing())
         };
         Ok(Container {
@@ -75,6 +77,7 @@ impl Container {
         } else {
             ::UNVERSIONED_DIRECTORY_LISTING_TAG
         };
+
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         let (created_directory, grand_parent) = try!(directory_helper.create(name,
                                                                              tag_type,
@@ -174,10 +177,16 @@ impl Container {
         let directory_metadata = container_info.into_directory_metadata();
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         let dir_listing = match version {
-            Some(version_id) => try!(directory_helper.get_by_version(directory_metadata.get_id(),
-                                                                     directory_metadata.get_access_level(),
-                                                                     ::routing::NameType(version_id))),
-            None =>  try!(directory_helper.get(directory_metadata.get_key())),
+            Some(version_id) => {
+                    debug!("Retrieving using version id ...");
+                    try!(directory_helper.get_by_version(directory_metadata.get_id(),
+                                                         directory_metadata.get_access_level(),
+                                                         ::routing::NameType(version_id)))
+            },
+            None =>  {
+                    debug!("Retrieving the latest version ...");
+                    try!(directory_helper.get(directory_metadata.get_key()))
+            },
         };
         Ok(Container {
             client: self.client.clone(),
@@ -213,6 +222,7 @@ impl Container {
     /// Updates the blob content. Writes the complete data and updates the Blob
     pub fn update_blob_content(&mut self, blob: &::rest::Blob, data: &[u8]) -> Result<(Container, Option<Container>), ::errors::NfsError> {
         let mut writer = try!(self.get_writer_for_blob(blob, ::helper::writer::Mode::Overwrite));
+        debug!("Writing data to blob ...");
         writer.write(data, 0);
         let (parent_directory, grand_parent) = try!(writer.close());
         Ok((Container {
@@ -235,6 +245,7 @@ impl Container {
     /// Reads the content of the blob and returns the complete content
     pub fn get_blob_content(&self, blob: &::rest::Blob) -> Result<Vec<u8>, ::errors::NfsError> {
         let mut reader = try!(self.get_reader_for_blob(blob));
+        debug!("Reading contents of a blob ...");
         let size = reader.size();
         reader.read(0, size)
     }
@@ -255,11 +266,12 @@ impl Container {
 
     /// Update the metadata of the Blob in the container
     /// Returns Updated parent container, if the parent container exists.
-    pub fn update_blob_metadata(&mut self, blob: ::rest::blob::Blob, metadata: Option<String>) ->Result<Option<Container>, ::errors::NfsError> {
+    pub fn update_blob_metadata(&mut self, mut blob: ::rest::blob::Blob, metadata: Option<String>) ->Result<Option<Container>, ::errors::NfsError> {
         let user_metadata = try!(self.validate_metadata(metadata));
-        let file = blob.into_file();
         let file_helper = ::helper::file_helper::FileHelper::new(self.client.clone());
-        if let Some(parent_directory_listing) = try!(file_helper.update_metadata(file.clone(), user_metadata, &mut self.directory_listing)) {
+        let mut file = blob.into_mut_file();
+        file.get_mut_metadata().set_user_metadata(user_metadata);
+        if let Some(parent_directory_listing) = try!(file_helper.update_metadata(file.clone(), &mut self.directory_listing)) {
             Ok(Some(Container {
                 client           : self.client.clone(),
                 directory_listing: parent_directory_listing,
@@ -288,6 +300,7 @@ impl Container {
         if destination.find_file(blob_name).is_some() {
            return Err(::errors::NfsError::FileExistsInDestination);
         }
+        debug!("Adding {:?} blob to destination files ...", blob_name);
         destination.get_mut_files().push(file.clone());
         let _ = try!(directory_helper.update(&destination));
         Ok(())
@@ -295,7 +308,7 @@ impl Container {
 
     fn get_writer_for_blob(&self, blob: &::rest::blob::Blob, mode: ::helper::writer::Mode) -> Result<::helper::writer::Writer, ::errors::NfsError> {
         let helper = ::helper::file_helper::FileHelper::new(self.client.clone());
-        helper.update(blob.into_file().clone(), mode, self.directory_listing.clone())
+        helper.update_content(blob.into_file().clone(), mode, self.directory_listing.clone())
     }
 
     fn get_reader_for_blob<'a>(&self, blob: &'a ::rest::blob::Blob) -> Result<::helper::reader::Reader<'a>, ::errors::NfsError> {
