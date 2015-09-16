@@ -52,20 +52,23 @@ impl ContainerInfo {
         self.metadata.is_versioned()
     }
 
-    // TODO Implement from trait for coversion
+
     /// Convert the ContainerInfo to the format of DirectoryInfo that lower levels understand and
     /// operate on
-    pub fn convert_to_directory_metadata(&self) -> ::metadata::directory_metadata::DirectoryMetadata {
+    pub fn into_directory_metadata(&self) -> ::metadata::directory_metadata::DirectoryMetadata {
         self.metadata.clone()
     }
 
-    /// Convert from the format of DirectoryInfo that the lower levels understand to the rest
-    /// friendly ContainerInfo
-    pub fn convert_from_directory_metadata(metadata: ::metadata::directory_metadata::DirectoryMetadata) -> ContainerInfo {
+}
+
+impl From<::metadata::directory_metadata::DirectoryMetadata> for ContainerInfo {
+
+    fn from(metadata: ::metadata::directory_metadata::DirectoryMetadata) -> ContainerInfo {
         ContainerInfo {
             metadata: metadata,
         }
     }
+
 }
 
 
@@ -89,7 +92,7 @@ mod test {
 
         assert_eq!(*directory_metadata.get_name(), name);
 
-        let container_info = ContainerInfo::convert_from_directory_metadata(directory_metadata.clone());
+        let container_info = ContainerInfo::from(directory_metadata.clone());
 
         assert_eq!(container_info.get_name(), directory_metadata.get_name());
         assert_eq!(container_info.get_created_time(), directory_metadata.get_created_time());
@@ -102,11 +105,11 @@ mod test {
             metadata: eval_result!(::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None)),
         };
 
-        assert_eq!(*container_info.get_name(), name);
+        assert_eq!(*container_info.get_name(), name.clone());
 
-        let directory_metadata = container_info.convert_to_directory_metadata();
+        let directory_metadata: ::metadata::directory_metadata::DirectoryMetadata = container_info.into_directory_metadata();
 
-        assert_eq!(directory_metadata.get_name(), container_info.get_name());
-        assert_eq!(directory_metadata.get_created_time(), container_info.get_created_time());
+        assert_eq!(*directory_metadata.get_name(), name);
+        assert_eq!(directory_metadata.get_key().get_type_tag(), 10u64);
     }
 }

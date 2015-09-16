@@ -33,7 +33,7 @@ impl Container {
                      container_info: Option<::rest::ContainerInfo>) -> Result<Container, ::errors::NfsError> {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(client.clone());
         let directory = if let Some(container_info) = container_info {
-            let metadata = container_info.convert_to_directory_metadata();
+            let metadata = container_info.into_directory_metadata();
             try!(directory_helper.get(metadata.get_key()))
         } else {
             try!(directory_helper.get_user_root_directory_listing())
@@ -107,7 +107,7 @@ impl Container {
 
     /// Return the unique id of the container
     pub fn get_info(&self) -> ::rest::ContainerInfo {
-        ::rest::ContainerInfo::convert_from_directory_metadata(self.directory_listing.get_metadata().clone())
+        ::rest::ContainerInfo::from(self.directory_listing.get_metadata().clone())
     }
 
     /// Returns the user metadata saved as String.
@@ -125,13 +125,13 @@ impl Container {
 
     /// Returns the list of Blobs in the container
     pub fn get_blobs(&self) -> Vec<::rest::Blob> {
-        self.directory_listing.get_files().iter().map(|x| ::rest::Blob::convert_from_file(x.clone())).collect()
+        self.directory_listing.get_files().iter().map(|x| ::rest::Blob::from(x.clone())).collect()
     }
 
     /// Returns a Blob from the container
     pub fn get_blob(&self, name: String) -> Result<::rest::blob::Blob, ::errors::NfsError> {
         match self.directory_listing.find_file(&name) {
-            Some(file) => Ok(::rest::blob::Blob::convert_from_file(file.clone())),
+            Some(file) => Ok(::rest::blob::Blob::from(file.clone())),
             None => Err(::errors::NfsError::NotFound),
         }
     }
@@ -139,7 +139,7 @@ impl Container {
     /// Returns the list of child containers
     pub fn get_containers(&self) -> Vec<::rest::ContainerInfo> {
         self.directory_listing.get_sub_directories().iter().map(|info| {
-                ::rest::ContainerInfo::convert_from_directory_metadata(info.clone())
+                ::rest::ContainerInfo::from(info.clone())
             }).collect()
     }
 
@@ -164,14 +164,14 @@ impl Container {
 
     /// Retrieves Versions for the container being referred by the container_id
     pub fn get_container_versions(&self, container_info: &::rest::container_info::ContainerInfo) -> Result<Vec<[u8; 64]>, ::errors::NfsError> {
-        let directory_metadata = container_info.convert_to_directory_metadata();
+        let directory_metadata = container_info.into_directory_metadata();
         self.list_container_versions(directory_metadata.get_id(), directory_metadata.get_type_tag())
     }
 
     /// Fetches the latest version of the child container.
     /// Can fetch a specific version of the Container by passing the corresponding VersionId.
     pub fn get_container(&mut self, container_info: &::rest::container_info::ContainerInfo, version: Option<[u8; 64]>) -> Result<Container, ::errors::NfsError> {
-        let directory_metadata = container_info.convert_to_directory_metadata();
+        let directory_metadata = container_info.into_directory_metadata();
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         let dir_listing = match version {
             Some(version_id) => try!(directory_helper.get_by_version(directory_metadata.get_id(),
@@ -250,14 +250,14 @@ impl Container {
         let file = try!(self.directory_listing.find_file(name).ok_or(::errors::NfsError::NotFound));
         let file_helper = ::helper::file_helper::FileHelper::new(self.client.clone());
         let versions = try!(file_helper.get_versions(&file, &self.directory_listing));
-        Ok(versions.iter().map(|file| { ::rest::blob::Blob::convert_from_file(file.clone()) }).collect())
+        Ok(versions.iter().map(|file| { ::rest::blob::Blob::from(file.clone()) }).collect())
     }
 
     /// Update the metadata of the Blob in the container
     /// Returns Updated parent container, if the parent container exists.
     pub fn update_blob_metadata(&mut self, blob: ::rest::blob::Blob, metadata: Option<String>) ->Result<Option<Container>, ::errors::NfsError> {
         let user_metadata = try!(self.validate_metadata(metadata));
-        let file = blob.convert_to_file();
+        let file = blob.into_file();
         let file_helper = ::helper::file_helper::FileHelper::new(self.client.clone());
         if let Some(parent_directory_listing) = try!(file_helper.update_metadata(file.clone(), user_metadata, &mut self.directory_listing)) {
             Ok(Some(Container {
@@ -278,7 +278,7 @@ impl Container {
 
     /// Copies the latest blob version from the container to the specified destination container
     pub fn copy_blob(&mut self, blob_name: &String, to_container: &::rest::container_info::ContainerInfo) -> Result<(), ::errors::NfsError> {
-        let to_dir = to_container.convert_to_directory_metadata();
+        let to_dir = to_container.into_directory_metadata();
         if self.directory_listing.get_key() == to_dir.get_key() {
             return Err(::errors::NfsError::DestinationAndSourceAreSame);
         }
@@ -295,12 +295,12 @@ impl Container {
 
     fn get_writer_for_blob(&self, blob: &::rest::blob::Blob, mode: ::helper::writer::Mode) -> Result<::helper::writer::Writer, ::errors::NfsError> {
         let helper = ::helper::file_helper::FileHelper::new(self.client.clone());
-        helper.update(blob.convert_to_file().clone(), mode, self.directory_listing.clone())
+        helper.update(blob.into_file().clone(), mode, self.directory_listing.clone())
     }
 
     fn get_reader_for_blob<'a>(&self, blob: &'a ::rest::blob::Blob) -> Result<::helper::reader::Reader<'a>, ::errors::NfsError> {
         match self.directory_listing.find_file(blob.get_name()) {
-            Some(_) => Ok(::helper::reader::Reader::new(self.client.clone(), blob.convert_to_file())),
+            Some(_) => Ok(::helper::reader::Reader::new(self.client.clone(), blob.into_file())),
             None    => Err(::errors::NfsError::NotFound),
         }
     }
@@ -339,12 +339,12 @@ mod test {
         let client = get_client();
         let root_dir = eval_result!(Container::authorise(client.clone(), None));
         let root_dir_second = eval_result!(Container::authorise(client.clone(), None));
-        assert_eq!(*root_dir.get_info().convert_to_directory_metadata().get_key().get_id(),
-                   *root_dir_second.get_info().convert_to_directory_metadata().get_key().get_id());
+        assert_eq!(*root_dir.get_info().into_directory_metadata().get_key().get_id(),
+                   *root_dir_second.get_info().into_directory_metadata().get_key().get_id());
 
         let root_dir_from_info = eval_result!(Container::authorise(client, Some(root_dir.get_info())));
-        assert_eq!(*root_dir.get_info().convert_to_directory_metadata().get_key().get_id(),
-                   *root_dir_from_info.get_info().convert_to_directory_metadata().get_key().get_id());
+        assert_eq!(*root_dir.get_info().into_directory_metadata().get_key().get_id(),
+                   *root_dir_from_info.get_info().into_directory_metadata().get_key().get_id());
     }
 
     #[test]
