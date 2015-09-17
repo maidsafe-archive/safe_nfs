@@ -217,20 +217,18 @@ impl Container {
     }
 
     /// Updates the blob content. Writes the complete data and updates the Blob
-    pub fn update_blob_content(&mut self, blob: &::rest::Blob, data: &[u8]) -> Result<(Container, Option<Container>), ::errors::NfsError> {
+    pub fn update_blob_content(&mut self, blob: &::rest::Blob, data: &[u8]) -> Result<Option<Container>, ::errors::NfsError> {
         let mut writer = try!(self.get_writer_for_blob(blob, ::helper::writer::Mode::Overwrite));
         debug!("Writing data to blob ...");
         writer.write(data, 0);
         let (parent_directory, grand_parent) = try!(writer.close());
-        Ok((Container {
-            client           : self.client.clone(),
-            directory_listing: parent_directory,
-        }, grand_parent.iter().next().map(|parent_directory| {
+        self.directory_listing = parent_directory.clone();
+        Ok(grand_parent.iter().next().map(|parent_directory| {
             Container {
                 client: self.client.clone(),
                 directory_listing: parent_directory.clone(),
             }
-        })))
+        }))
     }
 
     /// Return a writter object for the Blob, through which the content of the blob can be updated
@@ -295,7 +293,7 @@ impl Container {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         let mut destination = try!(directory_helper.get(to_dir.get_key()));
         if destination.find_file(blob_name).is_some() {
-           return Err(::errors::NfsError::FileExistsInDestination);
+           return Err(::errors::NfsError::FileAlreadyExistsWithSameName);
         }
         debug!("Adding {:?} blob to destination files ...", blob_name);
         destination.get_mut_files().push(file.clone());
@@ -405,7 +403,7 @@ mod test {
 
         let data_updated = "Hello World updated!".to_string().into_bytes();
         let _ = eval_result!(home_container.update_blob_content(&blob, &data_updated[..]));
-        home_container = eval_result!(container.get_container(&home_container.get_info(), None));
+        
         let blob = eval_result!(home_container.get_blob("sample.txt".to_string()));
         assert_eq!(eval_result!(home_container.get_blob_content(&blob)), data_updated);
 
