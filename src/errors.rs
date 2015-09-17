@@ -34,8 +34,6 @@ pub enum NfsError {
     FileAlreadyExistsWithSameName,
     /// File does not match with the existing file in the directory listing
     FileDoesNotMatch,
-    /// File already present in the destonation specified
-    FileExistsInDestination,
     /// File not found
     FileNotFound,
     /// Invalid byte range specified
@@ -67,11 +65,10 @@ impl Into<i32> for NfsError {
             NfsError::DirectoryNotFound                     => NFS_ERROR_START_RANGE - 3,
             NfsError::FileAlreadyExistsWithSameName         => NFS_ERROR_START_RANGE - 4,
             NfsError::FileDoesNotMatch                      => NFS_ERROR_START_RANGE - 5,
-            NfsError::FileExistsInDestination               => NFS_ERROR_START_RANGE - 6,
-            NfsError::FileNotFound                          => NFS_ERROR_START_RANGE - 7,
-            NfsError::InvalidRangeSpecified                 => NFS_ERROR_START_RANGE - 8,
-            NfsError::ParameterIsNotValid                   => NFS_ERROR_START_RANGE - 9,
-            NfsError::Unexpected(_)                         => NFS_ERROR_START_RANGE - 10,
+            NfsError::FileNotFound                          => NFS_ERROR_START_RANGE - 6,
+            NfsError::InvalidRangeSpecified                 => NFS_ERROR_START_RANGE - 7,
+            NfsError::ParameterIsNotValid                   => NFS_ERROR_START_RANGE - 8,
+            NfsError::Unexpected(_)                         => NFS_ERROR_START_RANGE - 9,
         }
     }
 }
@@ -84,8 +81,7 @@ impl ::std::fmt::Debug for NfsError {
             NfsError::DestinationAndSourceAreSame           => write!(f, "NfsError::DestinationAndSourceAreSame"),
             NfsError::DirectoryNotFound                     => write!(f, "NfsError::DirectoryNotFound"),
             NfsError::FileAlreadyExistsWithSameName         => write!(f, "NfsError::FileAlreadyExistsWithSameName"),
-            NfsError::FileDoesNotMatch                      => write!(f, "NfsError::FileDoesNotMatch"),
-            NfsError::FileExistsInDestination               => write!(f, "NfsError::FileExistsInDestination"),
+            NfsError::FileDoesNotMatch                      => write!(f, "NfsError::FileDoesNotMatch"),            
             NfsError::FileNotFound                          => write!(f, "NfsError::FileNotFound"),
             NfsError::InvalidRangeSpecified                 => write!(f, "NfsError::InvalidRangeSpecified"),
             NfsError::ParameterIsNotValid                   => write!(f, "NfsError::ParameterIsNotValid"),
