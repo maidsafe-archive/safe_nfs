@@ -279,6 +279,7 @@ fn main() {
             println!("9. Get blob content by version");
             println!("10. Delete blob");
             println!("11. Copy blob");
+            println!("12. Exit");
             println!("------ Enter a number --------------------");
             let _ = std::io::stdin().read_line(&mut option);
             println!("\n");
@@ -293,6 +294,7 @@ fn main() {
                             Err(msg) => println!("Failed: {:?}", msg),
                             Ok(_) => (),
                         },
+                        12 => break,
                         _ => println!("Invalid option"),
                     }
                 },
