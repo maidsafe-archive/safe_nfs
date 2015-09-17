@@ -223,7 +223,7 @@ impl DirectoryHelper {
             };
             let version = try!(self.save_as_immutable_data(serialised_data,
                                                            ::routing::immutable_data::ImmutableDataType::Normal));
-            Ok(try!(::safe_client::structured_data_operations::versioned::create(&mut *eval_result!(self.client.lock()),
+            Ok(try!(::safe_client::structured_data_operations::versioned::create(& *eval_result!(self.client.lock()),
                                                                                  version,
                                                                                  directory.get_key().get_type_tag(),
                                                                                  directory.get_key().get_id().clone(),
