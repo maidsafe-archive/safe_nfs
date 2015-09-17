@@ -27,7 +27,6 @@ impl Blob {
         self.file.get_metadata().get_name()
     }
 
-    // TODO metadata is convering utf8 string - better to do no conversion and just send the vec<u8> to the caller
     /// Get the user settable Metadata of the Blob
     pub fn get_metadata(&self) -> String {
         match String::from_utf8(self.file.get_metadata().get_user_metadata().clone()) {
@@ -52,22 +51,23 @@ impl Blob {
     }
 
     /// Convert the Blob to the format acceptable to the lower level Api's
-    pub fn convert_to_file(&self) -> &::file::File {
+    pub fn into_file(&self) -> &::file::File {
         &self.file
     }
 
-    // TODO Implement from trait for coversion
     /// Convert the Blob to the format acceptable to the lower level Api's
     /// This can also be modified on the fly as the return is a mutable value
-    pub fn convert_to_mut_file(&mut self) -> &mut ::file::File {
+    pub fn into_mut_file(&mut self) -> &mut ::file::File {
         &mut self.file
     }
 
-    /// Convert the format acceptable to the lower level Api's into a Blob for more restful
-    /// interface
-    pub fn convert_from_file(file: ::file::File) -> Blob {
+}
+
+impl From<::file::File> for Blob {
+
+    fn from(file: ::file::File) -> Blob {
         Blob {
-            file: file,
+            file: file
         }
     }
 }
@@ -90,7 +90,7 @@ mod test {
         assert_eq!(blob.get_size(), metadata.get_size());
         assert!(blob.get_metadata().is_empty());
 
-        let file = blob.convert_to_file();
+        let file = blob.into_file();
 
         assert_eq!(file.get_name(), metadata.get_name());
         assert_eq!(file.get_metadata().get_created_time(), metadata.get_created_time());
@@ -106,7 +106,7 @@ mod test {
         let metadata = ::metadata::file_metadata::FileMetadata::new("blob".to_string(), Vec::new());
         let file = eval_result!(::file::File::new(metadata.clone(), datamap.clone()));
 
-        let blob = Blob::convert_from_file(file.clone());
+        let blob = Blob::from(file.clone());
 
         assert_eq!(*blob.get_name(), *file.get_name());
         assert_eq!(blob.get_created_time(), file.get_metadata().get_created_time());
@@ -130,7 +130,7 @@ mod test {
         assert!(blob.get_metadata().is_empty());
         assert!(file.get_metadata().get_user_metadata().is_empty());
 
-        let file = blob.convert_to_file();
+        let file = blob.into_file();
 
         assert_eq!(*blob.get_name(), *file.get_name());
         assert_eq!(blob.get_created_time(), file.get_metadata().get_created_time());
@@ -145,7 +145,7 @@ mod test {
         let first_metadata = ::metadata::file_metadata::FileMetadata::new("first_blob".to_string(), Vec::new());
         let first_file = eval_result!(::file::File::new(first_metadata.clone(), first_datamap.clone()));
 
-        let first_blob = Blob::convert_from_file(first_file.clone());
+        let first_blob = Blob::from(first_file.clone());
         let second_blob = Blob{file: first_file.clone() };
 
         // allow 'times' to be sufficiently distinct
@@ -155,7 +155,7 @@ mod test {
         let second_metadata = ::metadata::file_metadata::FileMetadata::new("second_blob".to_string(), Vec::new());
         let second_file = eval_result!(::file::File::new(second_metadata, second_datamap.clone()));
 
-        let third_blob = Blob::convert_from_file(second_file.clone());
+        let third_blob = Blob::from(second_file.clone());
 
         assert_eq!(*first_blob.get_name(), *second_blob.get_name());
         assert_eq!(first_blob.get_created_time(), second_blob.get_created_time());

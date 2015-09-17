@@ -40,12 +40,12 @@ cargo test
 ## TODO
 
 ### [0.1.1]
-- [ ] [MAID-1305](https://maidsafe.atlassian.net/browse/MAID-1305) Expand test cases
+- [X] [MAID-1305](https://maidsafe.atlassian.net/browse/MAID-1305) Expand test cases
 - [X] [MAID-1306](https://maidsafe.atlassian.net/browse/MAID-1306) Remove all unwraps() AND Check for Ok(try!( and see if really required (ie., for error conversion etc)
 - [X] [MAID-1307](https://maidsafe.atlassian.net/browse/MAID-1307) Address the TODO’s and make temporary fixes as permanent
 - [X] [MAID-1308](https://maidsafe.atlassian.net/browse/MAID-1308) Test cases for addressed TODO's and permanent fixes
-- [ ] [MAID-1309](https://maidsafe.atlassian.net/browse/MAID-1309) Check for all muts (eg., response_getter etc) and validate if really required
+- [X] [MAID-1309](https://maidsafe.atlassian.net/browse/MAID-1309) Check for all muts (eg., response_getter etc) and validate if really required
 - [ ] [MAID-1310](https://maidsafe.atlassian.net/browse/MAID-1310) Remove unwanted errors and Unexpected should take an &str instead of String
-- [ ] [MAID-1311](https://maidsafe.atlassian.net/browse/MAID-1311) Put debug statements
+- [X] [MAID-1311](https://maidsafe.atlassian.net/browse/MAID-1311) Put debug statements
 - [ ] [MAID-1312](https://maidsafe.atlassian.net/browse/MAID-1312) Changes due to client
 - [ ] [MAID-1313](https://maidsafe.atlassian.net/browse/MAID-1313) Add exit and help to rest_api example
