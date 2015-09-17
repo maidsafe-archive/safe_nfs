@@ -36,7 +36,7 @@ impl FileHelper {
                   user_metatdata  : Vec<u8>,
                   parent_directory: ::directory_listing::DirectoryListing) -> Result<::helper::writer::Writer, ::errors::NfsError> {
         match parent_directory.find_file(&name) {
-            Some(_) => Err(::errors::NfsError::AlreadyExists),
+            Some(_) => Err(::errors::NfsError::FileAlreadyExistsWithSameName),
             None => {
                 let file = try!(::file::File::new(::metadata::file_metadata::FileMetadata::new(name, user_metatdata), ::self_encryption::datamap::DataMap::None));
                 Ok(::helper::writer::Writer::new(self.client.clone(), ::helper::writer::Mode::Overwrite, parent_directory, file))
@@ -64,7 +64,7 @@ impl FileHelper {
             let existing_file = try!(parent_directory.find_file_by_id(file.get_id()).ok_or(::errors::NfsError::FileNotFound));
             if existing_file.get_name() != file.get_name() &&
                parent_directory.find_file(file.get_name()).is_some() {
-               return Err(::errors::NfsError::AlreadyExists)
+               return Err(::errors::NfsError::FileAlreadyExistsWithSameName)
             }
         }
         parent_directory.upsert_file(file);
