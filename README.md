@@ -47,5 +47,5 @@ cargo test
 - [X] [MAID-1309](https://maidsafe.atlassian.net/browse/MAID-1309) Check for all muts (eg., response_getter etc) and validate if really required
 - [X] [MAID-1310](https://maidsafe.atlassian.net/browse/MAID-1310) Remove unwanted errors and Unexpected should take an &str instead of String
 - [X] [MAID-1311](https://maidsafe.atlassian.net/browse/MAID-1311) Put debug statements
-- [ ] [MAID-1312](https://maidsafe.atlassian.net/browse/MAID-1312) Changes due to client
+- [X] [MAID-1312](https://maidsafe.atlassian.net/browse/MAID-1312) Changes due to client
 - [X] [MAID-1313](https://maidsafe.atlassian.net/browse/MAID-1313) Add exit and help to rest_api example
