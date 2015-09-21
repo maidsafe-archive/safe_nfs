@@ -56,7 +56,7 @@ impl DirectoryHelper {
 
         let structured_data = try!(self.save_directory_listing(&directory));
         debug!("Posting PUT request to network to save structured data for directory ...");
-        eval_result!(self.client.lock()).put(::routing::data::Data::StructuredData(structured_data), None);
+        try!(eval_result!(self.client.lock()).put(::routing::data::Data::StructuredData(structured_data), None));
         if let Some(mut parent_directory) = parent_directory {
             parent_directory.upsert_sub_directory(directory.get_metadata().clone());
             Ok((directory, try!(self.update(parent_directory))))
@@ -308,7 +308,7 @@ impl DirectoryHelper {
         let immutable_data = ::routing::immutable_data::ImmutableData::new(data_type, data);
         let name = immutable_data.name();
         debug!("Posting PUT request to save immutable data to the network ...");
-        eval_result!(self.client.lock()).put(::routing::data::Data::ImmutableData(immutable_data), None);
+        try!(eval_result!(self.client.lock()).put(::routing::data::Data::ImmutableData(immutable_data), None));
         Ok(name)
     }
 
