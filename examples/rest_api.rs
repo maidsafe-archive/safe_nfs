@@ -45,7 +45,7 @@ fn create_account() -> Result<safe_client::client::Client, ::safe_nfs::errors::N
     }
 
     // Account Creation
-    println!("\nTrying to create an account ...");    
+    println!("\nTrying to create an account ...");
     let _ = eval_result!(safe_client::client::Client::create_account(keyword.clone(), pin.clone(), password.clone()));
     println!("Account Created Successfully !!");
     println!("\n\n\tAuto Account Login");
