@@ -358,7 +358,7 @@ mod test {
     fn create_container() {
         let client = get_client();
         let mut container = eval_result!(Container::authorise(client.clone(), None));
-        eval_result!(container.create("Home".to_string(), true, ::AccessLevel::Private, None));
+        let _ = eval_result!(container.create("Home".to_string(), true, ::AccessLevel::Private, None));
 
         assert_eq!(container.get_containers().len(), 1);
         assert_eq!(container.get_containers()[0].get_name(), "Home");
@@ -371,12 +371,12 @@ mod test {
         let client = get_client();
         let dir_name = "Home".to_string();
         let mut container = eval_result!(Container::authorise(client, None));
-        eval_result!(container.create(dir_name.clone(), true, ::AccessLevel::Private, None));
+        let _ = eval_result!(container.create(dir_name.clone(), true, ::AccessLevel::Private, None));
 
         assert_eq!(container.get_containers().len(), 1);
         assert_eq!(container.get_containers()[0].get_name(), "Home");
 
-        eval_result!(container.delete_container(&dir_name));
+        let _ = eval_result!(container.delete_container(&dir_name));
 
         assert_eq!(container.get_containers().len(), 0);
     }
@@ -393,7 +393,7 @@ mod test {
         let mut writer = eval_result!(home_container.create_blob("sample.txt".to_string(), None));
         let data = "Hello World!".to_string().into_bytes();
         writer.write(&data[..], 0);
-        eval_result!(writer.close());
+        let _ = eval_result!(writer.close());
         home_container = eval_result!(container.get_container(&home_container.get_info(), None));
         assert!(home_container.create_blob("sample.txt".to_string(), None).is_err());
 
@@ -418,7 +418,7 @@ mod test {
             }
         }
         let metadata = "{\"purpose\": \"test\"}".to_string();
-        eval_result!(home_container.update_blob_metadata(blob, Some(metadata.clone())));
+        let _ = eval_result!(home_container.update_blob_metadata(blob, Some(metadata.clone())));
         let blob = eval_result!(home_container.get_blob("sample.txt".to_string()));
         assert_eq!(blob.get_metadata(), metadata);
 

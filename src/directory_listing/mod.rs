@@ -168,7 +168,7 @@ impl DirectoryListing {
     pub fn remove_sub_directory(&mut self, directory_name: &String) -> Result<(), ::errors::NfsError> {
         let index = try!(self.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == *directory_name).ok_or(::errors::NfsError::DirectoryNotFound));
         debug!("Removing sub directory at index {:?} ...", index);
-        self.get_mut_sub_directories().remove(index);
+        let _ = self.get_mut_sub_directories().remove(index);
         Ok(())
     }
 
@@ -176,7 +176,7 @@ impl DirectoryListing {
     pub fn remove_file(&mut self, file_name: &String) -> Result<(), ::errors::NfsError> {
         let index = try!(self.get_files().iter().position(|file| *file.get_name() == *file_name).ok_or(::errors::NfsError::FileNotFound));
         debug!("Removing file at index {:?} ...", index);
-        self.get_mut_files().remove(index);
+        let _ = self.get_mut_files().remove(index);
         Ok(())
     }
 
@@ -248,15 +248,15 @@ mod test {
         directory_listing.upsert_file(file2.clone());
         assert_eq!(directory_listing.get_files().len(), 2);
 
-        eval_option!(directory_listing.find_file(file.get_name()), "File not found");
-        eval_option!(directory_listing.find_file(file2.get_name()), "File not found");
+        let _ = eval_option!(directory_listing.find_file(file.get_name()), "File not found");
+        let _ = eval_option!(directory_listing.find_file(file2.get_name()), "File not found");
 
-        eval_result!(directory_listing.remove_file(file.get_metadata().get_name()));
+        let _ = eval_result!(directory_listing.remove_file(file.get_metadata().get_name()));
         assert!(directory_listing.find_file(file.get_name()).is_none());
         assert!(directory_listing.find_file(file2.get_name()).is_some());
         assert_eq!(directory_listing.get_files().len(), 1);
 
-        eval_result!(directory_listing.remove_file(file2.get_metadata().get_name()));
+        let _ = eval_result!(directory_listing.remove_file(file2.get_metadata().get_name()));
         assert_eq!(directory_listing.get_files().len(), 0);
     }
 
@@ -290,15 +290,15 @@ mod test {
         directory_listing.upsert_sub_directory(sub_directory_two.get_metadata().clone());
         assert_eq!(directory_listing.get_sub_directories().len(), 2);
 
-        eval_option!(directory_listing.find_sub_directory(sub_directory.get_metadata().get_name()), "Directory not found");
-        eval_option!(directory_listing.find_sub_directory(sub_directory_two.get_metadata().get_name()), "Directory not found");
+        let _ = eval_option!(directory_listing.find_sub_directory(sub_directory.get_metadata().get_name()), "Directory not found");
+        let _ = eval_option!(directory_listing.find_sub_directory(sub_directory_two.get_metadata().get_name()), "Directory not found");
 
-        eval_result!(directory_listing.remove_sub_directory(sub_directory.get_metadata().get_name()));
+        let _ = eval_result!(directory_listing.remove_sub_directory(sub_directory.get_metadata().get_name()));
         assert!(directory_listing.find_sub_directory(sub_directory.get_metadata().get_name()).is_none());
         assert!(directory_listing.find_sub_directory(sub_directory_two.get_metadata().get_name()).is_some());
         assert_eq!(directory_listing.get_sub_directories().len(), 1);
 
-        eval_result!(directory_listing.remove_sub_directory(sub_directory_two.get_metadata().get_name()));
+        let _ = eval_result!(directory_listing.remove_sub_directory(sub_directory_two.get_metadata().get_name()));
         assert_eq!(directory_listing.get_sub_directories().len(), 0);
     }
 
