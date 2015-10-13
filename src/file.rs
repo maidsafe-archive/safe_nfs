@@ -29,7 +29,7 @@ impl File {
     pub fn new(metadata: ::metadata::file_metadata::FileMetadata,
                datamap : ::self_encryption::datamap::DataMap) -> Result<File, ::errors::NfsError> {
         Ok(File {
-            id      : ::routing::NameType::new(try!(::safe_client::utility::generate_random_array_u8_64())),
+            id      : ::routing::NameType::new(try!(::safe_core::utility::generate_random_array_u8_64())),
             metadata: metadata,
             datamap : datamap,
         })
@@ -82,8 +82,8 @@ mod test {
         let obj_before = eval_result!(File::new(::metadata::file_metadata::FileMetadata::new("Home".to_string(),
                                                                                              "{mime:\"application/json\"}".to_string().into_bytes()),
                                                                                              ::self_encryption::datamap::DataMap::None));
-        let serialised_data = eval_result!(::safe_client::utility::serialise(&obj_before));
-        let obj_after = eval_result!(::safe_client::utility::deserialise(&serialised_data));
+        let serialised_data = eval_result!(::safe_core::utility::serialise(&obj_before));
+        let obj_after = eval_result!(::safe_core::utility::deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);
     }
 }

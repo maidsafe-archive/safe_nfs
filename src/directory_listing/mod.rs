@@ -80,28 +80,28 @@ impl DirectoryListing {
     }
 
     /// Decrypts a directory listing
-    pub fn decrypt(client      : ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>,
+    pub fn decrypt(client      : ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>>,
                    directory_id: &::routing::NameType,
                    data        : Vec<u8>) -> Result<DirectoryListing, ::errors::NfsError> {
         let decrypted_data_map = try!(eval_result!(client.lock()).hybrid_decrypt(&data,
                                                                                  Some(&DirectoryListing::generate_nonce(directory_id))));
-        let datamap: ::self_encryption::datamap::DataMap = try!(::safe_client::utility::deserialise(&decrypted_data_map));
-        let mut se = ::self_encryption::SelfEncryptor::new(::safe_client::SelfEncryptionStorage::new(client.clone()), datamap);
+        let datamap: ::self_encryption::datamap::DataMap = try!(::safe_core::utility::deserialise(&decrypted_data_map));
+        let mut se = ::self_encryption::SelfEncryptor::new(::safe_core::SelfEncryptionStorage::new(client.clone()), datamap);
         let length = se.len();
         debug!("Reading encrypted storage of length {:?} ...", length);
         let serialised_directory_listing = se.read(0, length);
-        Ok(try!(::safe_client::utility::deserialise(&serialised_directory_listing)))
+        Ok(try!(::safe_core::utility::deserialise(&serialised_directory_listing)))
     }
 
     /// Encrypts the directory listing
     pub fn encrypt(&self,
-                   client: ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>) -> Result<Vec<u8>, ::errors::NfsError> {
-        let serialised_data = try!(::safe_client::utility::serialise(&self));
-        let mut se = ::self_encryption::SelfEncryptor::new(::safe_client::SelfEncryptionStorage::new(client.clone()), ::self_encryption::datamap::DataMap::None);
+                   client: ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>>) -> Result<Vec<u8>, ::errors::NfsError> {
+        let serialised_data = try!(::safe_core::utility::serialise(&self));
+        let mut se = ::self_encryption::SelfEncryptor::new(::safe_core::SelfEncryptionStorage::new(client.clone()), ::self_encryption::datamap::DataMap::None);
         debug!("Writing to storage using self encryption ...");
         se.write(&serialised_data, 0);
         let datamap = se.close();
-        let serialised_data_map = try!(::safe_client::utility::serialise(&datamap));
+        let serialised_data_map = try!(::safe_core::utility::serialise(&datamap));
         Ok(try!(eval_result!(client.lock()).hybrid_encrypt(&serialised_data_map, Some(&DirectoryListing::generate_nonce(&self.get_key().get_id())))))
     }
 
@@ -204,14 +204,14 @@ mod test {
                                                             ::AccessLevel::Private,
                                                             None));
 
-        let serialised_data = eval_result!(::safe_client::utility::serialise(&obj_before));
-        let obj_after = eval_result!(::safe_client::utility::deserialise(&serialised_data));
+        let serialised_data = eval_result!(::safe_core::utility::serialise(&obj_before));
+        let obj_after = eval_result!(::safe_core::utility::deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);
     }
 
     #[test]
     fn encrypt_and_decrypt_directory_listing() {
-        let test_client = eval_result!(::safe_client::utility::test_utils::get_client());
+        let test_client = eval_result!(::safe_core::utility::test_utils::get_client());
         let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
         let directory_listing = eval_result!(DirectoryListing::new("Home".to_string(),
                                                                    10,

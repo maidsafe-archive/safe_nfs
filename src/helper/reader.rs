@@ -19,16 +19,16 @@
 /// large
 #[allow(dead_code)]
 pub struct Reader<'a> {
-    client        : ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>,
-    self_encryptor: ::self_encryption::SelfEncryptor<::safe_client::SelfEncryptionStorage>,
+    client        : ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>>,
+    self_encryptor: ::self_encryption::SelfEncryptor<::safe_core::SelfEncryptionStorage>,
     file          : &'a ::file::File,
 }
 
 impl<'a> Reader<'a> {
     /// Create a new instance of Reader
-    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>,
+    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>>,
                file  : &'a ::file::File) -> Reader {
-        let se_storage = ::safe_client::SelfEncryptionStorage::new(client.clone());
+        let se_storage = ::safe_core::SelfEncryptionStorage::new(client.clone());
 
         Reader {
             client        : client.clone(),

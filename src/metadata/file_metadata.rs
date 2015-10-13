@@ -132,8 +132,8 @@ mod test {
     fn serialise_and_deserialise_file_metadata() {
         let obj_before = FileMetadata::new("hello.txt".to_string(),
                                            "{mime: \"application/json\"}".to_string().into_bytes());
-        let serialised_data = eval_result!(::safe_client::utility::serialise(&obj_before));
-        let obj_after = eval_result!(::safe_client::utility::deserialise(&serialised_data));
+        let serialised_data = eval_result!(::safe_core::utility::serialise(&obj_before));
+        let obj_after = eval_result!(::safe_core::utility::deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);
     }
 }

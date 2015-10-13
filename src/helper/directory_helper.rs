@@ -17,12 +17,12 @@
 
 /// DirectoryHelper provides helper functions to perform Operations on Directory
 pub struct DirectoryHelper {
-    client: ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>,
+    client: ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>>,
 }
 
 impl DirectoryHelper {
     /// Create a new DirectoryHelper instance
-    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>) -> DirectoryHelper {
+    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>>) -> DirectoryHelper {
         DirectoryHelper {
             client: client,
         }
@@ -94,7 +94,7 @@ impl DirectoryHelper {
     /// Return the versions of the directory
     pub fn get_versions(&self, directory_id: &::routing::NameType, type_tag: u64) -> Result<Vec<::routing::NameType>, ::errors::NfsError> {
         let structured_data = try!(self.get_structured_data(directory_id, type_tag));
-        Ok(try!(::safe_client::structured_data_operations::versioned::get_all_versions(&mut *eval_result!(self.client.lock()), &structured_data)))
+        Ok(try!(::safe_core::structured_data_operations::versioned::get_all_versions(&mut *eval_result!(self.client.lock()), &structured_data)))
     }
 
     /// Return the DirectoryListing for the specified version
@@ -105,7 +105,7 @@ impl DirectoryHelper {
           let immutable_data = try!(self.get_immutable_data(version, ::routing::immutable_data::ImmutableDataType::Normal));
           match *access_level {
               ::AccessLevel::Private => ::directory_listing::DirectoryListing::decrypt(self.client.clone(), directory_id, immutable_data.value().clone()),
-              ::AccessLevel::Public  => Ok(try!(::safe_client::utility::deserialise(immutable_data.value()))),
+              ::AccessLevel::Public  => Ok(try!(::safe_core::utility::deserialise(immutable_data.value()))),
           }
     }
 
@@ -139,10 +139,10 @@ impl DirectoryHelper {
             };
 
             let structured_data = try!(self.get_structured_data(directory_id, type_tag));
-            let serialised_directory_listing = try!(::safe_client::structured_data_operations::unversioned::get_data(self.client.clone(),
+            let serialised_directory_listing = try!(::safe_core::structured_data_operations::unversioned::get_data(self.client.clone(),
                                                                                                                  &structured_data,
                                                                                                                  encryption_keys));
-            Ok(try!(::safe_client::utility::deserialise(&serialised_directory_listing)))
+            Ok(try!(::safe_core::utility::deserialise(&serialised_directory_listing)))
         }
     }
 
@@ -219,11 +219,11 @@ impl DirectoryHelper {
         if versioned {
             let serialised_data = match *access_level {
                 ::AccessLevel::Private => try!(directory.encrypt(self.client.clone())),
-                ::AccessLevel::Public => try!(::safe_client::utility::serialise(&directory)),
+                ::AccessLevel::Public => try!(::safe_core::utility::serialise(&directory)),
             };
             let version = try!(self.save_as_immutable_data(serialised_data,
                                                            ::routing::immutable_data::ImmutableDataType::Normal));
-            Ok(try!(::safe_client::structured_data_operations::versioned::create(& *eval_result!(self.client.lock()),
+            Ok(try!(::safe_core::structured_data_operations::versioned::create(& *eval_result!(self.client.lock()),
                                                                                  version,
                                                                                  directory.get_key().get_type_tag(),
                                                                                  directory.get_key().get_id().clone(),
@@ -235,7 +235,7 @@ impl DirectoryHelper {
             let private_key = try!(eval_result!(self.client.lock()).get_public_encryption_key()).clone();
             let secret_key = try!(eval_result!(self.client.lock()).get_secret_encryption_key()).clone();
             let nonce = ::directory_listing::DirectoryListing::generate_nonce(directory.get_key().get_id());
-            let serialised_data = try!(::safe_client::utility::serialise(&directory));
+            let serialised_data = try!(::safe_core::utility::serialise(&directory));
 
             let encryption_keys = match *access_level {
                 ::AccessLevel::Private => Some((&private_key,
@@ -243,7 +243,7 @@ impl DirectoryHelper {
                                                 &nonce)),
                 ::AccessLevel::Public => None,
             };
-            Ok(try!(::safe_client::structured_data_operations::unversioned::create(self.client.clone(),
+            Ok(try!(::safe_core::structured_data_operations::unversioned::create(self.client.clone(),
                                                                                    directory.get_key().get_type_tag(),
                                                                                    directory.get_key().get_id().clone(),
                                                                                    0,
@@ -266,11 +266,11 @@ impl DirectoryHelper {
         let updated_structured_data = if versioned {
             let serialised_data = match *access_level {
                 ::AccessLevel::Private => try!(directory.encrypt(self.client.clone())),
-                ::AccessLevel::Public => try!(::safe_client::utility::serialise(&directory)),
+                ::AccessLevel::Public => try!(::safe_core::utility::serialise(&directory)),
             };
             let version = try!(self.save_as_immutable_data(serialised_data,
                                                            ::routing::immutable_data::ImmutableDataType::Normal));
-            try!(::safe_client::structured_data_operations::versioned::append_version(&mut *eval_result!(self.client.lock()),
+            try!(::safe_core::structured_data_operations::versioned::append_version(&mut *eval_result!(self.client.lock()),
                                                                                       structured_data,
                                                                                       version,
                                                                                       &signing_key))
@@ -278,7 +278,7 @@ impl DirectoryHelper {
             let private_key = try!(eval_result!(self.client.lock()).get_public_encryption_key()).clone();
             let secret_key = try!(eval_result!(self.client.lock()).get_secret_encryption_key()).clone();
             let nonce = ::directory_listing::DirectoryListing::generate_nonce(directory.get_key().get_id());
-            let serialised_data = try!(::safe_client::utility::serialise(&directory));
+            let serialised_data = try!(::safe_core::utility::serialise(&directory));
 
             let encryption_keys = match *access_level {
                 ::AccessLevel::Private => Some((&private_key,
@@ -286,7 +286,7 @@ impl DirectoryHelper {
                                                 &nonce)),
                 ::AccessLevel::Public => None,
             };
-            try!(::safe_client::structured_data_operations::unversioned::create(self.client.clone(),
+            try!(::safe_core::structured_data_operations::unversioned::create(self.client.clone(),
                                                                                 directory.get_key().get_type_tag(),
                                                                                 directory.get_key().get_id().clone(),
                                                                                 structured_data.get_version() + 1,
@@ -321,7 +321,7 @@ impl DirectoryHelper {
         let response_getter = eval_result!(self.client.lock()).get(request, None);
         match try!(response_getter.get()) {
             ::routing::data::Data::StructuredData(structured_data) => Ok(structured_data),
-            _ => Err(::errors::NfsError::from(::safe_client::errors::ClientError::ReceivedUnexpectedData)),
+            _ => Err(::errors::NfsError::from(::safe_core::errors::CoreError::ReceivedUnexpectedData)),
         }
     }
 
@@ -334,7 +334,7 @@ impl DirectoryHelper {
         let response_getter = eval_result!(self.client.lock()).get(request, None);
         match try!(response_getter.get()) {
             ::routing::data::Data::ImmutableData(immutable_data) => Ok(immutable_data),
-            _ => Err(::errors::NfsError::from(::safe_client::errors::ClientError::ReceivedUnexpectedData)),
+            _ => Err(::errors::NfsError::from(::safe_core::errors::CoreError::ReceivedUnexpectedData)),
         }
     }
 }
@@ -345,7 +345,7 @@ mod test {
 
     #[test]
     fn create_dir_listing() {
-        let test_client = eval_result!(::safe_client::utility::test_utils::get_client());
+        let test_client = eval_result!(::safe_core::utility::test_utils::get_client());
         let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
         let dir_helper = DirectoryHelper::new(client.clone());
         // Create a Directory
@@ -391,7 +391,7 @@ mod test {
     fn create_versioned_public_directory() {
         let public_directory;
         {
-            let test_client = eval_result!(::safe_client::utility::test_utils::get_client());
+            let test_client = eval_result!(::safe_core::utility::test_utils::get_client());
             let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
             let dir_helper = DirectoryHelper::new(client.clone());
             let (directory, _) = eval_result!(dir_helper.create("PublicDirectory".to_string(),
@@ -403,7 +403,7 @@ mod test {
             public_directory = directory;
         }
         {
-            let test_client = eval_result!(::safe_client::utility::test_utils::get_client());
+            let test_client = eval_result!(::safe_core::utility::test_utils::get_client());
             let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
             let dir_helper = DirectoryHelper::new(client.clone());
             let retrieved_public_directory = eval_result!(dir_helper.get(public_directory.get_key()));
@@ -415,7 +415,7 @@ mod test {
     fn create_unversioned_public_directory() {
         let public_directory;
         {
-            let test_client = eval_result!(::safe_client::utility::test_utils::get_client());
+            let test_client = eval_result!(::safe_core::utility::test_utils::get_client());
             let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
             let dir_helper = DirectoryHelper::new(client.clone());
             let (directory, _) = eval_result!(dir_helper.create("PublicDirectory".to_string(),
@@ -427,7 +427,7 @@ mod test {
             public_directory = directory;
         }
         {
-            let test_client = eval_result!(::safe_client::utility::test_utils::get_client());
+            let test_client = eval_result!(::safe_core::utility::test_utils::get_client());
             let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
             let dir_helper = DirectoryHelper::new(client.clone());
             let retrieved_public_directory = eval_result!(dir_helper.get(public_directory.get_key()));
@@ -437,7 +437,7 @@ mod test {
 
     #[test]
     fn user_root_configuration() {
-        let test_client = eval_result!(::safe_client::utility::test_utils::get_client());
+        let test_client = eval_result!(::safe_core::utility::test_utils::get_client());
         let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
         let dir_helper = DirectoryHelper::new(client.clone());
 
@@ -454,7 +454,7 @@ mod test {
 
     #[test]
     fn configuration_directory() {
-        let test_client = eval_result!(::safe_client::utility::test_utils::get_client());
+        let test_client = eval_result!(::safe_core::utility::test_utils::get_client());
         let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
         let dir_helper = DirectoryHelper::new(client.clone());
         let config_dir = eval_result!(dir_helper.get_configuration_directory_listing("DNS".to_string()));
@@ -466,7 +466,7 @@ mod test {
 
     #[test]
     fn update_and_versioning() {
-        let test_client = eval_result!(::safe_client::utility::test_utils::get_client());
+        let test_client = eval_result!(::safe_core::utility::test_utils::get_client());
         let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
         let dir_helper = DirectoryHelper::new(client.clone());
 
@@ -499,7 +499,7 @@ mod test {
 
     #[test]
     fn delete_directory() {
-        let test_client = eval_result!(::safe_client::utility::test_utils::get_client());
+        let test_client = eval_result!(::safe_core::utility::test_utils::get_client());
         let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
         let dir_helper = DirectoryHelper::new(client.clone());
         // Create a Directory

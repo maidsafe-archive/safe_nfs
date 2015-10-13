@@ -19,7 +19,7 @@
 /// Container Repersents a Directory.
 /// Container can have its own metadata, sub-containers and files
 pub struct Container {
-    client              : ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>,
+    client              : ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>>,
     directory_listing   : ::directory_listing::DirectoryListing,
 }
 
@@ -29,7 +29,7 @@ impl Container {
     /// This sevrves as the initial access point of the Rest API. Operations can only be performed on a Container object.
     /// If the ContainerInfo parameter is None, then the user's root directory is returned.
     /// Returns the Container, if authorisation is successful.
-    pub fn authorise(client        : ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>,
+    pub fn authorise(client        : ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>>,
                      container_info: Option<::rest::ContainerInfo>) -> Result<Container, ::errors::NfsError> {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(client.clone());
         let directory = if let Some(container_info) = container_info {
@@ -337,8 +337,8 @@ impl Container {
 mod test {
     use super::*;
 
-    fn get_client() -> ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>> {
-        ::std::sync::Arc::new(::std::sync::Mutex::new(eval_result!(::safe_client::utility::test_utils::get_client())))
+    fn get_client() -> ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>> {
+        ::std::sync::Arc::new(::std::sync::Mutex::new(eval_result!(::safe_core::utility::test_utils::get_client())))
     }
 
     #[test]

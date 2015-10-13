@@ -17,9 +17,9 @@
 
 extern crate time;
 extern crate safe_nfs;
-#[macro_use] extern crate safe_client;
+#[macro_use] extern crate safe_core;
 
-fn create_account() -> Result<safe_client::client::Client, ::safe_nfs::errors::NfsError> {
+fn create_account() -> Result<safe_core::client::Client, ::safe_nfs::errors::NfsError> {
     let mut pin = String::new();
     let mut keyword = String::new();
     let mut password = String::new();
@@ -46,14 +46,14 @@ fn create_account() -> Result<safe_client::client::Client, ::safe_nfs::errors::N
 
     // Account Creation
     println!("\nTrying to create an account ...");
-    try!(safe_client::client::Client::create_account(keyword.clone(), pin.clone(), password.clone())); // TODO how is nfs crate allowing unused values to pass undetected .. Investigate
+    try!(safe_core::client::Client::create_account(keyword.clone(), pin.clone(), password.clone())); // TODO how is nfs crate allowing unused values to pass undetected .. Investigate
     println!("Account Created Successfully !!");
     println!("\n\n\tAuto Account Login");
     println!("\t==================");
 
     // Log into the created account
     println!("\nTrying to log into the created account using supplied credentials ...");
-    let client = try!(safe_client::client::Client::log_in(keyword, pin, password));
+    let client = try!(safe_core::client::Client::log_in(keyword, pin, password));
     println!("Account Login Successful !!");
     Ok(client)
 }

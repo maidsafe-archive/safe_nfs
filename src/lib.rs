@@ -47,7 +47,7 @@ extern crate sodiumoxide;
 extern crate rustc_serialize;
 extern crate self_encryption;
 #[macro_use] extern crate log;
-#[macro_use] extern crate safe_client;
+#[macro_use] extern crate safe_core;
 
 /// Module for File struct
 pub mod file;
@@ -67,7 +67,7 @@ pub const ROOT_DIRECTORY_NAME: &'static str = "USER_ROOT";
 /// Configuration directory Name stored in the session packet
 pub const CONFIGURATION_DIRECTORY_NAME: &'static str = "CONFIGURATION_ROOT";
 /// Tag representing the Versioned Directory Listing
-pub const VERSIONED_DIRECTORY_LISTING_TAG: u64 = safe_client::CLIENT_STRUCTURED_DATA_TAG + 100;
+pub const VERSIONED_DIRECTORY_LISTING_TAG: u64 = safe_core::CLIENT_STRUCTURED_DATA_TAG + 100;
 /// Tag representing the Versioned Directory Listing
 pub const UNVERSIONED_DIRECTORY_LISTING_TAG: u64 = VERSIONED_DIRECTORY_LISTING_TAG + 1;
 
