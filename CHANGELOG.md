@@ -1,5 +1,8 @@
 # Safe nfs - Change Log
 
+## [0.2.1]
+- Routing crate updated to version 0.4.*
+
 ## [0.2.0]
 - [MAID-1305](https://maidsafe.atlassian.net/browse/MAID-1305) Expand test cases
 - [MAID-1306](https://maidsafe.atlassian.net/browse/MAID-1306) Remove all unwraps() AND Check for Ok(try!( and see if really required (ie., for error conversion etc)

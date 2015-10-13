@@ -182,12 +182,12 @@ mod test {
         {// Update Metadata
             let mut file = eval_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
             file.get_mut_metadata().set_user_metadata(vec![12u8; 10]);
-            eval_result!(file_helper.update_metadata(file, &mut directory));
+            let _ = eval_result!(file_helper.update_metadata(file, &mut directory));
             let file = eval_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
             assert_eq!(*file.get_metadata().get_user_metadata(), vec![12u8; 10]);
         }
         {// Delete
-            eval_result!(file_helper.delete(file_name.clone(), &mut directory));
+            let _ = eval_result!(file_helper.delete(file_name.clone(), &mut directory));
             assert!(directory.find_file(&file_name).is_none());
         }
     }

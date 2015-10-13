@@ -530,7 +530,7 @@ mod test {
                                                                                    ::AccessLevel::Private,
                                                                                    Some(&mut child_directory)));
 
-        eval_option!(grand_parent, "Grand Parent Should be updated");
+        let _ = eval_option!(grand_parent, "Grand Parent Should be updated");
 
         let delete_result = eval_result!(dir_helper.delete(&mut child_directory, grand_child_directory.get_metadata().get_name()));
         let updated_grand_parent = eval_option!(delete_result, "Parent directory should be returned");

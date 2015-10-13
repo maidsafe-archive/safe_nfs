@@ -46,7 +46,7 @@ fn create_account() -> Result<safe_core::client::Client, ::safe_nfs::errors::Nfs
 
     // Account Creation
     println!("\nTrying to create an account ...");
-    try!(safe_core::client::Client::create_account(keyword.clone(), pin.clone(), password.clone())); // TODO how is nfs crate allowing unused values to pass undetected .. Investigate
+    let _ = eval_result!(safe_core::client::Client::create_account(keyword.clone(), pin.clone(), password.clone()));
     println!("Account Created Successfully !!");
     println!("\n\n\tAuto Account Login");
     println!("\t==================");
