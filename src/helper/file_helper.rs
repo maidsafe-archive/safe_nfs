@@ -17,12 +17,12 @@
 
 /// File provides helper functions to perform Operations on Files
 pub struct FileHelper {
-    client: ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>,
+    client: ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>>,
 }
 
 impl FileHelper {
     /// Create a new FileHelper instance
-    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>) -> FileHelper {
+    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>>) -> FileHelper {
         FileHelper {
             client: client,
         }
@@ -120,8 +120,8 @@ impl FileHelper {
 
 #[cfg(test)]
 mod test {
-    fn get_client() -> ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>> {
-        let test_client = eval_result!(::safe_client::utility::test_utils::get_client());
+    fn get_client() -> ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>> {
+        let test_client = eval_result!(::safe_core::utility::test_utils::get_client());
         ::std::sync::Arc::new(::std::sync::Mutex::new(test_client))
     }
 

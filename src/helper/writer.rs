@@ -26,15 +26,15 @@ pub enum Mode {
 /// Writer is used to write contents to a File and especially in chunks if the file happens to be
 /// too large
 pub struct Writer {
-    client          : ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>,
+    client          : ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>>,
     file            : ::file::File,
     parent_directory: ::directory_listing::DirectoryListing,
-    self_encryptor  : ::self_encryption::SelfEncryptor<::safe_client::SelfEncryptionStorage>,
+    self_encryptor  : ::self_encryption::SelfEncryptor<::safe_core::SelfEncryptionStorage>,
 }
 
 impl Writer {
     /// Create new instance of Writer
-    pub fn new(client          : ::std::sync::Arc<::std::sync::Mutex<::safe_client::client::Client>>,
+    pub fn new(client          : ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>>,
                mode            : Mode,
                parent_directory: ::directory_listing::DirectoryListing,
                file            : ::file::File) -> Writer {
@@ -47,7 +47,7 @@ impl Writer {
             client          : client.clone(),
             file            : file,
             parent_directory: parent_directory,
-            self_encryptor  : ::self_encryption::SelfEncryptor::new(::safe_client::SelfEncryptionStorage::new(client.clone()), datamap),
+            self_encryptor  : ::self_encryption::SelfEncryptor::new(::safe_core::SelfEncryptionStorage::new(client.clone()), datamap),
         }
     }
 

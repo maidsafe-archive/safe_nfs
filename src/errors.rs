@@ -17,13 +17,13 @@
 
 /// Intended for converting NFS Errors into numeric codes for propagating some error information
 /// across FFI boundaries and specially to C.
-pub const NFS_ERROR_START_RANGE: i32 = ::safe_client::errors::CLIENT_ERROR_START_RANGE - 500;
+pub const NFS_ERROR_START_RANGE: i32 = ::safe_core::errors::CLIENT_ERROR_START_RANGE - 500;
 
 /// NFS Errors
 #[allow(variant_size_differences)] // TODO
 pub enum NfsError {
     /// Client Error
-    ClientError(::safe_client::errors::ClientError),
+    CoreError(::safe_core::errors::CoreError),
     /// If Directory already exists with the same name in the same level
     DirectoryAlreadyExistsWithSameName,
     /// Destination is Same as the Source
@@ -44,9 +44,9 @@ pub enum NfsError {
     Unexpected(String),
 }
 
-impl From<::safe_client::errors::ClientError> for NfsError {
-    fn from(error: ::safe_client::errors::ClientError) -> NfsError {
-        NfsError::ClientError(error)
+impl From<::safe_core::errors::CoreError> for NfsError {
+    fn from(error: ::safe_core::errors::CoreError) -> NfsError {
+        NfsError::CoreError(error)
     }
 }
 
@@ -59,7 +59,7 @@ impl<'a> From<&'a str> for NfsError {
 impl Into<i32> for NfsError {
     fn into(self) -> i32 {
         match self {
-            NfsError::ClientError(error)                    => error.into(),
+            NfsError::CoreError(error)                    => error.into(),
             NfsError::DirectoryAlreadyExistsWithSameName    => NFS_ERROR_START_RANGE - 1,
             NfsError::DestinationAndSourceAreSame           => NFS_ERROR_START_RANGE - 2,
             NfsError::DirectoryNotFound                     => NFS_ERROR_START_RANGE - 3,
@@ -76,7 +76,7 @@ impl Into<i32> for NfsError {
 impl ::std::fmt::Debug for NfsError {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         match *self {
-            NfsError::ClientError(ref error)                => write!(f, "NfsError::ClientError -> {:?}", error),
+            NfsError::CoreError(ref error)                => write!(f, "NfsError::CoreError -> {:?}", error),
             NfsError::DirectoryAlreadyExistsWithSameName    => write!(f, "NfsError::DirectoryAlreadyExistsWithSameName"),
             NfsError::DestinationAndSourceAreSame           => write!(f, "NfsError::DestinationAndSourceAreSame"),
             NfsError::DirectoryNotFound                     => write!(f, "NfsError::DirectoryNotFound"),
