@@ -1,8 +1,6 @@
 env:
   global:
     - secure: uZdIxBDz1fMLnJu7ow8Zk7MUE5Hi7RM1V/dy8M0aahjWbWZWe/43+1C9SnK0ORhI0dOH232CkO5y3QKNnCeQkP8V0FEovFd+1OvpzhzyblShMbQrXf/jnFV77MSCGFIuNkr1msLSAXTX30JJHhJFt4PKpfvroh6huScAb6wU40JEwrONHkwIponaSbOFt2QMVzjkotASje6wwZs+3M/TnToOqOtmXJjIGido8TjGA15RcGDhDhitWmE6fBI96zMEoVwDunP7EEp4Sha8mi78tuqVH0P3nxtBVDT4cYpvsYg5VJQeE3ZHQJW0iyozXhVI86OV3vIXHs7ERGH5A/lcw7TKmTSawmXIK7JCoe5t2uMzHmfZyJzMM4vDwN0WG/T2QxCfNN3k+b1KjuBwPOwbDDX1nqxOixyeJ2Ca6/elN0Ofh7aMddshikbvSHaWU0rSInZWiCM/EjrI2gxIg13PkNN+IhlpjFZ9+GrkB1HEsMWkQeoYpg2cGxWaoY9J1f1EzD/W5o6gYWDrpOpsypdweWynjUVl0y6JzFGqy0H2BQZIhlhGQ2w3zQJLD6LYn5HUhwYZA12fKHU5rHuY/AdbTF1IJoypGbJG7E/qeFDtZ6abNbFYeMXmVuDBhBQeadFP5L734OTV8M8AkQhps0VlLia+MqP1JraijzWZXsoocBo=
-    - LibSodiumVersion=1.0.3
-    - ElfUtilsVersion=0.163
     - Features=use-mock-routing
 os:
   - linux
@@ -20,6 +18,9 @@ cache:
   directories:
     - $HOME/libsodium-$LibSodiumVersion
     - $HOME/elfutils-$ElfUtilsVersion
+before_install:
+    - curl -sSLO https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/dependency_versions.sh
+    - . dependency_versions.sh
 install:
   - curl -sSLO https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/install_libsodium.sh
   - . install_libsodium.sh
