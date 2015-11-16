@@ -1,6 +1,6 @@
 [package]
 name          = "safe_nfs"
-version       = "0.3.0"
+version       = "0.3.1"
 authors       = ["MaidSafe Developers <dev@maidsafe.net>"]
 description   = "This is Pre alpha, and not useful, no code worth looking at."
 documentation = "http://maidsafe.net/safe_nfs/latest"
@@ -11,15 +11,15 @@ homepage      = "http://maidsafe.net"
 
 [dependencies]
 # ---- Maidsafe ----
-routing         = "0.4.*"
-safe_core       = "0.3.*"
-self_encryption = "0.2.*"
+routing         = "~0.4.2"
+safe_core       = "~0.3.1"
+self_encryption = "~0.2.4"
 
 # ---- Others ----
-log             = "*"
-time            = "*"
-sodiumoxide     = "*"
-rustc-serialize = "*"
+log             = "~0.3.3"
+time            = "~0.1.34"
+sodiumoxide     = "~0.0.9"
+rustc-serialize = "~0.3.16"
 
 [features]
 use-mock-routing = ["safe_core/use-mock-routing"]

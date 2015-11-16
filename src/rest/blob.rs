@@ -149,7 +149,8 @@ mod test {
         let second_blob = Blob{file: first_file.clone() };
 
         // allow 'times' to be sufficiently distinct
-        ::std::thread::sleep_ms(1000u32);
+        let duration = ::std::time::Duration::from_millis(1000);
+        ::std::thread::sleep(duration);
 
         let second_datamap = ::self_encryption::datamap::DataMap::None;
         let second_metadata = ::metadata::file_metadata::FileMetadata::new("second_blob".to_string(), Vec::new());
