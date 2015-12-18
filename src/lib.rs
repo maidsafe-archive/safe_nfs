@@ -39,11 +39,13 @@
 
 extern crate time;
 extern crate routing;
+extern crate xor_name;
+extern crate safe_core;
 extern crate sodiumoxide;
 extern crate rustc_serialize;
 extern crate self_encryption;
 #[macro_use] extern crate log;
-#[macro_use] extern crate safe_core;
+#[macro_use] extern crate maidsafe_utilities;
 
 /// Module for File struct
 pub mod file;

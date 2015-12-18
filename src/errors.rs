@@ -59,16 +59,16 @@ impl<'a> From<&'a str> for NfsError {
 impl Into<i32> for NfsError {
     fn into(self) -> i32 {
         match self {
-            NfsError::CoreError(error)                    => error.into(),
-            NfsError::DirectoryAlreadyExistsWithSameName    => NFS_ERROR_START_RANGE - 1,
-            NfsError::DestinationAndSourceAreSame           => NFS_ERROR_START_RANGE - 2,
-            NfsError::DirectoryNotFound                     => NFS_ERROR_START_RANGE - 3,
-            NfsError::FileAlreadyExistsWithSameName         => NFS_ERROR_START_RANGE - 4,
-            NfsError::FileDoesNotMatch                      => NFS_ERROR_START_RANGE - 5,
-            NfsError::FileNotFound                          => NFS_ERROR_START_RANGE - 6,
-            NfsError::InvalidRangeSpecified                 => NFS_ERROR_START_RANGE - 7,
-            NfsError::ParameterIsNotValid                   => NFS_ERROR_START_RANGE - 8,
-            NfsError::Unexpected(_)                         => NFS_ERROR_START_RANGE - 9,
+            NfsError::CoreError(error)                   => error.into(),
+            NfsError::DirectoryAlreadyExistsWithSameName => NFS_ERROR_START_RANGE - 1,
+            NfsError::DestinationAndSourceAreSame        => NFS_ERROR_START_RANGE - 2,
+            NfsError::DirectoryNotFound                  => NFS_ERROR_START_RANGE - 3,
+            NfsError::FileAlreadyExistsWithSameName      => NFS_ERROR_START_RANGE - 4,
+            NfsError::FileDoesNotMatch                   => NFS_ERROR_START_RANGE - 5,
+            NfsError::FileNotFound                       => NFS_ERROR_START_RANGE - 6,
+            NfsError::InvalidRangeSpecified              => NFS_ERROR_START_RANGE - 7,
+            NfsError::ParameterIsNotValid                => NFS_ERROR_START_RANGE - 8,
+            NfsError::Unexpected(_)                      => NFS_ERROR_START_RANGE - 9,
         }
     }
 }
@@ -76,16 +76,16 @@ impl Into<i32> for NfsError {
 impl ::std::fmt::Debug for NfsError {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         match *self {
-            NfsError::CoreError(ref error)                => write!(f, "NfsError::CoreError -> {:?}", error),
-            NfsError::DirectoryAlreadyExistsWithSameName    => write!(f, "NfsError::DirectoryAlreadyExistsWithSameName"),
-            NfsError::DestinationAndSourceAreSame           => write!(f, "NfsError::DestinationAndSourceAreSame"),
-            NfsError::DirectoryNotFound                     => write!(f, "NfsError::DirectoryNotFound"),
-            NfsError::FileAlreadyExistsWithSameName         => write!(f, "NfsError::FileAlreadyExistsWithSameName"),
-            NfsError::FileDoesNotMatch                      => write!(f, "NfsError::FileDoesNotMatch"),            
-            NfsError::FileNotFound                          => write!(f, "NfsError::FileNotFound"),
-            NfsError::InvalidRangeSpecified                 => write!(f, "NfsError::InvalidRangeSpecified"),
-            NfsError::ParameterIsNotValid                   => write!(f, "NfsError::ParameterIsNotValid"),
-            NfsError::Unexpected(ref error)                 => write!(f, "NfsError::Unexpected -> {:?}", error),
+            NfsError::CoreError(ref error)               => write!(f, "NfsError::CoreError -> {:?}", error),
+            NfsError::DirectoryAlreadyExistsWithSameName => write!(f, "NfsError::DirectoryAlreadyExistsWithSameName"),
+            NfsError::DestinationAndSourceAreSame        => write!(f, "NfsError::DestinationAndSourceAreSame"),
+            NfsError::DirectoryNotFound                  => write!(f, "NfsError::DirectoryNotFound"),
+            NfsError::FileAlreadyExistsWithSameName      => write!(f, "NfsError::FileAlreadyExistsWithSameName"),
+            NfsError::FileDoesNotMatch                   => write!(f, "NfsError::FileDoesNotMatch"),            
+            NfsError::FileNotFound                       => write!(f, "NfsError::FileNotFound"),
+            NfsError::InvalidRangeSpecified              => write!(f, "NfsError::InvalidRangeSpecified"),
+            NfsError::ParameterIsNotValid                => write!(f, "NfsError::ParameterIsNotValid"),
+            NfsError::Unexpected(ref error)              => write!(f, "NfsError::Unexpected -> {:?}", error),
         }
     }
 }
