@@ -1,8 +1,6 @@
 env:
   global:
-    - secure: "jft8gl/u8TC9SNLU6RQzl4JSFTAJWbI76m/neYYAzXWZbRA5lRBZYW4/OuVBowK2ntqzna/u/OFwMT8YAWgQAu64JYk0hDhNLc052Z+fwIV4/PKfxp/Ej4cR++A7XPYprAriplwOCx67EprHE5ioRCgNjj53Wlu/9ErcCIXMw8t4rdDM0ofT7HCzwhTa9b9EmKI0Hq7bbc/6SWIkGjKzL6wD1IPvMKpsPyrPHvOp13O2ZYJHpzPf4kpDMnEqEX6onWQpQ1aUH4JF5xv2wukPei6v9YEuiC9xmugnv/XwNlvRbNLLuelrs2J81bf7r8ePpeWjjtofNEA0J+yPIWfnz1XIkaJ7ZTmbBDkq5oLIsgLLXcSYmsHAYJQfZtlJlD19tHoT1KgPJKVSeCWER1a+0Nr90qUuWZOslwJK4wPEoz+vv7GWJZzGMDOWLPxMwnveKM/b/hGW6p45T9ftTbubLokNdeexlnvQzx5J18DVhHLbwtEFSnC0YEgT2plDOOuY99/gbnSwQ5VCPMEOUctaDOZW1+orRddrEOjCAWB8gKci3EpFmMvdofui+5TvjsJFFGUYP57mkLtl08sKP7AoFQxnSBB0GdM11bKm+YBF8y0mYLGBgQzPEV9To6952fa1xMRElSFWIF29/1tydAJbCas3qkZMhi+f/yDnG+PY+KY="
-    - LibSodiumVersion=1.0.3
-    - ElfUtilsVersion=0.163
+    - secure: XnnxSncPvHtQla09NrVySvd3oyc+wjaSMJPP0jqvCrdv6zUZKzf1Z+HFTrxSoA5SYU69n+u6icqllRIvHSCF2dZqrj3+YZ6Ie0f0x1zXCrJU368NnDvi22a7j0MIep8+4CMvZ1q3roxGO4wLc9YqXvI0sUb/7F3qdqMwdvkh8EiLOVhbOR1SjP6v/QWuvxjytQ8imFs+qDeEnt5gmFMaz7nO2aPmQBv7knCL7BI2b8KolPmLcGdSC/edebkhC/qV4Z2ImLaC0T36b7waX7VXCaAqif1jPezK9AL3Zl6tFdZbO0BWAR0e+ARIrg0QAALBiicXoYr037q8k6WJQB14NFL0Pmid2kfv4olZAAITpJo/4qQ6FCUEjczzxc//8ckg07j6KRT0N1g/Zr+M5anxI7n2XuFeX6bP7wdETS7/nypxo98hvGinqpRl+tBVLUSwFvEOqpgUhwFOjiBDwYLmMVjJNEVNvE6CyJxUKLCIXDrgtxkShZYdMdhjWOZflaJSm5pRSDf4FEDogq8YFT36YxbPFlLHngjsolcu+0/ev49JD5FjCsvKmPWy2ksiK16CNAs8/rtHpAWb8ISDM7Sys3HqRakwd03yvKflNGQMgai5V84usCUrxrcS2KDCmezz4KwhgQIyP84tz436/9Y7f+YgZjaIs2EZsVrS2XMsDYA=
     - Features=use-mock-routing
 os:
   - linux
@@ -18,12 +16,15 @@ branches:
     - master
 cache:
   directories:
-    - $HOME/libsodium-$LibSodiumVersion
-    - $HOME/elfutils-$ElfUtilsVersion
+    - $HOME/libsodium
+    - $HOME/elfutils
 install:
   - curl -sSLO https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/install_libsodium.sh
   - . install_libsodium.sh
 script:
   - curl -sSL https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/build_and_run_tests.sh | bash
+before_cache:
+  - curl -sSLO https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/install_elfutils.sh
+  - . install_elfutils.sh
 after_success:
   - curl -sSL https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/after_success.sh | bash
