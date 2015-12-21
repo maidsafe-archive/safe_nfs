@@ -15,6 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use xor_name::XorName;
 
 /// Container Repersents a Directory.
 /// Container can have its own metadata, sub-containers and files
@@ -178,7 +179,7 @@ impl Container {
                     debug!("Retrieving using version id ...");
                     try!(directory_helper.get_by_version(directory_metadata.get_id(),
                                                          directory_metadata.get_access_level(),
-                                                         ::routing::NameType(version_id)))
+                                                         XorName(version_id)))
             },
             None =>  {
                     debug!("Retrieving the latest version ...");
@@ -313,7 +314,7 @@ impl Container {
         }
     }
 
-    fn list_container_versions(&self, dir_id: &::routing::NameType, type_tag: u64) -> Result<Vec<[u8; 64]>, ::errors::NfsError> {
+    fn list_container_versions(&self, dir_id: &XorName, type_tag: u64) -> Result<Vec<[u8; 64]>, ::errors::NfsError> {
         let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
         let versions = try!(directory_helper.get_versions(dir_id, type_tag));
         Ok(versions.iter().map(|v| v.0).collect())
@@ -338,18 +339,18 @@ mod test {
     use super::*;
 
     fn get_client() -> ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>> {
-        ::std::sync::Arc::new(::std::sync::Mutex::new(eval_result!(::safe_core::utility::test_utils::get_client())))
+        ::std::sync::Arc::new(::std::sync::Mutex::new(unwrap_result!(::safe_core::utility::test_utils::get_client())))
     }
 
     #[test]
     fn authorise_container() {
         let client = get_client();
-        let root_dir = eval_result!(Container::authorise(client.clone(), None));
-        let root_dir_second = eval_result!(Container::authorise(client.clone(), None));
+        let root_dir = unwrap_result!(Container::authorise(client.clone(), None));
+        let root_dir_second = unwrap_result!(Container::authorise(client.clone(), None));
         assert_eq!(*root_dir.get_info().into_directory_metadata().get_key().get_id(),
                    *root_dir_second.get_info().into_directory_metadata().get_key().get_id());
 
-        let root_dir_from_info = eval_result!(Container::authorise(client, Some(root_dir.get_info())));
+        let root_dir_from_info = unwrap_result!(Container::authorise(client, Some(root_dir.get_info())));
         assert_eq!(*root_dir.get_info().into_directory_metadata().get_key().get_id(),
                    *root_dir_from_info.get_info().into_directory_metadata().get_key().get_id());
     }
@@ -357,8 +358,8 @@ mod test {
     #[test]
     fn create_container() {
         let client = get_client();
-        let mut container = eval_result!(Container::authorise(client.clone(), None));
-        let _ = eval_result!(container.create("Home".to_string(), true, ::AccessLevel::Private, None));
+        let mut container = unwrap_result!(Container::authorise(client.clone(), None));
+        let _ = unwrap_result!(container.create("Home".to_string(), true, ::AccessLevel::Private, None));
 
         assert_eq!(container.get_containers().len(), 1);
         assert_eq!(container.get_containers()[0].get_name(), "Home");
@@ -370,13 +371,13 @@ mod test {
     fn delete_container() {
         let client = get_client();
         let dir_name = "Home".to_string();
-        let mut container = eval_result!(Container::authorise(client, None));
-        let _ = eval_result!(container.create(dir_name.clone(), true, ::AccessLevel::Private, None));
+        let mut container = unwrap_result!(Container::authorise(client, None));
+        let _ = unwrap_result!(container.create(dir_name.clone(), true, ::AccessLevel::Private, None));
 
         assert_eq!(container.get_containers().len(), 1);
         assert_eq!(container.get_containers()[0].get_name(), "Home");
 
-        let _ = eval_result!(container.delete_container(&dir_name));
+        let _ = unwrap_result!(container.delete_container(&dir_name));
 
         assert_eq!(container.get_containers().len(), 0);
     }
@@ -384,55 +385,55 @@ mod test {
     #[test]
     fn create_update_delete_blob() {
         let client = get_client();
-        let mut container = eval_result!(Container::authorise(client.clone(), None));
-        let (mut home_container, _) = eval_result!(container.create("Home".to_string(), true, ::AccessLevel::Private, None));
+        let mut container = unwrap_result!(Container::authorise(client.clone(), None));
+        let (mut home_container, _) = unwrap_result!(container.create("Home".to_string(), true, ::AccessLevel::Private, None));
 
         assert_eq!(container.get_containers().len(), 1);
         assert_eq!(container.get_containers()[0].get_name(), "Home");
 
-        let mut writer = eval_result!(home_container.create_blob("sample.txt".to_string(), None));
+        let mut writer = unwrap_result!(home_container.create_blob("sample.txt".to_string(), None));
         let data = "Hello World!".to_string().into_bytes();
         writer.write(&data[..], 0);
-        let _ = eval_result!(writer.close());
-        home_container = eval_result!(container.get_container(&home_container.get_info(), None));
+        let _ = unwrap_result!(writer.close());
+        home_container = unwrap_result!(container.get_container(&home_container.get_info(), None));
         assert!(home_container.create_blob("sample.txt".to_string(), None).is_err());
 
-        assert_eq!(eval_result!(home_container.get_blob_versions(&"sample.txt".to_string())).len(), 1);
-        let blob = eval_result!(home_container.get_blob("sample.txt".to_string()));
-        assert_eq!(eval_result!(home_container.get_blob_content(&blob)), data);
+        assert_eq!(unwrap_result!(home_container.get_blob_versions(&"sample.txt".to_string())).len(), 1);
+        let blob = unwrap_result!(home_container.get_blob("sample.txt".to_string()));
+        assert_eq!(unwrap_result!(home_container.get_blob_content(&blob)), data);
 
         let data_updated = "Hello World updated!".to_string().into_bytes();
-        let _ = eval_result!(home_container.update_blob_content(&blob, &data_updated[..]));
+        let _ = unwrap_result!(home_container.update_blob_content(&blob, &data_updated[..]));
         
-        let blob = eval_result!(home_container.get_blob("sample.txt".to_string()));
-        assert_eq!(eval_result!(home_container.get_blob_content(&blob)), data_updated);
+        let blob = unwrap_result!(home_container.get_blob("sample.txt".to_string()));
+        assert_eq!(unwrap_result!(home_container.get_blob_content(&blob)), data_updated);
 
         // Assert versions
-        let versions = eval_result!(home_container.get_blob_versions(&"sample.txt".to_string()));
+        let versions = unwrap_result!(home_container.get_blob_versions(&"sample.txt".to_string()));
         assert_eq!(versions.len(), 2);
         for i in 0..2 {
             if i == 0 {
-                assert_eq!(eval_result!(home_container.get_blob_content(&versions[i])), data);
+                assert_eq!(unwrap_result!(home_container.get_blob_content(&versions[i])), data);
             } else {
-                assert_eq!(eval_result!(home_container.get_blob_content(&versions[i])), data_updated);
+                assert_eq!(unwrap_result!(home_container.get_blob_content(&versions[i])), data_updated);
             }
         }
         let metadata = "{\"purpose\": \"test\"}".to_string();
-        let _ = eval_result!(home_container.update_blob_metadata(blob, Some(metadata.clone())));
-        let blob = eval_result!(home_container.get_blob("sample.txt".to_string()));
+        let _ = unwrap_result!(home_container.update_blob_metadata(blob, Some(metadata.clone())));
+        let blob = unwrap_result!(home_container.get_blob("sample.txt".to_string()));
         assert_eq!(blob.get_metadata(), metadata);
 
-        let (mut docs_container, _) = eval_result!(container.create("Docs".to_string(), true, ::AccessLevel::Private, None));
+        let (mut docs_container, _) = unwrap_result!(container.create("Docs".to_string(), true, ::AccessLevel::Private, None));
         assert_eq!(docs_container.get_blobs().len(), 0);
         let _ = home_container.copy_blob(&"sample.txt".to_string(), &docs_container.get_info());
-        docs_container = eval_result!(container.get_container(&docs_container.get_info(), None));
+        docs_container = unwrap_result!(container.get_container(&docs_container.get_info(), None));
         assert_eq!(docs_container.get_blobs().len(), 1);
 
         let _ = home_container.delete_blob("sample.txt".to_string());
         assert_eq!(home_container.get_blobs().len(), 0);
 
-        let (_, parent) = eval_result!(home_container.create("Pictures".to_string(), true, ::AccessLevel::Private, None));
+        let (_, parent) = unwrap_result!(home_container.create("Pictures".to_string(), true, ::AccessLevel::Private, None));
         assert!(parent.is_some());
-        assert_eq!(*eval_option!(parent, "parent container should be present").get_name(), *container.get_name());
+        assert_eq!(*unwrap_option!(parent, "parent container should be present").get_name(), *container.get_name());
     }
 }

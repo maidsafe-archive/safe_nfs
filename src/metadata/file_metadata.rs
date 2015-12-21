@@ -127,13 +127,14 @@ impl ::rustc_serialize::Decodable for FileMetadata {
 #[cfg(test)]
 mod test {
     use super::*;
+    use maidsafe_utilities::serialisation::{serialise, deserialise};
 
     #[test]
     fn serialise_and_deserialise_file_metadata() {
         let obj_before = FileMetadata::new("hello.txt".to_string(),
                                            "{mime: \"application/json\"}".to_string().into_bytes());
-        let serialised_data = eval_result!(::safe_core::utility::serialise(&obj_before));
-        let obj_after = eval_result!(::safe_core::utility::deserialise(&serialised_data));
+        let serialised_data = unwrap_result!(serialise(&obj_before));
+        let obj_after = unwrap_result!(deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);
     }
 }

@@ -17,7 +17,8 @@
 
 extern crate time;
 extern crate safe_nfs;
-#[macro_use] extern crate safe_core;
+extern crate safe_core;
+#[macro_use] extern crate maidsafe_utilities;
 
 fn create_account() -> Result<safe_core::client::Client, ::safe_nfs::errors::NfsError> {
     let mut pin = String::new();
@@ -46,7 +47,7 @@ fn create_account() -> Result<safe_core::client::Client, ::safe_nfs::errors::Nfs
 
     // Account Creation
     println!("\nTrying to create an account ...");
-    let _ = eval_result!(safe_core::client::Client::create_account(keyword.clone(), pin.clone(), password.clone()));
+    let _ = unwrap_result!(safe_core::client::Client::create_account(keyword.clone(), pin.clone(), password.clone()));
     println!("Account Created Successfully !!");
     println!("\n\n\tAuto Account Login");
     println!("\t==================");
@@ -259,10 +260,10 @@ fn blob_operation(option: u32, container: &mut safe_nfs::rest::Container) -> Res
 }
 
 fn main() {
-    let test_client = eval_result!(create_account());
+    let test_client = unwrap_result!(create_account());
     let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
     println!("\n\t-- Preparing storage ----\n");
-    let mut root_container = eval_result!(safe_nfs::rest::Container::authorise(client.clone(), None));
+    let mut root_container = unwrap_result!(safe_nfs::rest::Container::authorise(client.clone(), None));
     println!("\n\n------  (Tip) Start by creating a container and then store blob, modify blob within the container --------------------");
     loop {
         let mut option = String::new();

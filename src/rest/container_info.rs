@@ -78,17 +78,17 @@ mod test {
 
     #[test]
     fn create() {
-        let name = eval_result!(::safe_core::utility::generate_random_string(10));
+        let name = unwrap_result!(::safe_core::utility::generate_random_string(10));
         let container_info = ContainerInfo {
-            metadata: eval_result!(::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None)),
+            metadata: unwrap_result!(::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None)),
         };
         assert_eq!(*container_info.get_name(), name);
     }
 
     #[test]
     fn convert_from() {
-        let name = eval_result!(::safe_core::utility::generate_random_string(10));
-        let directory_metadata = eval_result!(::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None));
+        let name = unwrap_result!(::safe_core::utility::generate_random_string(10));
+        let directory_metadata = unwrap_result!(::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None));
 
         assert_eq!(*directory_metadata.get_name(), name);
 
@@ -100,9 +100,9 @@ mod test {
 
     #[test]
     fn convert_to() {
-        let name = eval_result!(::safe_core::utility::generate_random_string(10));
+        let name = unwrap_result!(::safe_core::utility::generate_random_string(10));
         let container_info = ContainerInfo {
-            metadata: eval_result!(::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None)),
+            metadata: unwrap_result!(::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None)),
         };
 
         assert_eq!(*container_info.get_name(), name.clone());

@@ -121,7 +121,7 @@ impl FileHelper {
 #[cfg(test)]
 mod test {
     fn get_client() -> ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>> {
-        let test_client = eval_result!(::safe_core::utility::test_utils::get_client());
+        let test_client = unwrap_result!(::safe_core::utility::test_utils::get_client());
         ::std::sync::Arc::new(::std::sync::Mutex::new(test_client))
     }
 
@@ -129,7 +129,7 @@ mod test {
     fn file_crud() {
         let client = get_client();
         let dir_helper = ::helper::directory_helper::DirectoryHelper::new(client.clone());
-        let (mut directory, _) = eval_result!(dir_helper.create("DirName".to_string(),
+        let (mut directory, _) = unwrap_result!(dir_helper.create("DirName".to_string(),
                                                                 ::VERSIONED_DIRECTORY_LISTING_TAG,
                                                                 Vec::new(),
                                                                 true,
@@ -138,56 +138,56 @@ mod test {
         let file_helper = ::helper::file_helper::FileHelper::new(client.clone());
         let file_name = "hello.txt".to_string();
         { // create
-            let mut writer = eval_result!(file_helper.create(file_name.clone(), Vec::new(), directory));
+            let mut writer = unwrap_result!(file_helper.create(file_name.clone(), Vec::new(), directory));
             writer.write(&vec![0u8; 100], 0);
-            let (updated_directory, _) = eval_result!(writer.close());
+            let (updated_directory, _) = unwrap_result!(writer.close());
             directory = updated_directory;
             assert!(directory.find_file(&file_name).is_some());
         }
         {// read
-            let file = eval_option!(directory.find_file(&file_name), "File not found");
+            let file = unwrap_option!(directory.find_file(&file_name), "File not found");
             let mut reader = file_helper.read(file);
             let size = reader.size();
-            assert_eq!(eval_result!(reader.read(0, size)), vec![0u8; 100]);
+            assert_eq!(unwrap_result!(reader.read(0, size)), vec![0u8; 100]);
         }
         {// update - full rewrite
-            let file = eval_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
-            let mut writer = eval_result!(file_helper.update_content(file, ::helper::writer::Mode::Overwrite, directory));
+            let file = unwrap_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
+            let mut writer = unwrap_result!(file_helper.update_content(file, ::helper::writer::Mode::Overwrite, directory));
             writer.write(&vec![1u8; 50], 0);
-            let (updated_directory, _) = eval_result!(writer.close());
+            let (updated_directory, _) = unwrap_result!(writer.close());
             directory = updated_directory;
-            let file = eval_option!(directory.find_file(&file_name), "File not found");
+            let file = unwrap_option!(directory.find_file(&file_name), "File not found");
             let mut reader = file_helper.read(file);
             let size = reader.size();
-            assert_eq!(eval_result!(reader.read(0, size)), vec![1u8; 50]);
+            assert_eq!(unwrap_result!(reader.read(0, size)), vec![1u8; 50]);
         }
         {// update - partial rewrite
-            let file = eval_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
-            let mut writer = eval_result!(file_helper.update_content(file, ::helper::writer::Mode::Modify, directory));
+            let file = unwrap_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
+            let mut writer = unwrap_result!(file_helper.update_content(file, ::helper::writer::Mode::Modify, directory));
             writer.write(&vec![2u8; 10], 0);
-            let (updated_directory, _) = eval_result!(writer.close());
+            let (updated_directory, _) = unwrap_result!(writer.close());
             directory = updated_directory;
-            let file = eval_option!(directory.find_file(&file_name), "File not found");
+            let file = unwrap_option!(directory.find_file(&file_name), "File not found");
             let mut reader = file_helper.read(file);
             let size = reader.size();
-            let data = eval_result!(reader.read(0, size));
+            let data = unwrap_result!(reader.read(0, size));
             assert_eq!(&data[0..10], [2u8; 10]);
             assert_eq!(&data[10..20], [1u8; 10]);
         }
         {// versions
-            let file = eval_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
-            let versions = eval_result!(file_helper.get_versions(&file, &directory));
+            let file = unwrap_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
+            let versions = unwrap_result!(file_helper.get_versions(&file, &directory));
             assert_eq!(versions.len(), 3);
         }
         {// Update Metadata
-            let mut file = eval_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
+            let mut file = unwrap_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
             file.get_mut_metadata().set_user_metadata(vec![12u8; 10]);
-            let _ = eval_result!(file_helper.update_metadata(file, &mut directory));
-            let file = eval_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
+            let _ = unwrap_result!(file_helper.update_metadata(file, &mut directory));
+            let file = unwrap_option!(directory.find_file(&file_name).map(|file| file.clone()), "File not found");
             assert_eq!(*file.get_metadata().get_user_metadata(), vec![12u8; 10]);
         }
         {// Delete
-            let _ = eval_result!(file_helper.delete(file_name.clone(), &mut directory));
+            let _ = unwrap_result!(file_helper.delete(file_name.clone(), &mut directory));
             assert!(directory.find_file(&file_name).is_none());
         }
     }

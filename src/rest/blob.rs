@@ -80,7 +80,7 @@ mod test {
     fn create() {
         let datamap = ::self_encryption::datamap::DataMap::None;
         let metadata = ::metadata::file_metadata::FileMetadata::new("blob".to_string(), Vec::new());
-        let file = eval_result!(::file::File::new(metadata.clone(), datamap.clone()));
+        let file = unwrap_result!(::file::File::new(metadata.clone(), datamap.clone()));
 
         let blob = Blob{file: file.clone() };
 
@@ -104,7 +104,7 @@ mod test {
     fn create_from_file() {
         let datamap = ::self_encryption::datamap::DataMap::None;
         let metadata = ::metadata::file_metadata::FileMetadata::new("blob".to_string(), Vec::new());
-        let file = eval_result!(::file::File::new(metadata.clone(), datamap.clone()));
+        let file = unwrap_result!(::file::File::new(metadata.clone(), datamap.clone()));
 
         let blob = Blob::from(file.clone());
 
@@ -119,7 +119,7 @@ mod test {
     fn convert_to_file() {
         let datamap = ::self_encryption::datamap::DataMap::None;
         let metadata = ::metadata::file_metadata::FileMetadata::new("blob".to_string(), Vec::new());
-        let file = eval_result!(::file::File::new(metadata.clone(), datamap.clone()));
+        let file = unwrap_result!(::file::File::new(metadata.clone(), datamap.clone()));
 
         let blob = Blob{ file: file.clone() };
 
@@ -143,7 +143,7 @@ mod test {
     fn compare() {
         let first_datamap = ::self_encryption::datamap::DataMap::None;
         let first_metadata = ::metadata::file_metadata::FileMetadata::new("first_blob".to_string(), Vec::new());
-        let first_file = eval_result!(::file::File::new(first_metadata.clone(), first_datamap.clone()));
+        let first_file = unwrap_result!(::file::File::new(first_metadata.clone(), first_datamap.clone()));
 
         let first_blob = Blob::from(first_file.clone());
         let second_blob = Blob{file: first_file.clone() };
@@ -154,7 +154,7 @@ mod test {
 
         let second_datamap = ::self_encryption::datamap::DataMap::None;
         let second_metadata = ::metadata::file_metadata::FileMetadata::new("second_blob".to_string(), Vec::new());
-        let second_file = eval_result!(::file::File::new(second_metadata, second_datamap.clone()));
+        let second_file = unwrap_result!(::file::File::new(second_metadata, second_datamap.clone()));
 
         let third_blob = Blob::from(second_file.clone());
 
