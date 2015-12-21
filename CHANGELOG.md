@@ -1,5 +1,8 @@
 # Safe nfs - Change Log
 
+## [0.4.0]
+- Compiles and passes tests with refactored routing and safe_core api's
+
 ## [0.3.1]
 - Remove wildcard dependencies
 
