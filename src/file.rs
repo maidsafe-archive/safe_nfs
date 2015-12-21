@@ -15,11 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use xor_name::XorName;
+
 /// Representation of a File to be put into the network. Could be text, music, video etc any kind
 /// of file
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct File {
-    id      : ::routing::NameType,
+    id      : XorName,
     metadata: ::metadata::file_metadata::FileMetadata,
     datamap : ::self_encryption::datamap::DataMap,
 }
@@ -29,14 +31,14 @@ impl File {
     pub fn new(metadata: ::metadata::file_metadata::FileMetadata,
                datamap : ::self_encryption::datamap::DataMap) -> Result<File, ::errors::NfsError> {
         Ok(File {
-            id      : ::routing::NameType::new(try!(::safe_core::utility::generate_random_array_u8_64())),
+            id      : XorName::new(try!(::safe_core::utility::generate_random_array_u8_64())),
             metadata: metadata,
             datamap : datamap,
         })
     }
 
     /// Returns unique id
-    pub fn get_id(&self) -> &::routing::NameType {
+    pub fn get_id(&self) -> &XorName {
         &self.id
     }
 
@@ -76,14 +78,15 @@ impl ::std::fmt::Debug for File {
 #[cfg(test)]
 mod test {
     use super::*;
+    use maidsafe_utilities::serialisation::{serialise, deserialise};
 
     #[test]
-    fn serialise() {
-        let obj_before = eval_result!(File::new(::metadata::file_metadata::FileMetadata::new("Home".to_string(),
+    fn serialise_deserialise() {
+        let obj_before = unwrap_result!(File::new(::metadata::file_metadata::FileMetadata::new("Home".to_string(),
                                                                                              "{mime:\"application/json\"}".to_string().into_bytes()),
                                                                                              ::self_encryption::datamap::DataMap::None));
-        let serialised_data = eval_result!(::safe_core::utility::serialise(&obj_before));
-        let obj_after = eval_result!(::safe_core::utility::deserialise(&serialised_data));
+        let serialised_data = unwrap_result!(serialise(&obj_before));
+        let obj_after = unwrap_result!(deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);
     }
 }

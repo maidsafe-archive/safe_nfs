@@ -15,15 +15,18 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use xor_name::XorName;
+use metadata::directory_key::DirectoryKey;
+
 /// Metadata about a File or a Directory
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct DirectoryMetadata {
-    key           : ::metadata::directory_key::DirectoryKey,
+    key           : DirectoryKey,
     name          : String,
     created_time  : ::time::Tm,
     modified_time : ::time::Tm,
     user_metadata : Vec<u8>,
-    parent_dir_key: Option<::metadata::directory_key::DirectoryKey>,
+    parent_dir_key: Option<DirectoryKey>,
 }
 
 impl DirectoryMetadata {
@@ -33,10 +36,10 @@ impl DirectoryMetadata {
                versioned     : bool,
                access_level  : ::AccessLevel,
                user_metadata : Vec<u8>,
-               parent_dir_key: Option<::metadata::directory_key::DirectoryKey>) -> Result<DirectoryMetadata, ::errors::NfsError> {
-        let id = ::routing::NameType::new(try!(::safe_core::utility::generate_random_array_u8_64()));
+               parent_dir_key: Option<DirectoryKey>) -> Result<DirectoryMetadata, ::errors::NfsError> {
+        let id = XorName::new(try!(::safe_core::utility::generate_random_array_u8_64()));
         Ok(DirectoryMetadata {
-            key           : ::metadata::directory_key::DirectoryKey::new(id, type_tag, versioned, access_level),
+            key           : DirectoryKey::new(id, type_tag, versioned, access_level),
             name          : name,
             created_time  : ::time::now_utc(),
             modified_time : ::time::now_utc(),
@@ -46,7 +49,7 @@ impl DirectoryMetadata {
     }
 
     /// Return the id
-    pub fn get_id(&self) -> &::routing::NameType {
+    pub fn get_id(&self) -> &XorName {
         self.key.get_id()
     }
 
@@ -82,12 +85,12 @@ impl DirectoryMetadata {
     }
 
     /// Returns the DirectoryKey
-    pub fn get_key(&self) -> &::metadata::directory_key::DirectoryKey {
+    pub fn get_key(&self) -> &DirectoryKey {
         &self.key
     }
 
     /// Returns the Parent dir id
-    pub fn get_parent_dir_key(&self) -> Option<&::metadata::directory_key::DirectoryKey> {
+    pub fn get_parent_dir_key(&self) -> Option<&DirectoryKey> {
         self.parent_dir_key.iter().next()
     }
 
@@ -157,51 +160,54 @@ impl ::rustc_serialize::Decodable for DirectoryMetadata {
 #[cfg(test)]
 mod test {
     use super::*;
+    use xor_name::XorName;
+    use metadata::directory_key::DirectoryKey;
+    use maidsafe_utilities::serialisation::{serialise, deserialise};
 
     #[test]
     fn serialise_directorty_metadata_without_parent_directory() {
-        let obj_before = eval_result!(DirectoryMetadata::new("hello.txt".to_string(),
+        let obj_before = unwrap_result!(DirectoryMetadata::new("hello.txt".to_string(),
                                                              99u64,
                                                              true,
                                                              ::AccessLevel::Private,
                                                              Vec::new(),
                                                              None));
-        let serialised_data = eval_result!(::safe_core::utility::serialise(&obj_before));
-        let obj_after = eval_result!(::safe_core::utility::deserialise(&serialised_data));
+        let serialised_data = unwrap_result!(serialise(&obj_before));
+        let obj_after = unwrap_result!(deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);
     }
 
     #[test]
     fn serialise_directorty_metadata_with_parent_directory() {
-        let id = ::routing::NameType::new(eval_result!((::safe_core::utility::generate_random_array_u8_64())));
-        let parent_directory = ::metadata::directory_key::DirectoryKey::new(id, 100u64, false, ::AccessLevel::Private);
-        let obj_before = eval_result!(DirectoryMetadata::new("hello.txt".to_string(),
+        let id = XorName::new(unwrap_result!((::safe_core::utility::generate_random_array_u8_64())));
+        let parent_directory = DirectoryKey::new(id, 100u64, false, ::AccessLevel::Private);
+        let obj_before = unwrap_result!(DirectoryMetadata::new("hello.txt".to_string(),
                                                              99u64,
                                                              true,
                                                              ::AccessLevel::Private,
                                                              "Some user metadata".to_string().into_bytes(),
                                                              Some(parent_directory.clone())));
-        let serialised_data = eval_result!(::safe_core::utility::serialise(&obj_before));
-        let obj_after: DirectoryMetadata = eval_result!(::safe_core::utility::deserialise(&serialised_data));
-        assert_eq!(*eval_option!(obj_after.get_parent_dir_key(), "Directory should not be None"), parent_directory);
+        let serialised_data = unwrap_result!(serialise(&obj_before));
+        let obj_after: DirectoryMetadata = unwrap_result!(deserialise(&serialised_data));
+        assert_eq!(*unwrap_option!(obj_after.get_parent_dir_key(), "Directory should not be None"), parent_directory);
     }
 
     #[test]
     fn update_using_setters() {
-        let id = ::routing::NameType::new(eval_result!((::safe_core::utility::generate_random_array_u8_64())));
+        let id = XorName::new(unwrap_result!((::safe_core::utility::generate_random_array_u8_64())));
         let modified_time = ::time::now_utc();
-        let mut obj_before = eval_result!(DirectoryMetadata::new("hello.txt".to_string(),
+        let mut obj_before = unwrap_result!(DirectoryMetadata::new("hello.txt".to_string(),
                                                                  99u64,
                                                                  true,
                                                                  ::AccessLevel::Private,
                                                                  Vec::new(),
-                                                                 Some(::metadata::directory_key::DirectoryKey::new(id, 100u64, false, ::AccessLevel::Private))));
+                                                                 Some(DirectoryKey::new(id, 100u64, false, ::AccessLevel::Private))));
         let user_metadata = "{mime: \"application/json\"}".to_string().into_bytes();
         obj_before.set_user_metadata(user_metadata.clone());
         obj_before.set_modified_time(modified_time.clone());
         obj_before.set_name("index.txt".to_string());
-        let serialised_data = eval_result!(::safe_core::utility::serialise(&obj_before));
-        let obj_after: DirectoryMetadata = eval_result!(::safe_core::utility::deserialise(&serialised_data));
+        let serialised_data = unwrap_result!(serialise(&obj_before));
+        let obj_after: DirectoryMetadata = unwrap_result!(deserialise(&serialised_data));
         assert_eq!(user_metadata, *obj_after.get_user_metadata());
         assert_eq!(modified_time, *obj_after.get_modified_time());
         assert_eq!("index.txt".to_string(), *obj_after.get_name());
