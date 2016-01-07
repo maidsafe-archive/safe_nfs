@@ -1,5 +1,8 @@
 # Safe nfs - Change Log
 
+## [0.5.0]
+- Dependencies updated to allow building with Rust stable
+
 ## [0.4.0]
 - Compiles and passes tests with refactored routing and safe_core api's
 
