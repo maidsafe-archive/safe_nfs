@@ -21,20 +21,24 @@ use xor_name::XorName;
 /// A directory can be feteched with the DirectoryKey
 #[derive(Debug, RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct DirectoryKey {
-    id          : XorName,
-    type_tag    : u64,
-    versioned   : bool,
+    id: XorName,
+    type_tag: u64,
+    versioned: bool,
     access_level: ::AccessLevel,
 }
 
 impl DirectoryKey {
     /// Creates a new instance of DirectoryKey
-    pub fn new(directory_id: XorName, type_tag: u64, versioned: bool, access_level: ::AccessLevel) -> DirectoryKey {
+    pub fn new(directory_id: XorName,
+               type_tag: u64,
+               versioned: bool,
+               access_level: ::AccessLevel)
+               -> DirectoryKey {
         DirectoryKey {
-            id          : directory_id,
-            type_tag    : type_tag,
-            versioned   : versioned,
-            access_level: access_level
+            id: directory_id,
+            type_tag: type_tag,
+            versioned: versioned,
+            access_level: access_level,
         }
     }
 
@@ -61,11 +65,12 @@ mod test {
     use super::*;
     use xor_name::XorName;
     use maidsafe_utilities::serialisation::{serialise, deserialise};
+    use safe_core::utility;
 
     /// Should be able to serialise & deserialise the DirectoryKey
     #[test]
     fn serailise_and_deserialise_directory_key() {
-        let id = XorName(unwrap_result!(::safe_core::utility::generate_random_array_u8_64()));
+        let id = XorName(unwrap_result!(utility::generate_random_array_u8_64()));
         let tag = 10u64;
         let versioned = false;
         let access_level = ::AccessLevel::Private;
@@ -73,7 +78,8 @@ mod test {
         let directory_key = DirectoryKey::new(id.clone(), tag, versioned, access_level.clone());
 
         let serialised = unwrap_result!(serialise(&directory_key));
-        let deserilaised_key: ::metadata::directory_key::DirectoryKey = unwrap_result!(deserialise(&serialised));
+        let deserilaised_key: ::metadata::directory_key::DirectoryKey =
+            unwrap_result!(deserialise(&serialised));
         assert_eq!(*deserilaised_key.get_id(), id);
         assert_eq!(*deserilaised_key.get_access_level(), access_level);
         assert_eq!(deserilaised_key.is_versioned(), versioned);

@@ -15,17 +15,20 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use std::fmt;
+
 use maidsafe_utilities::serialisation::SerialisationError;
+use safe_core::errors::{CoreError, CLIENT_ERROR_START_RANGE};
 
 /// Intended for converting NFS Errors into numeric codes for propagating some error information
 /// across FFI boundaries and specially to C.
-pub const NFS_ERROR_START_RANGE: i32 = ::safe_core::errors::CLIENT_ERROR_START_RANGE - 500;
+pub const NFS_ERROR_START_RANGE: i32 = CLIENT_ERROR_START_RANGE - 500;
 
 /// NFS Errors
 #[allow(variant_size_differences)] // TODO
 pub enum NfsError {
     /// Client Error
-    CoreError(::safe_core::errors::CoreError),
+    CoreError(CoreError),
     /// If Directory already exists with the same name in the same level
     DirectoryAlreadyExistsWithSameName,
     /// Destination is Same as the Source
@@ -48,8 +51,8 @@ pub enum NfsError {
     UnsuccessfulEncodeDecode(SerialisationError),
 }
 
-impl From<::safe_core::errors::CoreError> for NfsError {
-    fn from(error: ::safe_core::errors::CoreError) -> NfsError {
+impl From<CoreError> for NfsError {
+    fn from(error: CoreError) -> NfsError {
         NfsError::CoreError(error)
     }
 }
@@ -69,35 +72,43 @@ impl<'a> From<&'a str> for NfsError {
 impl Into<i32> for NfsError {
     fn into(self) -> i32 {
         match self {
-            NfsError::CoreError(error)                   => error.into(),
+            NfsError::CoreError(error) => error.into(),
             NfsError::DirectoryAlreadyExistsWithSameName => NFS_ERROR_START_RANGE - 1,
-            NfsError::DestinationAndSourceAreSame        => NFS_ERROR_START_RANGE - 2,
-            NfsError::DirectoryNotFound                  => NFS_ERROR_START_RANGE - 3,
-            NfsError::FileAlreadyExistsWithSameName      => NFS_ERROR_START_RANGE - 4,
-            NfsError::FileDoesNotMatch                   => NFS_ERROR_START_RANGE - 5,
-            NfsError::FileNotFound                       => NFS_ERROR_START_RANGE - 6,
-            NfsError::InvalidRangeSpecified              => NFS_ERROR_START_RANGE - 7,
-            NfsError::ParameterIsNotValid                => NFS_ERROR_START_RANGE - 8,
-            NfsError::Unexpected(_)                      => NFS_ERROR_START_RANGE - 9,
-            NfsError::UnsuccessfulEncodeDecode(_)        => NFS_ERROR_START_RANGE - 10,
+            NfsError::DestinationAndSourceAreSame => NFS_ERROR_START_RANGE - 2,
+            NfsError::DirectoryNotFound => NFS_ERROR_START_RANGE - 3,
+            NfsError::FileAlreadyExistsWithSameName => NFS_ERROR_START_RANGE - 4,
+            NfsError::FileDoesNotMatch => NFS_ERROR_START_RANGE - 5,
+            NfsError::FileNotFound => NFS_ERROR_START_RANGE - 6,
+            NfsError::InvalidRangeSpecified => NFS_ERROR_START_RANGE - 7,
+            NfsError::ParameterIsNotValid => NFS_ERROR_START_RANGE - 8,
+            NfsError::Unexpected(_) => NFS_ERROR_START_RANGE - 9,
+            NfsError::UnsuccessfulEncodeDecode(_) => NFS_ERROR_START_RANGE - 10,
         }
     }
 }
 
-impl ::std::fmt::Debug for NfsError {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+impl fmt::Debug for NfsError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            NfsError::CoreError(ref error)                => write!(f, "NfsError::CoreError -> {:?}", error),
-            NfsError::DirectoryAlreadyExistsWithSameName  => write!(f, "NfsError::DirectoryAlreadyExistsWithSameName"),
-            NfsError::DestinationAndSourceAreSame         => write!(f, "NfsError::DestinationAndSourceAreSame"),
-            NfsError::DirectoryNotFound                   => write!(f, "NfsError::DirectoryNotFound"),
-            NfsError::FileAlreadyExistsWithSameName       => write!(f, "NfsError::FileAlreadyExistsWithSameName"),
-            NfsError::FileDoesNotMatch                    => write!(f, "NfsError::FileDoesNotMatch"),            
-            NfsError::FileNotFound                        => write!(f, "NfsError::FileNotFound"),
-            NfsError::InvalidRangeSpecified               => write!(f, "NfsError::InvalidRangeSpecified"),
-            NfsError::ParameterIsNotValid                 => write!(f, "NfsError::ParameterIsNotValid"),
-            NfsError::Unexpected(ref error)               => write!(f, "NfsError::Unexpected -> {:?}", error),
-            NfsError::UnsuccessfulEncodeDecode(ref error) => write!(f, "NfsError::UnsuccessfulEncodeDecode -> {:?}", error),
+            NfsError::CoreError(ref error) => write!(f, "NfsError::CoreError -> {:?}", error),
+            NfsError::DirectoryAlreadyExistsWithSameName => {
+                write!(f, "NfsError::DirectoryAlreadyExistsWithSameName")
+            }
+            NfsError::DestinationAndSourceAreSame => {
+                write!(f, "NfsError::DestinationAndSourceAreSame")
+            }
+            NfsError::DirectoryNotFound => write!(f, "NfsError::DirectoryNotFound"),
+            NfsError::FileAlreadyExistsWithSameName => {
+                write!(f, "NfsError::FileAlreadyExistsWithSameName")
+            }
+            NfsError::FileDoesNotMatch => write!(f, "NfsError::FileDoesNotMatch"),
+            NfsError::FileNotFound => write!(f, "NfsError::FileNotFound"),
+            NfsError::InvalidRangeSpecified => write!(f, "NfsError::InvalidRangeSpecified"),
+            NfsError::ParameterIsNotValid => write!(f, "NfsError::ParameterIsNotValid"),
+            NfsError::Unexpected(ref error) => write!(f, "NfsError::Unexpected -> {:?}", error),
+            NfsError::UnsuccessfulEncodeDecode(ref error) => {
+                write!(f, "NfsError::UnsuccessfulEncodeDecode -> {:?}", error)
+            }
         }
     }
 }

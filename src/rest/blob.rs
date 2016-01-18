@@ -15,10 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use file::File;
+use time::Tm;
+
 #[allow(dead_code)]
 /// Blob represents a File - Music, Video, Text etc
 pub struct Blob {
-    file: ::file::File,
+    file: File,
 }
 
 impl Blob {
@@ -36,12 +39,12 @@ impl Blob {
     }
 
     /// Get the creation time for Blob
-    pub fn get_created_time(&self) -> &::time::Tm {
+    pub fn get_created_time(&self) -> &Tm {
         self.file.get_metadata().get_created_time()
     }
 
     /// Get the last modified time for the Blob
-    pub fn get_modified_time(&self) -> &::time::Tm {
+    pub fn get_modified_time(&self) -> &Tm {
         self.file.get_metadata().get_modified_time()
     }
 
@@ -51,38 +54,37 @@ impl Blob {
     }
 
     /// Convert the Blob to the format acceptable to the lower level Api's
-    pub fn into_file(&self) -> &::file::File {
+    pub fn into_file(&self) -> &File {
         &self.file
     }
 
     /// Convert the Blob to the format acceptable to the lower level Api's
     /// This can also be modified on the fly as the return is a mutable value
-    pub fn into_mut_file(&mut self) -> &mut ::file::File {
+    pub fn into_mut_file(&mut self) -> &mut File {
         &mut self.file
     }
-
 }
 
-impl From<::file::File> for Blob {
-
-    fn from(file: ::file::File) -> Blob {
-        Blob {
-            file: file
-        }
+impl From<File> for Blob {
+    fn from(file: File) -> Blob {
+        Blob { file: file }
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use metadata::file_metadata::FileMetadata;
+    use file::File;
+    use self_encryption::datamap::DataMap;
 
     #[test]
     fn create() {
-        let datamap = ::self_encryption::datamap::DataMap::None;
-        let metadata = ::metadata::file_metadata::FileMetadata::new("blob".to_string(), Vec::new());
-        let file = unwrap_result!(::file::File::new(metadata.clone(), datamap.clone()));
+        let datamap = DataMap::None;
+        let metadata = FileMetadata::new("blob".to_string(), Vec::new());
+        let file = unwrap_result!(File::new(metadata.clone(), datamap.clone()));
 
-        let blob = Blob{file: file.clone() };
+        let blob = Blob { file: file.clone() };
 
         assert_eq!(*blob.get_name(), *metadata.get_name());
         assert_eq!(blob.get_created_time(), metadata.get_created_time());
@@ -93,8 +95,10 @@ mod test {
         let file = blob.into_file();
 
         assert_eq!(file.get_name(), metadata.get_name());
-        assert_eq!(file.get_metadata().get_created_time(), metadata.get_created_time());
-        assert_eq!(file.get_metadata().get_modified_time(), metadata.get_modified_time());
+        assert_eq!(file.get_metadata().get_created_time(),
+                   metadata.get_created_time());
+        assert_eq!(file.get_metadata().get_modified_time(),
+                   metadata.get_modified_time());
         assert_eq!(file.get_metadata().get_size(), metadata.get_size());
         assert_eq!(file.get_datamap().len(), datamap.len());
         assert!(!file.get_datamap().has_chunks());
@@ -102,30 +106,34 @@ mod test {
 
     #[test]
     fn create_from_file() {
-        let datamap = ::self_encryption::datamap::DataMap::None;
-        let metadata = ::metadata::file_metadata::FileMetadata::new("blob".to_string(), Vec::new());
-        let file = unwrap_result!(::file::File::new(metadata.clone(), datamap.clone()));
+        let datamap = DataMap::None;
+        let metadata = FileMetadata::new("blob".to_string(), Vec::new());
+        let file = unwrap_result!(File::new(metadata.clone(), datamap.clone()));
 
         let blob = Blob::from(file.clone());
 
         assert_eq!(*blob.get_name(), *file.get_name());
-        assert_eq!(blob.get_created_time(), file.get_metadata().get_created_time());
-        assert_eq!(blob.get_modified_time(), file.get_metadata().get_modified_time());
+        assert_eq!(blob.get_created_time(),
+                   file.get_metadata().get_created_time());
+        assert_eq!(blob.get_modified_time(),
+                   file.get_metadata().get_modified_time());
         assert_eq!(blob.get_size(), file.get_metadata().get_size());
         assert!(blob.get_metadata().is_empty());
     }
 
     #[test]
     fn convert_to_file() {
-        let datamap = ::self_encryption::datamap::DataMap::None;
-        let metadata = ::metadata::file_metadata::FileMetadata::new("blob".to_string(), Vec::new());
-        let file = unwrap_result!(::file::File::new(metadata.clone(), datamap.clone()));
+        let datamap = DataMap::None;
+        let metadata = FileMetadata::new("blob".to_string(), Vec::new());
+        let file = unwrap_result!(File::new(metadata.clone(), datamap.clone()));
 
-        let blob = Blob{ file: file.clone() };
+        let blob = Blob { file: file.clone() };
 
         assert_eq!(*blob.get_name(), *file.get_name());
-        assert_eq!(blob.get_created_time(), file.get_metadata().get_created_time());
-        assert_eq!(blob.get_modified_time(), file.get_metadata().get_modified_time());
+        assert_eq!(blob.get_created_time(),
+                   file.get_metadata().get_created_time());
+        assert_eq!(blob.get_modified_time(),
+                   file.get_metadata().get_modified_time());
         assert_eq!(blob.get_size(), file.get_metadata().get_size());
         assert!(blob.get_metadata().is_empty());
         assert!(file.get_metadata().get_user_metadata().is_empty());
@@ -133,34 +141,38 @@ mod test {
         let file = blob.into_file();
 
         assert_eq!(*blob.get_name(), *file.get_name());
-        assert_eq!(blob.get_created_time(), file.get_metadata().get_created_time());
-        assert_eq!(blob.get_modified_time(), file.get_metadata().get_modified_time());
+        assert_eq!(blob.get_created_time(),
+                   file.get_metadata().get_created_time());
+        assert_eq!(blob.get_modified_time(),
+                   file.get_metadata().get_modified_time());
         assert_eq!(blob.get_size(), file.get_metadata().get_size());
         assert!(file.get_metadata().get_user_metadata().is_empty());
     }
 
     #[test]
     fn compare() {
-        let first_datamap = ::self_encryption::datamap::DataMap::None;
-        let first_metadata = ::metadata::file_metadata::FileMetadata::new("first_blob".to_string(), Vec::new());
-        let first_file = unwrap_result!(::file::File::new(first_metadata.clone(), first_datamap.clone()));
+        let first_datamap = DataMap::None;
+        let first_metadata = FileMetadata::new("first_blob".to_string(), Vec::new());
+        let first_file = unwrap_result!(File::new(first_metadata.clone(), first_datamap.clone()));
 
         let first_blob = Blob::from(first_file.clone());
-        let second_blob = Blob{file: first_file.clone() };
+        let second_blob = Blob { file: first_file.clone() };
 
         // allow 'times' to be sufficiently distinct
         let duration = ::std::time::Duration::from_millis(1000);
         ::std::thread::sleep(duration);
 
-        let second_datamap = ::self_encryption::datamap::DataMap::None;
-        let second_metadata = ::metadata::file_metadata::FileMetadata::new("second_blob".to_string(), Vec::new());
-        let second_file = unwrap_result!(::file::File::new(second_metadata, second_datamap.clone()));
+        let second_datamap = DataMap::None;
+        let second_metadata = FileMetadata::new("second_blob".to_string(), Vec::new());
+        let second_file = unwrap_result!(File::new(second_metadata, second_datamap.clone()));
 
         let third_blob = Blob::from(second_file.clone());
 
         assert_eq!(*first_blob.get_name(), *second_blob.get_name());
-        assert_eq!(first_blob.get_created_time(), second_blob.get_created_time());
-        assert_eq!(first_blob.get_modified_time(), second_blob.get_modified_time());
+        assert_eq!(first_blob.get_created_time(),
+                   second_blob.get_created_time());
+        assert_eq!(first_blob.get_modified_time(),
+                   second_blob.get_modified_time());
 
         assert!(*first_blob.get_name() != *third_blob.get_name());
         assert!(first_blob.get_created_time() != third_blob.get_created_time());
