@@ -36,28 +36,29 @@ pub enum Mode {
 /// Writer is used to write contents to a File and especially in chunks if the file happens to be
 /// too large
 pub struct Writer {
-    client          : Arc<Mutex<Client>>,
-    file            : File,
+    client: Arc<Mutex<Client>>,
+    file: File,
     parent_directory: DirectoryListing,
-    self_encryptor  : SelfEncryptor<SelfEncryptionStorage>,
+    self_encryptor: SelfEncryptor<SelfEncryptionStorage>,
 }
 
 impl Writer {
     /// Create new instance of Writer
-    pub fn new(client          : Arc<Mutex<Client>>,
-               mode            : Mode,
+    pub fn new(client: Arc<Mutex<Client>>,
+               mode: Mode,
                parent_directory: DirectoryListing,
-               file            : File) -> Writer {
+               file: File)
+               -> Writer {
         let datamap = match mode {
-                Mode::Modify    => file.get_datamap().clone(),
-                Mode::Overwrite => DataMap::None,
+            Mode::Modify => file.get_datamap().clone(),
+            Mode::Overwrite => DataMap::None,
         };
 
         Writer {
-            client          : client.clone(),
-            file            : file,
+            client: client.clone(),
+            file: file,
             parent_directory: parent_directory,
-            self_encryptor  : SelfEncryptor::new(SelfEncryptionStorage::new(client.clone()), datamap),
+            self_encryptor: SelfEncryptor::new(SelfEncryptionStorage::new(client.clone()), datamap),
         }
     }
 
@@ -69,7 +70,8 @@ impl Writer {
 
     /// close is invoked only after all the data is completely written
     /// The file/blob is saved only when the close is invoked.
-    /// Returns the update DirectoryListing which owns the file and also the updated DirectoryListing of the file's parent
+    /// Returns the update DirectoryListing which owns the file and also the updated
+    /// DirectoryListing of the file's parent
     /// Returns (files's parent_directory, Option<file's parent_directory's parent>)
     pub fn close(mut self) -> Result<(DirectoryListing, Option<DirectoryListing>), NfsError> {
         let mut file = self.file;
@@ -83,7 +85,8 @@ impl Writer {
 
         directory.upsert_file(file.clone());
 
-        let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client.clone());
+        let directory_helper = ::helper::directory_helper::DirectoryHelper::new(self.client
+                                                                                    .clone());
         if let Some(updated_grand_parent) = try!(directory_helper.update(&directory)) {
             Ok((directory, Some(updated_grand_parent)))
         } else {

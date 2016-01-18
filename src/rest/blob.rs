@@ -63,15 +63,11 @@ impl Blob {
     pub fn into_mut_file(&mut self) -> &mut File {
         &mut self.file
     }
-
 }
 
 impl From<File> for Blob {
-
     fn from(file: File) -> Blob {
-        Blob {
-            file: file
-        }
+        Blob { file: file }
     }
 }
 
@@ -88,7 +84,7 @@ mod test {
         let metadata = FileMetadata::new("blob".to_string(), Vec::new());
         let file = unwrap_result!(File::new(metadata.clone(), datamap.clone()));
 
-        let blob = Blob{file: file.clone() };
+        let blob = Blob { file: file.clone() };
 
         assert_eq!(*blob.get_name(), *metadata.get_name());
         assert_eq!(blob.get_created_time(), metadata.get_created_time());
@@ -99,8 +95,10 @@ mod test {
         let file = blob.into_file();
 
         assert_eq!(file.get_name(), metadata.get_name());
-        assert_eq!(file.get_metadata().get_created_time(), metadata.get_created_time());
-        assert_eq!(file.get_metadata().get_modified_time(), metadata.get_modified_time());
+        assert_eq!(file.get_metadata().get_created_time(),
+                   metadata.get_created_time());
+        assert_eq!(file.get_metadata().get_modified_time(),
+                   metadata.get_modified_time());
         assert_eq!(file.get_metadata().get_size(), metadata.get_size());
         assert_eq!(file.get_datamap().len(), datamap.len());
         assert!(!file.get_datamap().has_chunks());
@@ -115,8 +113,10 @@ mod test {
         let blob = Blob::from(file.clone());
 
         assert_eq!(*blob.get_name(), *file.get_name());
-        assert_eq!(blob.get_created_time(), file.get_metadata().get_created_time());
-        assert_eq!(blob.get_modified_time(), file.get_metadata().get_modified_time());
+        assert_eq!(blob.get_created_time(),
+                   file.get_metadata().get_created_time());
+        assert_eq!(blob.get_modified_time(),
+                   file.get_metadata().get_modified_time());
         assert_eq!(blob.get_size(), file.get_metadata().get_size());
         assert!(blob.get_metadata().is_empty());
     }
@@ -127,11 +127,13 @@ mod test {
         let metadata = FileMetadata::new("blob".to_string(), Vec::new());
         let file = unwrap_result!(File::new(metadata.clone(), datamap.clone()));
 
-        let blob = Blob{ file: file.clone() };
+        let blob = Blob { file: file.clone() };
 
         assert_eq!(*blob.get_name(), *file.get_name());
-        assert_eq!(blob.get_created_time(), file.get_metadata().get_created_time());
-        assert_eq!(blob.get_modified_time(), file.get_metadata().get_modified_time());
+        assert_eq!(blob.get_created_time(),
+                   file.get_metadata().get_created_time());
+        assert_eq!(blob.get_modified_time(),
+                   file.get_metadata().get_modified_time());
         assert_eq!(blob.get_size(), file.get_metadata().get_size());
         assert!(blob.get_metadata().is_empty());
         assert!(file.get_metadata().get_user_metadata().is_empty());
@@ -139,8 +141,10 @@ mod test {
         let file = blob.into_file();
 
         assert_eq!(*blob.get_name(), *file.get_name());
-        assert_eq!(blob.get_created_time(), file.get_metadata().get_created_time());
-        assert_eq!(blob.get_modified_time(), file.get_metadata().get_modified_time());
+        assert_eq!(blob.get_created_time(),
+                   file.get_metadata().get_created_time());
+        assert_eq!(blob.get_modified_time(),
+                   file.get_metadata().get_modified_time());
         assert_eq!(blob.get_size(), file.get_metadata().get_size());
         assert!(file.get_metadata().get_user_metadata().is_empty());
     }
@@ -152,7 +156,7 @@ mod test {
         let first_file = unwrap_result!(File::new(first_metadata.clone(), first_datamap.clone()));
 
         let first_blob = Blob::from(first_file.clone());
-        let second_blob = Blob{file: first_file.clone() };
+        let second_blob = Blob { file: first_file.clone() };
 
         // allow 'times' to be sufficiently distinct
         let duration = ::std::time::Duration::from_millis(1000);
@@ -165,8 +169,10 @@ mod test {
         let third_blob = Blob::from(second_file.clone());
 
         assert_eq!(*first_blob.get_name(), *second_blob.get_name());
-        assert_eq!(first_blob.get_created_time(), second_blob.get_created_time());
-        assert_eq!(first_blob.get_modified_time(), second_blob.get_modified_time());
+        assert_eq!(first_blob.get_created_time(),
+                   second_blob.get_created_time());
+        assert_eq!(first_blob.get_modified_time(),
+                   second_blob.get_modified_time());
 
         assert!(*first_blob.get_name() != *third_blob.get_name());
         assert!(first_blob.get_created_time() != third_blob.get_created_time());

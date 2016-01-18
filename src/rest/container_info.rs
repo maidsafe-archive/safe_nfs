@@ -23,7 +23,6 @@ pub struct ContainerInfo {
 }
 
 impl ContainerInfo {
-
     /// Get the name of the Container
     pub fn get_name(&self) -> &String {
         self.metadata.get_name()
@@ -60,17 +59,12 @@ impl ContainerInfo {
     pub fn into_directory_metadata(&self) -> DirectoryMetadata {
         self.metadata.clone()
     }
-
 }
 
 impl From<DirectoryMetadata> for ContainerInfo {
-
     fn from(metadata: DirectoryMetadata) -> ContainerInfo {
-        ContainerInfo {
-            metadata: metadata,
-        }
+        ContainerInfo { metadata: metadata }
     }
-
 }
 
 
@@ -84,7 +78,12 @@ mod test {
     fn create() {
         let name = unwrap_result!(utility::generate_random_string(10));
         let container_info = ContainerInfo {
-            metadata: unwrap_result!(DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None)),
+            metadata: unwrap_result!(DirectoryMetadata::new(name.clone(),
+                                                            10u64,
+                                                            true,
+                                                            ::AccessLevel::Public,
+                                                            Vec::new(),
+                                                            None)),
         };
         assert_eq!(*container_info.get_name(), name);
     }
@@ -92,21 +91,32 @@ mod test {
     #[test]
     fn convert_from() {
         let name = unwrap_result!(utility::generate_random_string(10));
-        let directory_metadata = unwrap_result!(DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None));
+        let directory_metadata = unwrap_result!(DirectoryMetadata::new(name.clone(),
+                                                                       10u64,
+                                                                       true,
+                                                                       ::AccessLevel::Public,
+                                                                       Vec::new(),
+                                                                       None));
 
         assert_eq!(*directory_metadata.get_name(), name);
 
         let container_info = ContainerInfo::from(directory_metadata.clone());
 
         assert_eq!(container_info.get_name(), directory_metadata.get_name());
-        assert_eq!(container_info.get_created_time(), directory_metadata.get_created_time());
+        assert_eq!(container_info.get_created_time(),
+                   directory_metadata.get_created_time());
     }
 
     #[test]
     fn convert_to() {
         let name = unwrap_result!(utility::generate_random_string(10));
         let container_info = ContainerInfo {
-            metadata: unwrap_result!(DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None)),
+            metadata: unwrap_result!(DirectoryMetadata::new(name.clone(),
+                                                            10u64,
+                                                            true,
+                                                            ::AccessLevel::Public,
+                                                            Vec::new(),
+                                                            None)),
         };
 
         assert_eq!(*container_info.get_name(), name.clone());

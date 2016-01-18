@@ -27,19 +27,18 @@ use xor_name::XorName;
 /// of file
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct File {
-    id      : XorName,
+    id: XorName,
     metadata: FileMetadata,
-    datamap : DataMap,
+    datamap: DataMap,
 }
 
 impl File {
     /// Create a new instance of File
-    pub fn new(metadata: FileMetadata,
-               datamap : DataMap) -> Result<File, NfsError> {
+    pub fn new(metadata: FileMetadata, datamap: DataMap) -> Result<File, NfsError> {
         Ok(File {
-            id      : XorName::new(try!(utility::generate_random_array_u8_64())),
+            id: XorName::new(try!(utility::generate_random_array_u8_64())),
             metadata: metadata,
-            datamap : datamap,
+            datamap: datamap,
         })
     }
 
@@ -91,8 +90,11 @@ mod test {
     #[test]
     fn serialise_deserialise() {
         let obj_before = unwrap_result!(File::new(FileMetadata::new("Home".to_string(),
-                                                                    "{mime:\"application/json\"}".to_string().into_bytes()),
-                                                                    DataMap::None));
+                                                                    "{mime:\"application/json\"\
+                                                                     }"
+                                                                        .to_string()
+                                                                        .into_bytes()),
+                                                  DataMap::None));
         let serialised_data = unwrap_result!(serialise(&obj_before));
         let obj_after = unwrap_result!(deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);

@@ -24,29 +24,30 @@ use safe_core::utility;
 /// Metadata about a File or a Directory
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct DirectoryMetadata {
-    key           : DirectoryKey,
-    name          : String,
-    created_time  : ::time::Tm,
-    modified_time : ::time::Tm,
-    user_metadata : Vec<u8>,
+    key: DirectoryKey,
+    name: String,
+    created_time: ::time::Tm,
+    modified_time: ::time::Tm,
+    user_metadata: Vec<u8>,
     parent_dir_key: Option<DirectoryKey>,
 }
 
 impl DirectoryMetadata {
     /// Create a new instance of Metadata
-    pub fn new(name          : String,
-               type_tag      : u64,
-               versioned     : bool,
-               access_level  : ::AccessLevel,
-               user_metadata : Vec<u8>,
-               parent_dir_key: Option<DirectoryKey>) -> Result<DirectoryMetadata, ::errors::NfsError> {
+    pub fn new(name: String,
+               type_tag: u64,
+               versioned: bool,
+               access_level: ::AccessLevel,
+               user_metadata: Vec<u8>,
+               parent_dir_key: Option<DirectoryKey>)
+               -> Result<DirectoryMetadata, ::errors::NfsError> {
         let id = XorName::new(try!(utility::generate_random_array_u8_64()));
         Ok(DirectoryMetadata {
-            key           : DirectoryKey::new(id, type_tag, versioned, access_level),
-            name          : name,
-            created_time  : ::time::now_utc(),
-            modified_time : ::time::now_utc(),
-            user_metadata : user_metadata,
+            key: DirectoryKey::new(id, type_tag, versioned, access_level),
+            name: name,
+            created_time: ::time::now_utc(),
+            modified_time: ::time::now_utc(),
+            user_metadata: user_metadata,
             parent_dir_key: parent_dir_key,
         })
     }
@@ -125,14 +126,14 @@ impl ::rustc_serialize::Encodable for DirectoryMetadata {
         let modified_time = self.modified_time.to_timespec();
 
         e.emit_struct("DirectoryMetadata", 8, |e| {
-            try!(e.emit_struct_field("key",                0, |e| self.key.encode(e)));
-            try!(e.emit_struct_field("name",               1, |e| self.name.encode(e)));
-            try!(e.emit_struct_field("created_time_sec",   2, |e| created_time.sec.encode(e)));
-            try!(e.emit_struct_field("created_time_nsec",  3, |e| created_time.nsec.encode(e)));
-            try!(e.emit_struct_field("modified_time_sec",  4, |e| modified_time.sec.encode(e)));
+            try!(e.emit_struct_field("key", 0, |e| self.key.encode(e)));
+            try!(e.emit_struct_field("name", 1, |e| self.name.encode(e)));
+            try!(e.emit_struct_field("created_time_sec", 2, |e| created_time.sec.encode(e)));
+            try!(e.emit_struct_field("created_time_nsec", 3, |e| created_time.nsec.encode(e)));
+            try!(e.emit_struct_field("modified_time_sec", 4, |e| modified_time.sec.encode(e)));
             try!(e.emit_struct_field("modified_time_nsec", 5, |e| modified_time.nsec.encode(e)));
-            try!(e.emit_struct_field("user_metadata",      6, |e| self.user_metadata.encode(e)));
-            try!(e.emit_struct_field("parent_dir_key",     7, |e| self.parent_dir_key.encode(e)));
+            try!(e.emit_struct_field("user_metadata", 6, |e| self.user_metadata.encode(e)));
+            try!(e.emit_struct_field("parent_dir_key", 7, |e| self.parent_dir_key.encode(e)));
 
             Ok(())
         })
@@ -143,18 +144,28 @@ impl Decodable for DirectoryMetadata {
     fn decode<D: Decoder>(d: &mut D) -> Result<DirectoryMetadata, D::Error> {
         d.read_struct("DirectoryMetadata", 8, |d| {
             Ok(DirectoryMetadata {
-                key           : try!(d.read_struct_field("key",  0, |d| Decodable::decode(d))),
-                name          : try!(d.read_struct_field("name", 1, |d| Decodable::decode(d))),
-                created_time  : ::time::at_utc(::time::Timespec {
-                                                   sec : try!(d.read_struct_field("created_time_sec",  2, |d| Decodable::decode(d))),
-                                                   nsec: try!(d.read_struct_field("created_time_nsec", 3, |d| Decodable::decode(d))),
-                                               }),
-                modified_time : ::time::at_utc(::time::Timespec {
-                                                   sec : try!(d.read_struct_field("modified_time_sec",  4, |d| Decodable::decode(d))),
-                                                   nsec: try!(d.read_struct_field("modified_time_nsec", 5, |d| Decodable::decode(d))),
-                                               }),
-                user_metadata : try!(d.read_struct_field("user_metadata",  6, |d| Decodable::decode(d))),
-                parent_dir_key: try!(d.read_struct_field("parent_dir_key", 7, |d| Decodable::decode(d))),
+                key: try!(d.read_struct_field("key", 0, |d| Decodable::decode(d))),
+                name: try!(d.read_struct_field("name", 1, |d| Decodable::decode(d))),
+                created_time: ::time::at_utc(::time::Timespec {
+                    sec: try!(d.read_struct_field("created_time_sec", 2, |d| Decodable::decode(d))),
+                    nsec: try!(d.read_struct_field("created_time_nsec",
+                                                   3,
+                                                   |d| Decodable::decode(d))),
+                }),
+                modified_time: ::time::at_utc(::time::Timespec {
+                    sec: try!(d.read_struct_field("modified_time_sec",
+                                                  4,
+                                                  |d| Decodable::decode(d))),
+                    nsec: try!(d.read_struct_field("modified_time_nsec",
+                                                   5,
+                                                   |d| Decodable::decode(d))),
+                }),
+                user_metadata: try!(d.read_struct_field("user_metadata",
+                                                        6,
+                                                        |d| Decodable::decode(d))),
+                parent_dir_key: try!(d.read_struct_field("parent_dir_key",
+                                                         7,
+                                                         |d| Decodable::decode(d))),
             })
         })
     }
@@ -171,11 +182,11 @@ mod test {
     #[test]
     fn serialise_directorty_metadata_without_parent_directory() {
         let obj_before = unwrap_result!(DirectoryMetadata::new("hello.txt".to_string(),
-                                                             99u64,
-                                                             true,
-                                                             ::AccessLevel::Private,
-                                                             Vec::new(),
-                                                             None));
+                                                               99u64,
+                                                               true,
+                                                               ::AccessLevel::Private,
+                                                               Vec::new(),
+                                                               None));
         let serialised_data = unwrap_result!(serialise(&obj_before));
         let obj_after = unwrap_result!(deserialise(&serialised_data));
         assert_eq!(obj_before, obj_after);
@@ -186,14 +197,18 @@ mod test {
         let id = XorName::new(unwrap_result!((utility::generate_random_array_u8_64())));
         let parent_directory = DirectoryKey::new(id, 100u64, false, ::AccessLevel::Private);
         let obj_before = unwrap_result!(DirectoryMetadata::new("hello.txt".to_string(),
-                                                             99u64,
-                                                             true,
-                                                             ::AccessLevel::Private,
-                                                             "Some user metadata".to_string().into_bytes(),
-                                                             Some(parent_directory.clone())));
+                                                               99u64,
+                                                               true,
+                                                               ::AccessLevel::Private,
+                                                               "Some user metadata"
+                                                                   .to_string()
+                                                                   .into_bytes(),
+                                                               Some(parent_directory.clone())));
         let serialised_data = unwrap_result!(serialise(&obj_before));
         let obj_after: DirectoryMetadata = unwrap_result!(deserialise(&serialised_data));
-        assert_eq!(*unwrap_option!(obj_after.get_parent_dir_key(), "Directory should not be None"), parent_directory);
+        assert_eq!(*unwrap_option!(obj_after.get_parent_dir_key(),
+                                   "Directory should not be None"),
+                   parent_directory);
     }
 
     #[test]
@@ -201,11 +216,8 @@ mod test {
         let id = XorName::new(unwrap_result!((utility::generate_random_array_u8_64())));
         let modified_time = ::time::now_utc();
         let mut obj_before = unwrap_result!(DirectoryMetadata::new("hello.txt".to_string(),
-                                                                 99u64,
-                                                                 true,
-                                                                 ::AccessLevel::Private,
-                                                                 Vec::new(),
-                                                                 Some(DirectoryKey::new(id, 100u64, false, ::AccessLevel::Private))));
+                99u64, true, ::AccessLevel::Private, Vec::new(),
+                Some(DirectoryKey::new(id, 100u64, false, ::AccessLevel::Private))));
         let user_metadata = "{mime: \"application/json\"}".to_string().into_bytes();
         obj_before.set_user_metadata(user_metadata.clone());
         obj_before.set_modified_time(modified_time.clone());

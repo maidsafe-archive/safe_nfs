@@ -27,21 +27,20 @@ use self_encryption::SelfEncryptor;
 /// large
 #[allow(dead_code)]
 pub struct Reader<'a> {
-    client        : Arc<Mutex<Client>>,
+    client: Arc<Mutex<Client>>,
     self_encryptor: SelfEncryptor<SelfEncryptionStorage>,
-    file          : &'a File,
+    file: &'a File,
 }
 
 impl<'a> Reader<'a> {
     /// Create a new instance of Reader
-    pub fn new(client: Arc<Mutex<Client>>,
-               file  : &'a File) -> Reader {
+    pub fn new(client: Arc<Mutex<Client>>, file: &'a File) -> Reader {
         let se_storage = SelfEncryptionStorage::new(client.clone());
 
         Reader {
-            client        : client.clone(),
+            client: client.clone(),
             self_encryptor: SelfEncryptor::new(se_storage, file.get_datamap().clone()),
-            file          : file,
+            file: file,
         }
     }
 
@@ -50,13 +49,15 @@ impl<'a> Reader<'a> {
         debug!("Retrieving file length ...");
         self.self_encryptor.len()
     }
-    
+
     /// Read data from file/blob
-    pub fn read(&mut self,  position: u64, length: u64) -> Result<Vec<u8>, NfsError> {
+    pub fn read(&mut self, position: u64, length: u64) -> Result<Vec<u8>, NfsError> {
         if (position + length) > self.size() {
             Err(NfsError::InvalidRangeSpecified)
         } else {
-            debug!("Reading {len} bytes of data from file starting at offset of {pos} bytes ...", len = length, pos = position);
+            debug!("Reading {len} bytes of data from file starting at offset of {pos} bytes ...",
+                   len = length,
+                   pos = position);
             Ok(self.self_encryptor.read(position, length))
         }
     }
