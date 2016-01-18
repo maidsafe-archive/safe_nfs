@@ -61,11 +61,12 @@ mod test {
     use super::*;
     use xor_name::XorName;
     use maidsafe_utilities::serialisation::{serialise, deserialise};
+    use safe_core::utility;
 
     /// Should be able to serialise & deserialise the DirectoryKey
     #[test]
     fn serailise_and_deserialise_directory_key() {
-        let id = XorName(unwrap_result!(::safe_core::utility::generate_random_array_u8_64()));
+        let id = XorName(unwrap_result!(utility::generate_random_array_u8_64()));
         let tag = 10u64;
         let versioned = false;
         let access_level = ::AccessLevel::Private;

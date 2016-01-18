@@ -15,9 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use metadata::directory_metadata::DirectoryMetadata;
+
 /// Wrapper over DirectoryInfo to present Rest-friendly name to the Restful interface users
 pub struct ContainerInfo {
-    metadata: ::metadata::directory_metadata::DirectoryMetadata,
+    metadata: DirectoryMetadata,
 }
 
 impl ContainerInfo {
@@ -55,15 +57,15 @@ impl ContainerInfo {
 
     /// Convert the ContainerInfo to the format of DirectoryInfo that lower levels understand and
     /// operate on
-    pub fn into_directory_metadata(&self) -> ::metadata::directory_metadata::DirectoryMetadata {
+    pub fn into_directory_metadata(&self) -> DirectoryMetadata {
         self.metadata.clone()
     }
 
 }
 
-impl From<::metadata::directory_metadata::DirectoryMetadata> for ContainerInfo {
+impl From<DirectoryMetadata> for ContainerInfo {
 
-    fn from(metadata: ::metadata::directory_metadata::DirectoryMetadata) -> ContainerInfo {
+    fn from(metadata: DirectoryMetadata) -> ContainerInfo {
         ContainerInfo {
             metadata: metadata,
         }
@@ -75,20 +77,22 @@ impl From<::metadata::directory_metadata::DirectoryMetadata> for ContainerInfo {
 #[cfg(test)]
 mod test {
     use super::*;
+    use metadata::directory_metadata::DirectoryMetadata;
+    use safe_core::utility;
 
     #[test]
     fn create() {
-        let name = unwrap_result!(::safe_core::utility::generate_random_string(10));
+        let name = unwrap_result!(utility::generate_random_string(10));
         let container_info = ContainerInfo {
-            metadata: unwrap_result!(::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None)),
+            metadata: unwrap_result!(DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None)),
         };
         assert_eq!(*container_info.get_name(), name);
     }
 
     #[test]
     fn convert_from() {
-        let name = unwrap_result!(::safe_core::utility::generate_random_string(10));
-        let directory_metadata = unwrap_result!(::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None));
+        let name = unwrap_result!(utility::generate_random_string(10));
+        let directory_metadata = unwrap_result!(DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None));
 
         assert_eq!(*directory_metadata.get_name(), name);
 
@@ -100,14 +104,14 @@ mod test {
 
     #[test]
     fn convert_to() {
-        let name = unwrap_result!(::safe_core::utility::generate_random_string(10));
+        let name = unwrap_result!(utility::generate_random_string(10));
         let container_info = ContainerInfo {
-            metadata: unwrap_result!(::metadata::directory_metadata::DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None)),
+            metadata: unwrap_result!(DirectoryMetadata::new(name.clone(), 10u64, true, ::AccessLevel::Public, Vec::new(), None)),
         };
 
         assert_eq!(*container_info.get_name(), name.clone());
 
-        let directory_metadata: ::metadata::directory_metadata::DirectoryMetadata = container_info.into_directory_metadata();
+        let directory_metadata: DirectoryMetadata = container_info.into_directory_metadata();
 
         assert_eq!(*directory_metadata.get_name(), name);
         assert_eq!(directory_metadata.get_key().get_type_tag(), 10u64);

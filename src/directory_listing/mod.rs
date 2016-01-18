@@ -15,15 +15,28 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use std::cmp;
+use std::sync::{Arc, Mutex};
+
+use sodiumoxide::crypto::box_;
+
+use errors::NfsError;
+use file::File;
 use xor_name::XorName;
 use maidsafe_utilities::serialisation::{serialise, deserialise};
+use metadata::directory_key::DirectoryKey;
+use metadata::directory_metadata::DirectoryMetadata;
+use safe_core::client::Client;
+use safe_core::SelfEncryptionStorage;
+use self_encryption::datamap::DataMap;
+use self_encryption::SelfEncryptor;
 
 /// DirectoryListing is the representation of a deserialised Directory in the network
 #[derive(Debug, RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct DirectoryListing {
-    metadata       : ::metadata::directory_metadata::DirectoryMetadata,
-    sub_directories: Vec<::metadata::directory_metadata::DirectoryMetadata>,
-    files          : Vec<::file::File>,
+    metadata       : DirectoryMetadata,
+    sub_directories: Vec<DirectoryMetadata>,
+    files          : Vec<File>,
 }
 
 impl DirectoryListing {
@@ -33,13 +46,13 @@ impl DirectoryListing {
                user_metadata  : Vec<u8>,
                versioned      : bool,
                access_level   : ::AccessLevel,
-               parent_dir_key: Option<::metadata::directory_key::DirectoryKey>) -> Result<DirectoryListing, ::errors::NfsError> {
-        let meta_data = try!(::metadata::directory_metadata::DirectoryMetadata::new(name,
-                                                                                    tag_type,
-                                                                                    versioned,
-                                                                                    access_level,
-                                                                                    user_metadata,
-                                                                                    parent_dir_key));
+               parent_dir_key: Option<DirectoryKey>) -> Result<DirectoryListing, NfsError> {
+        let meta_data = try!(DirectoryMetadata::new(name,
+                                                    tag_type,
+                                                    versioned,
+                                                    access_level,
+                                                    user_metadata,
+                                                    parent_dir_key));
         Ok(DirectoryListing {
             metadata       : meta_data,
             sub_directories: Vec::new(),
@@ -48,48 +61,48 @@ impl DirectoryListing {
     }
 
     /// Returns the DirectoryKey representing the DirectoryListing
-    pub fn get_key(&self) -> &::metadata::directory_key::DirectoryKey {
+    pub fn get_key(&self) -> &DirectoryKey {
         &self.metadata.get_key()
     }
 
     /// Get Directory metadata
-    pub fn get_metadata(&self) -> &::metadata::directory_metadata::DirectoryMetadata {
+    pub fn get_metadata(&self) -> &DirectoryMetadata {
         &self.metadata
     }
 
     /// Get Directory metadata in mutable format so that it can also be updated
-    pub fn get_mut_metadata(&mut self) -> &mut ::metadata::directory_metadata::DirectoryMetadata {
+    pub fn get_mut_metadata(&mut self) -> &mut DirectoryMetadata {
         &mut self.metadata
     }
 
     /// Get all files in this DirectoryListing
-    pub fn get_files(&self) -> &Vec<::file::File> {
+    pub fn get_files(&self) -> &Vec<File> {
         &self.files
     }
 
     /// Get all files in this DirectoryListing with mutability to update the listing of files
-    pub fn get_mut_files(&mut self) -> &mut Vec<::file::File> {
+    pub fn get_mut_files(&mut self) -> &mut Vec<File> {
         &mut self.files
     }
 
     /// Get all subdirectories in this DirectoryListing
-    pub fn get_sub_directories(&self) -> &Vec<::metadata::directory_metadata::DirectoryMetadata> {
+    pub fn get_sub_directories(&self) -> &Vec<DirectoryMetadata> {
         &self.sub_directories
     }
 
     /// Get all subdirectories in this DirectoryListing with mutability to update the listing of subdirectories
-    pub fn get_mut_sub_directories(&mut self) -> &mut Vec<::metadata::directory_metadata::DirectoryMetadata> {
+    pub fn get_mut_sub_directories(&mut self) -> &mut Vec<DirectoryMetadata> {
         &mut self.sub_directories
     }
 
     /// Decrypts a directory listing
-    pub fn decrypt(client      : ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>>,
+    pub fn decrypt(client      : Arc<Mutex<Client>>,
                    directory_id: &XorName,
-                   data        : Vec<u8>) -> Result<DirectoryListing, ::errors::NfsError> {
+                   data        : Vec<u8>) -> Result<DirectoryListing, NfsError> {
         let decrypted_data_map = try!(unwrap_result!(client.lock()).hybrid_decrypt(&data,
-                                                                                 Some(&DirectoryListing::generate_nonce(directory_id))));
-        let datamap: ::self_encryption::datamap::DataMap = try!(deserialise(&decrypted_data_map));
-        let mut se = ::self_encryption::SelfEncryptor::new(::safe_core::SelfEncryptionStorage::new(client.clone()), datamap);
+                Some(&DirectoryListing::generate_nonce(directory_id))));
+        let datamap: DataMap = try!(deserialise(&decrypted_data_map));
+        let mut se = SelfEncryptor::new(SelfEncryptionStorage::new(client.clone()), datamap);
         let length = se.len();
         debug!("Reading encrypted storage of length {:?} ...", length);
         let serialised_directory_listing = se.read(0, length);
@@ -97,54 +110,51 @@ impl DirectoryListing {
     }
 
     /// Encrypts the directory listing
-    pub fn encrypt(&self,
-                   client: ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>>) -> Result<Vec<u8>, ::errors::NfsError> {
+    pub fn encrypt(&self, client: Arc<Mutex<Client>>) -> Result<Vec<u8>, NfsError> {
         let serialised_data = try!(serialise(&self));
-        let mut se = ::self_encryption::SelfEncryptor::new(::safe_core::SelfEncryptionStorage::new(client.clone()), ::self_encryption::datamap::DataMap::None);
+        let mut se = SelfEncryptor::new(SelfEncryptionStorage::new(client.clone()), DataMap::None);
         debug!("Writing to storage using self encryption ...");
         se.write(&serialised_data, 0);
         let datamap = se.close();
         let serialised_data_map = try!(serialise(&datamap));
-        Ok(try!(unwrap_result!(client.lock()).hybrid_encrypt(&serialised_data_map, Some(&DirectoryListing::generate_nonce(&self.get_key().get_id())))))
+        Ok(try!(unwrap_result!(client.lock()).hybrid_encrypt(&serialised_data_map,
+                Some(&DirectoryListing::generate_nonce(&self.get_key().get_id())))))
     }
 
     /// Get DirectoryInfo of sub_directory within a DirectoryListing.
     /// Returns the Option<DirectoryInfo> for the directory_name from the DirectoryListing
-    pub fn find_file(&self,
-                     file_name: &String) -> Option<&::file::File> {
+    pub fn find_file(&self, file_name: &String) -> Option<&File> {
         self.get_files().iter().find(|file| *file.get_name() == *file_name)
     }
 
     /// Get DirectoryInfo of sub_directory within a DirectoryListing.
     /// Returns the Option<DirectoryInfo> for the directory_name from the DirectoryListing
-    pub fn find_file_by_id(&self,
-                           id: &XorName) -> Option<&::file::File> {
+    pub fn find_file_by_id(&self, id: &XorName) -> Option<&File> {
         self.get_files().iter().find(|file| *file.get_id() == *id)
     }
 
     /// Get DirectoryInfo of sub_directory within a DirectoryListing.
     /// Returns the Option<DirectoryInfo> for the directory_name from the DirectoryListing
-    pub fn find_sub_directory(&self,
-                              directory_name: &String) -> Option<&::metadata::directory_metadata::DirectoryMetadata> {
+    pub fn find_sub_directory(&self, directory_name: &String) -> Option<&DirectoryMetadata> {
         self.get_sub_directories().iter().find(|info| *info.get_name() == *directory_name)
     }
 
     /// Get DirectoryInfo of sub_directory within a DirectoryListing.
     /// Returns the Option<DirectoryInfo> for the directory_name from the DirectoryListing
-    pub fn find_sub_directory_by_id(&self,
-                                    id: &XorName) -> Option<&::metadata::directory_metadata::DirectoryMetadata> {
+    pub fn find_sub_directory_by_id(&self, id: &XorName) -> Option<&DirectoryMetadata> {
         self.get_sub_directories().iter().find(|info| *info.get_id() == *id)
     }
 
     /// If file is present in the DirectoryListing then replace it else insert it
-    pub fn upsert_file(&mut self, file: ::file::File) {
+    pub fn upsert_file(&mut self, file: File) {
         let modified_time = file.get_metadata().get_modified_time().clone();
         // TODO try using the below approach for efficiency - also try the same in upsert_sub_directory
         // if let Some(mut existing_file) = self.files.iter_mut().find(|entry| *entry.get_name() == *file.get_name()) {
         // *existing_file = file;
         if let Some(index) = self.files.iter().position(|entry| *entry.get_id() == *file.get_id()) {
             debug!("Replacing file in directory listing ...");
-            let mut existing = unwrap_option!(self.files.get_mut(index), "Programming Error - Report this as a Bug.");
+            let mut existing = unwrap_option!(self.files.get_mut(index),
+                                              "Programming Error - Report this as a Bug.");
             *existing = file;
         } else {
             debug!("Adding file to directory listing ...");
@@ -154,11 +164,12 @@ impl DirectoryListing {
     }
 
     /// If DirectoryMetadata is present in the sub_directories of DirectoryListing then replace it else insert it
-    pub fn upsert_sub_directory(&mut self, directory_metadata: ::metadata::directory_metadata::DirectoryMetadata) {
+    pub fn upsert_sub_directory(&mut self, directory_metadata: DirectoryMetadata) {
         let modified_time = directory_metadata.get_modified_time().clone();
         if let Some(index) = self.sub_directories.iter().position(|entry| *entry.get_key().get_id() == *directory_metadata.get_key().get_id()) {
             debug!("Replacing directory listing metadata ...");
-            let mut existing = unwrap_option!(self.sub_directories.get_mut(index), "Programming Error - Report this as a Bug.");
+            let mut existing = unwrap_option!(self.sub_directories.get_mut(index),
+                                              "Programming Error - Report this as a Bug.");
             *existing = directory_metadata;
         } else {
             debug!("Adding metadata to directory listing ...");
@@ -168,36 +179,41 @@ impl DirectoryListing {
     }
 
     /// Remove a sub_directory
-    pub fn remove_sub_directory(&mut self, directory_name: &String) -> Result<(), ::errors::NfsError> {
-        let index = try!(self.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == *directory_name).ok_or(::errors::NfsError::DirectoryNotFound));
+    pub fn remove_sub_directory(&mut self, directory_name: &String) -> Result<(), NfsError> {
+        let index = try!(self.get_sub_directories().iter().position(|dir_info| *dir_info.get_name() == *directory_name).ok_or(NfsError::DirectoryNotFound));
         debug!("Removing sub directory at index {:?} ...", index);
         let _ = self.get_mut_sub_directories().remove(index);
         Ok(())
     }
 
     /// Remove a file
-    pub fn remove_file(&mut self, file_name: &String) -> Result<(), ::errors::NfsError> {
-        let index = try!(self.get_files().iter().position(|file| *file.get_name() == *file_name).ok_or(::errors::NfsError::FileNotFound));
+    pub fn remove_file(&mut self, file_name: &String) -> Result<(), NfsError> {
+        let index = try!(self.get_files().iter().position(|file| *file.get_name() == *file_name).ok_or(NfsError::FileNotFound));
         debug!("Removing file at index {:?} ...", index);
         let _ = self.get_mut_files().remove(index);
         Ok(())
     }
 
     /// Generates a nonce based on the directory_id
-    pub fn generate_nonce(directory_id: &XorName) -> ::sodiumoxide::crypto::box_::Nonce {
-        let mut nonce = [0u8; ::sodiumoxide::crypto::box_::NONCEBYTES];
-        let min_length = ::std::cmp::min(nonce.len(), directory_id.0.len());
+    pub fn generate_nonce(directory_id: &XorName) -> box_::Nonce {
+        let mut nonce = [0u8; box_::NONCEBYTES];
+        let min_length = cmp::min(nonce.len(), directory_id.0.len());
         for i in 0..min_length {
             nonce[i] = directory_id.0[i];
         }
-        ::sodiumoxide::crypto::box_::Nonce(nonce)
+        box_::Nonce(nonce)
     }
 }
 
 #[cfg(test)]
 mod test {
+    use std::sync::{Arc, Mutex};
     use super::DirectoryListing;
+    use file::File;
     use maidsafe_utilities::serialisation::{serialise, deserialise};
+    use metadata::file_metadata::FileMetadata;
+    use safe_core::utility::test_utils;
+    use self_encryption::datamap::DataMap;
 
     #[test]
     fn serialise_and_deserialise_directory_listing() {
@@ -215,14 +231,14 @@ mod test {
 
     #[test]
     fn encrypt_and_decrypt_directory_listing() {
-        let test_client = unwrap_result!(::safe_core::utility::test_utils::get_client());
-        let client = ::std::sync::Arc::new(::std::sync::Mutex::new(test_client));
+        let test_client = unwrap_result!(test_utils::get_client());
+        let client = Arc::new(Mutex::new(test_client));
         let directory_listing = unwrap_result!(DirectoryListing::new("Home".to_string(),
-                                                                   10,
-                                                                   Vec::new(),
-                                                                   true,
-                                                                   ::AccessLevel::Private,
-                                                                   None));
+                                                                     10,
+                                                                     Vec::new(),
+                                                                     true,
+                                                                     ::AccessLevel::Private,
+                                                                     None));
         let encrypted_data = unwrap_result!(directory_listing.encrypt(client.clone()));
         let decrypted_listing = unwrap_result!(DirectoryListing::decrypt(client.clone(),
                                                                        directory_listing.get_key().get_id(),
@@ -233,13 +249,13 @@ mod test {
     #[test]
     fn find_upsert_remove_file() {
         let mut directory_listing = unwrap_result!(DirectoryListing::new("Home".to_string(),
-                                                                       10,
-                                                                       Vec::new(),
-                                                                       true,
-                                                                       ::AccessLevel::Private,
-                                                                       None));
-        let mut file = unwrap_result!(::file::File::new(::metadata::file_metadata::FileMetadata::new("index.html".to_string(), Vec::new()),
-                                                      ::self_encryption::datamap::DataMap::None));
+                                                                         10,
+                                                                         Vec::new(),
+                                                                         true,
+                                                                         ::AccessLevel::Private,
+                                                                         None));
+        let mut file = unwrap_result!(File::new(FileMetadata::new("index.html".to_string(), Vec::new()),
+                                                DataMap::None));
         assert!(directory_listing.find_file(file.get_name()).is_none());
         directory_listing.upsert_file(file.clone());
         assert!(directory_listing.find_file(file.get_name()).is_some());
@@ -247,8 +263,8 @@ mod test {
         file.get_mut_metadata().set_name("home.html".to_string());
         directory_listing.upsert_file(file.clone());
         assert_eq!(directory_listing.get_files().len(), 1);
-        let file2 = unwrap_result!(::file::File::new(::metadata::file_metadata::FileMetadata::new("demo.html".to_string(), Vec::new()),
-                                                   ::self_encryption::datamap::DataMap::None));
+        let file2 = unwrap_result!(File::new(FileMetadata::new("demo.html".to_string(), Vec::new()),
+                                             DataMap::None));
         directory_listing.upsert_file(file2.clone());
         assert_eq!(directory_listing.get_files().len(), 2);
 
@@ -267,17 +283,17 @@ mod test {
     #[test]
     fn find_upsert_remove_directory() {
         let mut directory_listing = unwrap_result!(DirectoryListing::new("Home".to_string(),
-                                                                       10,
-                                                                       Vec::new(),
-                                                                       true,
-                                                                       ::AccessLevel::Private,
-                                                                       None));
+                                                                         10,
+                                                                         Vec::new(),
+                                                                         true,
+                                                                         ::AccessLevel::Private,
+                                                                         None));
         let mut sub_directory = unwrap_result!(DirectoryListing::new("Child one".to_string(),
-                                                                   10,
-                                                                   Vec::new(),
-                                                                   true,
-                                                                   ::AccessLevel::Private,
-                                                                   None));
+                                                                     10,
+                                                                     Vec::new(),
+                                                                     true,
+                                                                     ::AccessLevel::Private,
+                                                                     None));
         assert!(directory_listing.find_sub_directory(sub_directory.get_metadata().get_name()).is_none());
         directory_listing.upsert_sub_directory(sub_directory.get_metadata().clone());
         assert!(directory_listing.find_sub_directory(sub_directory.get_metadata().get_name()).is_some());
@@ -286,11 +302,11 @@ mod test {
         directory_listing.upsert_sub_directory(sub_directory.get_metadata().clone());
         assert_eq!(directory_listing.get_sub_directories().len(), 1);
         let sub_directory_two = unwrap_result!(DirectoryListing::new("Child Two".to_string(),
-                                                                   10,
-                                                                   Vec::new(),
-                                                                   true,
-                                                                   ::AccessLevel::Private,
-                                                                   None));
+                                                                     10,
+                                                                     Vec::new(),
+                                                                     true,
+                                                                     ::AccessLevel::Private,
+                                                                     None));
         directory_listing.upsert_sub_directory(sub_directory_two.get_metadata().clone());
         assert_eq!(directory_listing.get_sub_directories().len(), 2);
 

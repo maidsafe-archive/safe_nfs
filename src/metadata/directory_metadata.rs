@@ -15,8 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use rustc_serialize::{Decodable, Decoder};
+
 use xor_name::XorName;
 use metadata::directory_key::DirectoryKey;
+use safe_core::utility;
 
 /// Metadata about a File or a Directory
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
@@ -37,7 +40,7 @@ impl DirectoryMetadata {
                access_level  : ::AccessLevel,
                user_metadata : Vec<u8>,
                parent_dir_key: Option<DirectoryKey>) -> Result<DirectoryMetadata, ::errors::NfsError> {
-        let id = XorName::new(try!(::safe_core::utility::generate_random_array_u8_64()));
+        let id = XorName::new(try!(utility::generate_random_array_u8_64()));
         Ok(DirectoryMetadata {
             key           : DirectoryKey::new(id, type_tag, versioned, access_level),
             name          : name,
@@ -136,22 +139,22 @@ impl ::rustc_serialize::Encodable for DirectoryMetadata {
     }
 }
 
-impl ::rustc_serialize::Decodable for DirectoryMetadata {
-    fn decode<D: ::rustc_serialize::Decoder>(d: &mut D) -> Result<DirectoryMetadata, D::Error> {
+impl Decodable for DirectoryMetadata {
+    fn decode<D: Decoder>(d: &mut D) -> Result<DirectoryMetadata, D::Error> {
         d.read_struct("DirectoryMetadata", 8, |d| {
             Ok(DirectoryMetadata {
-                key           : try!(d.read_struct_field("key",  0, |d| ::rustc_serialize::Decodable::decode(d))),
-                name          : try!(d.read_struct_field("name", 1, |d| ::rustc_serialize::Decodable::decode(d))),
+                key           : try!(d.read_struct_field("key",  0, |d| Decodable::decode(d))),
+                name          : try!(d.read_struct_field("name", 1, |d| Decodable::decode(d))),
                 created_time  : ::time::at_utc(::time::Timespec {
-                                                   sec : try!(d.read_struct_field("created_time_sec",  2, |d| ::rustc_serialize::Decodable::decode(d))),
-                                                   nsec: try!(d.read_struct_field("created_time_nsec", 3, |d| ::rustc_serialize::Decodable::decode(d))),
+                                                   sec : try!(d.read_struct_field("created_time_sec",  2, |d| Decodable::decode(d))),
+                                                   nsec: try!(d.read_struct_field("created_time_nsec", 3, |d| Decodable::decode(d))),
                                                }),
                 modified_time : ::time::at_utc(::time::Timespec {
-                                                   sec : try!(d.read_struct_field("modified_time_sec",  4, |d| ::rustc_serialize::Decodable::decode(d))),
-                                                   nsec: try!(d.read_struct_field("modified_time_nsec", 5, |d| ::rustc_serialize::Decodable::decode(d))),
+                                                   sec : try!(d.read_struct_field("modified_time_sec",  4, |d| Decodable::decode(d))),
+                                                   nsec: try!(d.read_struct_field("modified_time_nsec", 5, |d| Decodable::decode(d))),
                                                }),
-                user_metadata : try!(d.read_struct_field("user_metadata",  6, |d| ::rustc_serialize::Decodable::decode(d))),
-                parent_dir_key: try!(d.read_struct_field("parent_dir_key", 7, |d| ::rustc_serialize::Decodable::decode(d))),
+                user_metadata : try!(d.read_struct_field("user_metadata",  6, |d| Decodable::decode(d))),
+                parent_dir_key: try!(d.read_struct_field("parent_dir_key", 7, |d| Decodable::decode(d))),
             })
         })
     }
@@ -163,6 +166,7 @@ mod test {
     use xor_name::XorName;
     use metadata::directory_key::DirectoryKey;
     use maidsafe_utilities::serialisation::{serialise, deserialise};
+    use safe_core::utility;
 
     #[test]
     fn serialise_directorty_metadata_without_parent_directory() {
@@ -179,7 +183,7 @@ mod test {
 
     #[test]
     fn serialise_directorty_metadata_with_parent_directory() {
-        let id = XorName::new(unwrap_result!((::safe_core::utility::generate_random_array_u8_64())));
+        let id = XorName::new(unwrap_result!((utility::generate_random_array_u8_64())));
         let parent_directory = DirectoryKey::new(id, 100u64, false, ::AccessLevel::Private);
         let obj_before = unwrap_result!(DirectoryMetadata::new("hello.txt".to_string(),
                                                              99u64,
@@ -194,7 +198,7 @@ mod test {
 
     #[test]
     fn update_using_setters() {
-        let id = XorName::new(unwrap_result!((::safe_core::utility::generate_random_array_u8_64())));
+        let id = XorName::new(unwrap_result!((utility::generate_random_array_u8_64())));
         let modified_time = ::time::now_utc();
         let mut obj_before = unwrap_result!(DirectoryMetadata::new("hello.txt".to_string(),
                                                                  99u64,

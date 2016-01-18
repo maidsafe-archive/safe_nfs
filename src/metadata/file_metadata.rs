@@ -15,13 +15,16 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use rustc_serialize::{Encodable, Encoder, Decodable, Decoder};
+use time::{self, Timespec, Tm};
+
 /// FileMetadata about a File or a Directory
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct FileMetadata {
     name         : String,
     size         : u64,
-    created_time : ::time::Tm,
-    modified_time: ::time::Tm,
+    created_time : Tm,
+    modified_time: Tm,
     user_metadata: Vec<u8>,
 }
 
@@ -31,19 +34,19 @@ impl FileMetadata {
         FileMetadata {
             name         : name,
             size         : 0,
-            created_time : ::time::now_utc(),
-            modified_time: ::time::now_utc(),
+            created_time : time::now_utc(),
+            modified_time: time::now_utc(),
             user_metadata: user_metadata,
         }
     }
 
     /// Get time of creation
-    pub fn get_created_time(&self) -> &::time::Tm {
+    pub fn get_created_time(&self) -> &Tm {
         &self.created_time
     }
 
     /// Get time of modification
-    pub fn get_modified_time(&self) -> &::time::Tm {
+    pub fn get_modified_time(&self) -> &Tm {
         &self.modified_time
     }
 
@@ -75,7 +78,7 @@ impl FileMetadata {
     }
 
     /// Set time of modification
-    pub fn set_modified_time(&mut self, modified_time: ::time::Tm) {
+    pub fn set_modified_time(&mut self, modified_time: Tm) {
         self.modified_time = modified_time
     }
 
@@ -85,8 +88,8 @@ impl FileMetadata {
     }
 }
 
-impl ::rustc_serialize::Encodable for FileMetadata {
-    fn encode<E: ::rustc_serialize::Encoder>(&self, e: &mut E) -> Result<(), E::Error> {
+impl Encodable for FileMetadata {
+    fn encode<E: Encoder>(&self, e: &mut E) -> Result<(), E::Error> {
         let created_time = self.created_time.to_timespec();
         let modified_time = self.modified_time.to_timespec();
 
@@ -104,21 +107,21 @@ impl ::rustc_serialize::Encodable for FileMetadata {
     }
 }
 
-impl ::rustc_serialize::Decodable for FileMetadata {
-    fn decode<D: ::rustc_serialize::Decoder>(d: &mut D) -> Result<FileMetadata, D::Error> {
+impl Decodable for FileMetadata {
+    fn decode<D: Decoder>(d: &mut D) -> Result<FileMetadata, D::Error> {
         d.read_struct("FileMetadata", 7, |d| {
             Ok(FileMetadata {
-                name         : try!(d.read_struct_field("name", 0, |d| ::rustc_serialize::Decodable::decode(d))),
-                size         : try!(d.read_struct_field("size", 1, |d| ::rustc_serialize::Decodable::decode(d))),
-                created_time : ::time::at_utc(::time::Timespec {
-                                                  sec : try!(d.read_struct_field("created_time_sec",  2, |d| ::rustc_serialize::Decodable::decode(d))),
-                                                  nsec: try!(d.read_struct_field("created_time_nsec", 3, |d| ::rustc_serialize::Decodable::decode(d))),
+                name         : try!(d.read_struct_field("name", 0, |d| Decodable::decode(d))),
+                size         : try!(d.read_struct_field("size", 1, |d| Decodable::decode(d))),
+                created_time : ::time::at_utc(Timespec {
+                                                  sec : try!(d.read_struct_field("created_time_sec",  2, |d| Decodable::decode(d))),
+                                                  nsec: try!(d.read_struct_field("created_time_nsec", 3, |d| Decodable::decode(d))),
                                               }),
-                modified_time: ::time::at_utc(::time::Timespec {
-                                                  sec : try!(d.read_struct_field("modified_time_sec",  4, |d| ::rustc_serialize::Decodable::decode(d))),
-                                                  nsec: try!(d.read_struct_field("modified_time_nsec", 5, |d| ::rustc_serialize::Decodable::decode(d))),
+                modified_time: ::time::at_utc(Timespec {
+                                                  sec : try!(d.read_struct_field("modified_time_sec",  4, |d| Decodable::decode(d))),
+                                                  nsec: try!(d.read_struct_field("modified_time_nsec", 5, |d| Decodable::decode(d))),
                                               }),
-                user_metadata: try!(d.read_struct_field("user_metadata",  6, |d| ::rustc_serialize::Decodable::decode(d))),
+                user_metadata: try!(d.read_struct_field("user_metadata",  6, |d| Decodable::decode(d))),
             })
         })
     }

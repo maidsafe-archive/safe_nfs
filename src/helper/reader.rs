@@ -15,24 +15,32 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use std::sync::{Arc, Mutex};
+
+use errors::NfsError;
+use file::File;
+use safe_core::client::Client;
+use safe_core::SelfEncryptionStorage;
+use self_encryption::SelfEncryptor;
+
 /// Reader is used to read contents of a File. It can read in chunks if the file happens to be very
 /// large
 #[allow(dead_code)]
 pub struct Reader<'a> {
-    client        : ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>>,
-    self_encryptor: ::self_encryption::SelfEncryptor<::safe_core::SelfEncryptionStorage>,
-    file          : &'a ::file::File,
+    client        : Arc<Mutex<Client>>,
+    self_encryptor: SelfEncryptor<SelfEncryptionStorage>,
+    file          : &'a File,
 }
 
 impl<'a> Reader<'a> {
     /// Create a new instance of Reader
-    pub fn new(client: ::std::sync::Arc<::std::sync::Mutex<::safe_core::client::Client>>,
-               file  : &'a ::file::File) -> Reader {
-        let se_storage = ::safe_core::SelfEncryptionStorage::new(client.clone());
+    pub fn new(client: Arc<Mutex<Client>>,
+               file  : &'a File) -> Reader {
+        let se_storage = SelfEncryptionStorage::new(client.clone());
 
         Reader {
             client        : client.clone(),
-            self_encryptor: ::self_encryption::SelfEncryptor::new(se_storage, file.get_datamap().clone()),
+            self_encryptor: SelfEncryptor::new(se_storage, file.get_datamap().clone()),
             file          : file,
         }
     }
@@ -44,9 +52,9 @@ impl<'a> Reader<'a> {
     }
     
     /// Read data from file/blob
-    pub fn read(&mut self,  position: u64, length: u64) -> Result<Vec<u8>, ::errors::NfsError> {
+    pub fn read(&mut self,  position: u64, length: u64) -> Result<Vec<u8>, NfsError> {
         if (position + length) > self.size() {
-            Err(::errors::NfsError::InvalidRangeSpecified)
+            Err(NfsError::InvalidRangeSpecified)
         } else {
             debug!("Reading {len} bytes of data from file starting at offset of {pos} bytes ...", len = length, pos = position);
             Ok(self.self_encryptor.read(position, length))
