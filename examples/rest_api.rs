@@ -15,10 +15,31 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+//! REST API example.
+
+// For explanation of lint checks, run `rustc -W help` or see
+// https://github.com/maidsafe/QA/blob/master/Documentation/Rust%20Lint%20Checks.md
+#![forbid(bad_style, exceeding_bitshifts, mutable_transmutes, no_mangle_const_items,
+          unknown_crate_types, warnings)]
+#![deny(deprecated, drop_with_repr_extern, improper_ctypes, missing_docs,
+        non_shorthand_field_patterns, overflowing_literals, plugin_as_library,
+        private_no_mangle_fns, private_no_mangle_statics, stable_features, unconditional_recursion,
+        unknown_lints, unsafe_code, unused, unused_allocation, unused_attributes,
+        unused_comparisons, unused_features, unused_parens, while_true)]
+#![warn(trivial_casts, trivial_numeric_casts, unused_extern_crates, unused_import_braces,
+        unused_qualifications, unused_results)]
+#![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
+         missing_debug_implementations, variant_size_differences)]
+
+#![cfg_attr(feature="clippy", feature(plugin))]
+#![cfg_attr(feature="clippy", plugin(clippy))]
+#![cfg_attr(feature="clippy", deny(clippy, clippy_pedantic))]
+
+#![allow(unused_extern_crates)] #[macro_use]
+extern crate maidsafe_utilities;
 extern crate time;
 extern crate safe_nfs;
 extern crate safe_core;
-#[macro_use] extern crate maidsafe_utilities;
 
 use std::sync::{Arc, Mutex};
 
@@ -123,7 +144,7 @@ fn container_operation(option: u32, container: &mut Container) -> Result<(), Nfs
                         2 | 4 => AccessLevel::Public,
                         _     => AccessLevel::Private,
                     };
-                    try!(container.create(name.clone(), versioned, access_level, None));
+                    let _ = try!(container.create(name.clone(), versioned, access_level, None));
                     println!("Created Container - {}", name);
                 },
                 Err(_) => println!("Invalid input"),
@@ -157,7 +178,7 @@ fn container_operation(option: u32, container: &mut Container) -> Result<(), Nfs
             }
         },
         4 => { // Delete container
-            try!(container.delete_container(&get_user_string("Container name")));
+            let _ = try!(container.delete_container(&get_user_string("Container name")));
             println!("Container deleted");
         },
         _ => {}
@@ -186,14 +207,14 @@ fn blob_operation(option: u32, container: &mut Container) -> Result<(), NfsError
             let data = get_user_string("text to be saved as a file").into_bytes();
             let mut writer = try!(container.create_blob(get_user_string("Blob name"), None));
             writer.write(&data[..], 0);
-            try!(writer.close());
+            let _ = try!(writer.close());
             println!("Blob created");
         },
         7 => { // Update blob
             let mut container = try!(get_child_container(container));
             let blob = try!(container.get_blob(get_user_string("Blob name")));
             let data = get_user_string("text to be saved as a file").into_bytes();
-            try!(container.update_blob_content(&blob, &data[..]));
+            let _ = try!(container.update_blob_content(&blob, &data[..]));
             println!("Blob Updated");
         },
         8 => { // Read blob
