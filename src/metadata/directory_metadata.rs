@@ -114,9 +114,14 @@ impl DirectoryMetadata {
         self.modified_time = modified_time
     }
 
-    /// User setteble metadata for custom metadata
+    /// Setter for user_metadata
     pub fn set_user_metadata(&mut self, user_metadata: Vec<u8>) {
         self.user_metadata = user_metadata;
+    }
+
+    /// Setter for parent_dir_key
+    pub fn set_parent_dir_key(&mut self, parent_dir_key: Option<DirectoryKey>) {
+        self.parent_dir_key = parent_dir_key;
     }
 }
 
