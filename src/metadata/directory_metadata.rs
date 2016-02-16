@@ -109,6 +109,11 @@ impl DirectoryMetadata {
         self.name = name;
     }
 
+    /// Set time of creation
+    pub fn set_created_time(&mut self, created_time: ::time::Tm) {
+        self.created_time = created_time;
+    }
+
     /// Set time of modification
     pub fn set_modified_time(&mut self, modified_time: ::time::Tm) {
         self.modified_time = modified_time
