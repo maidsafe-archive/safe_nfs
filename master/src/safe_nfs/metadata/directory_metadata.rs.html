@@ -272,6 +272,16 @@
 <span id="229">229</span>
 <span id="230">230</span>
 <span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -384,14 +394,24 @@
         <span class='self'>self</span>.<span class='ident'>name</span> <span class='op'>=</span> <span class='ident'>name</span>;
     }
 
+    <span class='doccomment'>/// Set time of creation</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_created_time</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>created_time</span>: ::<span class='ident'>time</span>::<span class='ident'>Tm</span>) {
+        <span class='self'>self</span>.<span class='ident'>created_time</span> <span class='op'>=</span> <span class='ident'>created_time</span>;
+    }
+
     <span class='doccomment'>/// Set time of modification</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_modified_time</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>modified_time</span>: ::<span class='ident'>time</span>::<span class='ident'>Tm</span>) {
         <span class='self'>self</span>.<span class='ident'>modified_time</span> <span class='op'>=</span> <span class='ident'>modified_time</span>
     }
 
-    <span class='doccomment'>/// User setteble metadata for custom metadata</span>
+    <span class='doccomment'>/// Setter for user_metadata</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_user_metadata</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>user_metadata</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>) {
         <span class='self'>self</span>.<span class='ident'>user_metadata</span> <span class='op'>=</span> <span class='ident'>user_metadata</span>;
+    }
+
+    <span class='doccomment'>/// Setter for parent_dir_key</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_parent_dir_key</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>parent_dir_key</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>DirectoryKey</span><span class='op'>&gt;</span>) {
+        <span class='self'>self</span>.<span class='ident'>parent_dir_key</span> <span class='op'>=</span> <span class='ident'>parent_dir_key</span>;
     }
 }
 
