@@ -109,14 +109,24 @@ impl DirectoryMetadata {
         self.name = name;
     }
 
+    /// Set time of creation
+    pub fn set_created_time(&mut self, created_time: ::time::Tm) {
+        self.created_time = created_time;
+    }
+
     /// Set time of modification
     pub fn set_modified_time(&mut self, modified_time: ::time::Tm) {
         self.modified_time = modified_time
     }
 
-    /// User setteble metadata for custom metadata
+    /// Setter for user_metadata
     pub fn set_user_metadata(&mut self, user_metadata: Vec<u8>) {
         self.user_metadata = user_metadata;
+    }
+
+    /// Setter for parent_dir_key
+    pub fn set_parent_dir_key(&mut self, parent_dir_key: Option<DirectoryKey>) {
+        self.parent_dir_key = parent_dir_key;
     }
 }
 
