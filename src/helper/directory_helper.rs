@@ -73,7 +73,7 @@ impl DirectoryHelper {
 
         let structured_data = try!(self.save_directory_listing(&directory));
         debug!("Posting PUT request to network to save structured data for directory ...");
-        try!(unwrap_result!(self.client.lock()).put(Data::StructuredData(structured_data), None));
+        try!(unwrap_result!(self.client.lock()).put(Data::Structured(structured_data), None));
         if let Some(mut parent_directory) = parent_directory {
             parent_directory.upsert_sub_directory(directory.get_metadata().clone());
             Ok((directory, try!(self.update(parent_directory))))
@@ -355,7 +355,7 @@ impl DirectoryHelper {
         };
         debug!("Posting updated structured data to the network ...");
         try!(unwrap_result!(self.client.lock())
-                 .post(Data::StructuredData(updated_structured_data), None));
+                 .post(Data::Structured(updated_structured_data), None));
         Ok(())
     }
 
@@ -367,17 +367,17 @@ impl DirectoryHelper {
         let immutable_data = ImmutableData::new(data_type, data);
         let name = immutable_data.name();
         debug!("Posting PUT request to save immutable data to the network ...");
-        try!(unwrap_result!(self.client.lock()).put(Data::ImmutableData(immutable_data), None));
+        try!(unwrap_result!(self.client.lock()).put(Data::Immutable(immutable_data), None));
         Ok(name)
     }
 
     /// Get StructuredData from the Network
     fn get_structured_data(&self, id: &XorName, type_tag: u64) -> Result<StructuredData, NfsError> {
-        let request = DataRequest::StructuredData(id.clone(), type_tag);
+        let request = DataRequest::Structured(id.clone(), type_tag);
         debug!("Getting structured data from the network ...");
         let response_getter = try!(unwrap_result!(self.client.lock()).get(request, None));
         match try!(response_getter.get()) {
-            Data::StructuredData(structured_data) => Ok(structured_data),
+            Data::Structured(structured_data) => Ok(structured_data),
             _ => Err(NfsError::from(CoreError::ReceivedUnexpectedData)),
         }
     }
@@ -387,11 +387,11 @@ impl DirectoryHelper {
                           id: XorName,
                           data_type: ImmutableDataType)
                           -> Result<ImmutableData, NfsError> {
-        let request = DataRequest::ImmutableData(id, data_type);
+        let request = DataRequest::Immutable(id, data_type);
         debug!("Getting immutable data from the network ...");
         let response_getter = try!(unwrap_result!(self.client.lock()).get(request, None));
         match try!(response_getter.get()) {
-            Data::ImmutableData(immutable_data) => Ok(immutable_data),
+            Data::Immutable(immutable_data) => Ok(immutable_data),
             _ => Err(NfsError::from(CoreError::ReceivedUnexpectedData)),
         }
     }
