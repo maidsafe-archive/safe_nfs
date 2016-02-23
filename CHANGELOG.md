@@ -1,5 +1,8 @@
 # Safe nfs - Change Log
 
+## [0.5.1]
+- Expose setter for updating parent directory
+  
 ## [0.5.0]
 - Dependencies updated to allow building with Rust stable
 
