@@ -28,8 +28,7 @@ use metadata::directory_key::DirectoryKey;
 use metadata::directory_metadata::DirectoryMetadata;
 use safe_core::client::Client;
 use safe_core::SelfEncryptionStorage;
-use self_encryption::datamap::DataMap;
-use self_encryption::SelfEncryptor;
+use self_encryption::{DataMap, SelfEncryptor};
 
 /// DirectoryListing is the representation of a deserialised Directory in the network
 #[derive(Debug, RustcEncodable, RustcDecodable, PartialEq, Eq, PartialOrd, Ord, Clone)]
@@ -228,7 +227,7 @@ mod test {
     use maidsafe_utilities::serialisation::{serialise, deserialise};
     use metadata::file_metadata::FileMetadata;
     use safe_core::utility::test_utils;
-    use self_encryption::datamap::DataMap;
+    use self_encryption::DataMap;
 
     #[test]
     fn serialise_and_deserialise_directory_listing() {

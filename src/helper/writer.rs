@@ -22,8 +22,7 @@ use directory_listing::DirectoryListing;
 use file::File;
 use safe_core::client::Client;
 use safe_core::SelfEncryptionStorage;
-use self_encryption::datamap::DataMap;
-use self_encryption::SelfEncryptor;
+use self_encryption::{DataMap, SelfEncryptor};
 
 /// Mode of the writter
 pub enum Mode {
@@ -73,7 +72,7 @@ impl Writer {
     /// Returns the update DirectoryListing which owns the file and also the updated
     /// DirectoryListing of the file's parent
     /// Returns (files's parent_directory, Option<file's parent_directory's parent>)
-    pub fn close(mut self) -> Result<(DirectoryListing, Option<DirectoryListing>), NfsError> {
+    pub fn close(self) -> Result<(DirectoryListing, Option<DirectoryListing>), NfsError> {
         let mut file = self.file;
         let mut directory = self.parent_directory;
         let size = self.self_encryptor.len();

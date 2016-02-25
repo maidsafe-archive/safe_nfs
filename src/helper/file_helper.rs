@@ -25,7 +25,7 @@ use helper::reader::Reader;
 use helper::writer::{Mode, Writer};
 use metadata::file_metadata::FileMetadata;
 use safe_core::client::Client;
-use self_encryption::datamap::DataMap;
+use self_encryption::DataMap;
 
 /// File provides helper functions to perform Operations on Files
 pub struct FileHelper {

@@ -76,7 +76,7 @@ mod test {
     use super::*;
     use metadata::file_metadata::FileMetadata;
     use file::File;
-    use self_encryption::datamap::DataMap;
+    use self_encryption::DataMap;
 
     #[test]
     fn create() {
