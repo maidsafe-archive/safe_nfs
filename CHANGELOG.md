@@ -1,5 +1,8 @@
 # Safe nfs - Change Log
 
+## [0.6.1]
+- Upgrade to self_encryption 0.2.6
+
 ## [0.6.0]
 - Upgrade to Routing 0.7.0
 
