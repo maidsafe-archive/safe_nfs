@@ -20,7 +20,7 @@ use std::fmt;
 use errors::NfsError;
 use metadata::file_metadata::FileMetadata;
 use safe_core::utility;
-use self_encryption::datamap::DataMap;
+use self_encryption::DataMap;
 use xor_name::XorName;
 
 /// Representation of a File to be put into the network. Could be text, music, video etc any kind
@@ -85,7 +85,7 @@ mod test {
     use super::*;
     use maidsafe_utilities::serialisation::{serialise, deserialise};
     use metadata::file_metadata::FileMetadata;
-    use self_encryption::datamap::DataMap;
+    use self_encryption::DataMap;
 
     #[test]
     fn serialise_deserialise() {
